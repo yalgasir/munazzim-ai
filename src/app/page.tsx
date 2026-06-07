@@ -25,7 +25,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     const loadData = () => {
-      // جلب البيانات الفعلية من LocalStorage لضمان أن الأرقام تتحدث
       const savedAppointments = JSON.parse(localStorage.getItem('munazzim_appointments') || '[]');
       const savedTasks = JSON.parse(localStorage.getItem('munazzim_tasks') || '[]');
       
@@ -42,8 +41,9 @@ export default function Dashboard() {
 
     loadData();
     
-    // التحديث عند حدوث تغيير في التخزين من صفحات أخرى
+    // الاستماع لأي تغييرات في التخزين من نوافذ أخرى
     window.addEventListener('storage', loadData);
+    // تحديث دوري كل ثانيتين للتأكد من المزامنة
     const interval = setInterval(loadData, 2000);
     
     return () => {
