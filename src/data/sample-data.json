@@ -1,0 +1,37 @@
+{
+  "appConfig": {
+    "name": "منظّم | Munazzim",
+    "version": "1.0.0",
+    "description": "نظام ذكي لإدارة الوقت والمهام",
+    "language": "ar",
+    "direction": "rtl"
+  },
+  "priorityLevels": [
+    {
+      "id": "high",
+      "label": "عالية الأولوية",
+      "color": "red",
+      "value": 3
+    },
+    {
+      "id": "medium",
+      "label": "متوسطة",
+      "color": "amber",
+      "value": 2
+    },
+    {
+      "id": "low",
+      "label": "منخفضة الأولوية",
+      "color": "emerald",
+      "value": 1
+    }
+  ],
+  "appointmentTypes": [
+    "عمل",
+    "صحة",
+    "اجتماعي",
+    "تعليم",
+    "ترفيه",
+    "أخرى"
+  ]
+}

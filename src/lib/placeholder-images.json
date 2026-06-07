@@ -1,0 +1,16 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract blue organizational background",
+      "imageUrl": "https://picsum.photos/seed/munazzim1/1200/800",
+      "imageHint": "abstract blue organizational"
+    },
+    {
+      "id": "user-avatar",
+      "description": "Professional user profile placeholder",
+      "imageUrl": "https://picsum.photos/seed/munazzim-user/100/100",
+      "imageHint": "professional avatar"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+'use server';
+/**
+ * @fileOverview تدفق اختبار مع تنظيف المخرجات من الماركدوان.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+const TestInputSchema = z.string().describe('نص الاختبار');
+export type TestInput = z.infer<typeof TestInputSchema>;
+
+const TestOutputSchema = z.object({
+  response: z.string().describe('رد النموذج'),
+  modelUsed: z.string().describe('اسم النموذج المستخدم'),
+});
+export type TestOutput = z.infer<typeof TestOutputSchema>;
+
+export async function runTestAI(prompt: string): Promise<TestOutput> {
+  return testFlow(prompt);
+}
+
+const testFlow = ai.defineFlow(
+  {
+    name: 'testFlow',
+    inputSchema: TestInputSchema,
+    outputSchema: TestOutputSchema,
+  },
+  async (input) => {
+    try {
+      const modelName = process.env.OPENROUTER_MODEL || 'openrouter/free';
+      const { text } = await ai.generate({
+        model: `openai/${modelName}`,
+        prompt: input,
+        system: `أنت مساعد عربي. لا تستخدم رموز Markdown مثل # أو * نهائياً. أجب بنص عادي فقط.`,
+      });
+
+      const cleanResponse = (text || '')
+        .replace(/[#*`|_~]/g, '')
+        .trim();
+
+      return {
+        response: cleanResponse || 'لا يوجد رد.',
+        modelUsed: modelName,
+      };
+    } catch (error: any) {
+      throw new Error(error.message || 'فشل الاتصال');
+    }
+  }
+);

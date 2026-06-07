@@ -1,0 +1,87 @@
+
+import { NextResponse } from 'next/server';
+
+/**
+ * @fileOverview مسار API مستقل تماماً لاختبار الاتصال بـ OpenRouter.
+ * يضمن هذا المسار إرجاع JSON دائماً لتجنب أخطاء التحليل في الواجهة الأمامية.
+ */
+
+export async function GET() {
+  return NextResponse.json({ ok: true, message: "API route is working" });
+}
+
+export async function POST(req: Request) {
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const modelName = process.env.OPENROUTER_MODEL || "openrouter/free";
+    
+    // التحقق من وجود مفتاح API
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'OPENROUTER_API_KEY is missing in environment variables' },
+        { status: 500 }
+      );
+    }
+
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Invalid JSON body in request' },
+        { status: 400 }
+      );
+    }
+
+    const { prompt } = body;
+    if (!prompt) {
+      return NextResponse.json(
+        { error: 'Prompt is required' },
+        { status: 400 }
+      );
+    }
+
+    // اتصال مباشر بـ OpenRouter لضمان العزل
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "Munazzim App",
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          { role: "system", content: "أنت مساعد ذكاء اصطناعي ودود. أجب باللغة العربية دائماً وبإيجاز." },
+          { role: "user", content: prompt }
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { 
+          error: data.error?.message || 'Failed to call OpenRouter',
+          details: data 
+        }, 
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json({
+      response: data.choices?.[0]?.message?.content || 'No response content',
+      modelUsed: data.model || modelName,
+      raw: data
+    });
+
+  } catch (error: any) {
+    console.error('API Route Error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
