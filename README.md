@@ -4,6 +4,7 @@ emoji: 🚀
 colorFrom: blue
 colorTo: indigo
 sdk: docker
+app_port: 3000
 pinned: false
 ---
 
@@ -13,7 +14,7 @@ pinned: false
 **التحقق من تكامل الأنظمة في بيئة ذات صلة (Subsystem Integration)**
 
 تم الانتقال بالمشروع من مجرد واجهات معملية (TRL 4) إلى نظام متكامل (TRL 5) حيث تتدفق البيانات بين الأنظمة الفرعية:
-1. **نظام الهوية (Auth Subsystem):** تأمين الوصول وتخصيص البيانات لكل مستخدم.
+1. **نظام الهوية (Auth Subsystem):** تأمين الوصول وتخصيص البيانات لكل مستخدم عبر Firebase/LocalAuth.
 2. **نظام التخزين (Data Subsystem):** مزامنة المواعيد والمهام لحظياً بين الواجهة وقاعدة البيانات.
 3. **نظام التحليل (Analysis Subsystem):** لوحة قيادة تقرأ البيانات الحقيقية لتقديم إحصائيات دقيقة.
 
@@ -30,11 +31,11 @@ pinned: false
 ---
 
 ## 💻 التقنيات المستخدمة
-- **Framework:** Next.js 15
+- **Framework:** Next.js 15 (Standalone Mode)
 - **AI Engine:** Google Genkit (Gemini 1.5 Flash)
 - **Database:** Firebase Firestore / LocalStorage Sync
 - **UI:** ShadCN & Tailwind CSS (RTL Support)
-- **Deployment:** Docker for Hugging Face Spaces
+- **Deployment:** Dockerized for Hugging Face Spaces
 
 ---
-*تم تطوير هذا المشروع ليكون الحل الأمثل للمستخدم العربي الباحث عن الإنتاجية بنظام هندسي متين.*
+*تم تطوير هذا المشروع ليكون الحل الأمثل للمستخدم العربي الباحث عن الإنتاجية بنظام هندسي متين وفق معايير الجاهزية التقنية.*
