@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,54 +12,55 @@ import {
   CheckCircle2, 
   AlertCircle,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { db, auth } from "@/lib/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 export default function Dashboard() {
-  const [appointmentsCount, setAppointmentsCount] = useState(0);
-  const [totalTasksCount, setTotalTasksCount] = useState(0);
-  const [highPriorityTasksCount, setHighPriorityTasksCount] = useState(0);
-  const [todayApps, setTodayApps] = useState<any[]>([]);
-  const [urgentTasks, setUrgentTasks] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = () => {
-      const savedAppointments = JSON.parse(localStorage.getItem('munazzim_appointments') || '[]');
-      const savedTasks = JSON.parse(localStorage.getItem('munazzim_tasks') || '[]');
-      
-      setAppointmentsCount(savedAppointments.length);
-      setTodayApps(savedAppointments.slice(0, 3));
-      
-      const pendingTasks = savedTasks.filter((t: any) => !t.isCompleted);
-      setTotalTasksCount(pendingTasks.length);
-      
-      const highPriority = savedTasks.filter((t: any) => t.priority === "High" && !t.isCompleted);
-      setHighPriorityTasksCount(highPriority.length);
-      setUrgentTasks(highPriority.slice(0, 3));
-    };
+    if (!auth.currentUser) return;
 
-    loadData();
-    
-    // الاستماع لأي تغييرات في التخزين من نوافذ أخرى
-    window.addEventListener('storage', loadData);
-    // تحديث دوري كل ثانيتين للتأكد من المزامنة
-    const interval = setInterval(loadData, 2000);
-    
-    return () => {
-      window.removeEventListener('storage', loadData);
-      clearInterval(interval);
-    };
+    const qApps = query(collection(db, "appointments"), where("userId", "==", auth.currentUser.uid));
+    const qTasks = query(collection(db, "tasks"), where("userId", "==", auth.currentUser.uid));
+
+    const unsubApps = onSnapshot(qApps, (snapshot) => {
+      setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const unsubTasks = onSnapshot(qTasks, (snapshot) => {
+      setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    });
+
+    return () => { unsubApps(); unsubTasks(); };
   }, []);
+
+  const totalPendingTasks = tasks.filter(t => !t.isCompleted).length;
+  const highPriorityTasks = tasks.filter(t => t.priority === "High" && !t.isCompleted);
+
+  if (loading) return (
+    <AppLayout>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    </AppLayout>
+  );
 
   return (
     <AppLayout>
       <div className="flex flex-col gap-8 max-w-7xl mx-auto" dir="rtl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-headline mb-2 text-primary">مرحباً بك مجدداً!</h1>
-            <p className="text-muted-foreground">إليك نظرة سريعة على يومك وما ينتظرك.</p>
+            <h1 className="text-3xl font-bold font-headline mb-2 text-primary">مرحباً بك {auth.currentUser?.email?.split('@')[0]}!</h1>
+            <p className="text-muted-foreground">إليك نظرة سريعة على عالمك الخاص في منظّم.</p>
           </div>
           <div className="flex gap-2">
             <Button className="gap-2 bg-primary hover:bg-primary/90" asChild>
@@ -72,28 +74,22 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-primary text-primary-foreground shadow-lg border-none overflow-hidden relative group transition-all hover:scale-[1.02]">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-              <CalendarIcon className="h-24 w-24" />
-            </div>
             <CardHeader className="pb-2 relative z-10">
-              <CardTitle className="text-lg font-medium">مواعيد اليوم</CardTitle>
+              <CardTitle className="text-lg font-medium">مواعيدي</CardTitle>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-bold mb-1">{appointmentsCount}</div>
-              <p className="text-primary-foreground/80 text-sm">لديك {appointmentsCount} مواعيد مجدولة</p>
+              <div className="text-4xl font-bold mb-1">{appointments.length}</div>
+              <p className="text-primary-foreground/80 text-sm">لديك {appointments.length} موعد مخزن سحابياً</p>
             </CardContent>
           </Card>
 
           <Card className="bg-accent text-accent-foreground shadow-lg border-none overflow-hidden relative group transition-all hover:scale-[1.02]">
-             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-              <CheckCircle2 className="h-24 w-24" />
-            </div>
             <CardHeader className="pb-2 relative z-10">
-              <CardTitle className="text-lg font-medium">المهام القائمة</CardTitle>
+              <CardTitle className="text-lg font-medium">المهام المتبقية</CardTitle>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-bold mb-1">{totalTasksCount}</div>
-              <p className="text-accent-foreground/80 text-sm">إجمالي المهام التي تنتظر الإنجاز</p>
+              <div className="text-4xl font-bold mb-1">{totalPendingTasks}</div>
+              <p className="text-accent-foreground/80 text-sm">مهام تنتظر إبداعك</p>
             </CardContent>
           </Card>
 
@@ -101,12 +97,12 @@ export default function Dashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium text-destructive flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
-                تنبيهات هامة
+                عاجل جداً
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{highPriorityTasksCount}</div>
-              <p className="text-muted-foreground text-sm">مهام عالية الأولوية قاربت على الانتهاء</p>
+              <div className="text-2xl font-bold mb-1">{highPriorityTasks.length}</div>
+              <p className="text-muted-foreground text-sm">أولويات قصوى تتطلب انتباهك</p>
             </CardContent>
           </Card>
         </div>
@@ -115,35 +111,23 @@ export default function Dashboard() {
           <Card className="shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="font-headline text-xl text-right">جدول مواعيدك</CardTitle>
-                <CardDescription className="text-right">المواعيد القريبة المجدولة</CardDescription>
+                <CardTitle className="font-headline text-xl text-right">جدولي الزمني</CardTitle>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/appointments" className="gap-2">
-                  عرض الكل
-                  <ArrowRight className="h-4 w-4" />
+                  إدارة الكل <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {todayApps.length > 0 ? todayApps.map((app) => (
-                <div key={app.id} className="flex items-center gap-4 p-4 rounded-xl border border-primary/5 hover:bg-primary/5 transition-colors">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Clock className="h-6 w-6" />
-                  </div>
+              {appointments.length > 0 ? appointments.slice(0, 3).map((app) => (
+                <div key={app.id} className="flex items-center gap-4 p-4 rounded-xl border border-primary/5">
                   <div className="flex-1 text-right">
-                    <h4 className="font-bold text-lg">{app.title}</h4>
-                    <div className="flex gap-4 text-sm text-muted-foreground justify-end">
-                      <span>{app.time}</span>
-                      <span>•</span>
-                      <span>{app.date}</span>
-                    </div>
+                    <h4 className="font-bold">{app.title}</h4>
+                    <span className="text-xs text-muted-foreground">{app.date} • {app.time}</span>
                   </div>
-                  <Badge variant="outline" className="border-primary/20">{app.type}</Badge>
                 </div>
-              )) : (
-                <div className="text-center py-10 text-muted-foreground">لا توجد مواعيد مضافة بعد.</div>
-              )}
+              )) : <p className="text-center text-muted-foreground py-10">لا يوجد مواعيد.</p>}
             </CardContent>
           </Card>
 
@@ -151,32 +135,22 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-xl text-right">المهام العاجلة</CardTitle>
-                <CardDescription className="text-right">ركز على الأولويات القصوى أولاً</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/tasks" className="gap-2">
-                  إدارة المهام
-                  <ArrowRight className="h-4 w-4" />
+                  إدارة المهام <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {urgentTasks.length > 0 ? urgentTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-4 p-4 rounded-xl border border-primary/5 hover:bg-primary/5 transition-colors">
+              {highPriorityTasks.length > 0 ? highPriorityTasks.slice(0, 3).map((task) => (
+                <div key={task.id} className="flex items-center gap-4 p-4 rounded-xl border border-primary/5">
                   <div className="flex-1 text-right">
-                    <h4 className="font-bold mb-1">{task.description}</h4>
-                    <span className="text-sm text-muted-foreground">الأولوية: {task.priority === "High" ? "عالية" : "متوسطة"}</span>
+                    <h4 className="font-bold">{task.description}</h4>
                   </div>
-                  <Badge className={cn(
-                    "text-white",
-                    task.priority === "High" ? "bg-red-500 hover:bg-red-600" : "bg-amber-500 hover:bg-amber-600"
-                  )}>
-                    عاجلة
-                  </Badge>
+                  <Badge className="bg-red-500">عاجل</Badge>
                 </div>
-              )) : (
-                <div className="text-center py-10 text-muted-foreground">لا توجد مهام عالية الأولوية حالياً.</div>
-              )}
+              )) : <p className="text-center text-muted-foreground py-10">كل شيء تحت السيطرة!</p>}
             </CardContent>
           </Card>
         </div>
