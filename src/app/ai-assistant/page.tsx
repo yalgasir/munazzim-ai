@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Send, BrainCircuit, Lightbulb, Loader2, AlertTriangle, Database, Zap, FileJson } from "lucide-react";
+import { Sparkles, Send, BrainCircuit, Loader2, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
@@ -19,7 +20,6 @@ export default function AIAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<OptimizeScheduleOutput | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [analyzedData, setAnalyzedData] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -65,9 +65,6 @@ export default function AIAssistantPage() {
         }));
       }
 
-      // توثيق البيانات التي تم إرسالها للتحليل (دليل TRL 6)
-      setAnalyzedData({ appointments: currentAppointments.length, tasks: currentTasks.length });
-
       const result = await optimizeSchedule({
         currentAppointments,
         currentTasks,
@@ -76,8 +73,8 @@ export default function AIAssistantPage() {
 
       setSuggestion(result);
       toast({
-        title: "اكتمل تحليل TRL 6",
-        description: "قام المساعد بقراءة بياناتك الحقيقية بنجاح.",
+        title: "تم التحليل بنجاح",
+        description: "قام المساعد بمراجعة جدولك ومهامك الحالية.",
       });
     } catch (error: any) {
       toast({ variant: "destructive", title: "خطأ", description: error.message });
@@ -92,60 +89,61 @@ export default function AIAssistantPage() {
     <AppLayout>
       <div className="max-w-4xl mx-auto flex flex-col gap-8" dir="rtl">
         <div className="flex flex-col items-center text-center gap-2">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 mb-2">
-            🚀 إثبات الكفاءة: TRL 6 (Contextual Integration)
-          </Badge>
-          <h1 className="text-3xl font-bold font-headline text-primary">المساعد الذكي الواعي بالسياق</h1>
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm border border-primary/20">
+            <BrainCircuit className="h-8 w-8" />
+          </div>
+          <h1 className="text-3xl font-bold font-headline text-primary">المساعد الذكي للإنتاجية</h1>
           <p className="text-muted-foreground max-w-xl">
-            الدليل القاطع للمستوى السادس: المساعد يقرأ مصفوفة بياناتك الحقيقية قبل توليد الرد.
+            أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
         </div>
 
-        <Card className="border-primary/20 shadow-xl">
+        <Card className="border-primary/10 shadow-lg bg-card">
           <CardContent className="p-6 space-y-4">
             <Textarea 
-              placeholder="بماذا يمكنني مساعدتك اليوم بناءً على جدولك؟"
-              className="min-h-[120px] text-lg p-4 text-right"
+              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: كيف أرتب مهامي لليوم؟ هل يوجد تعارض في مواعيدي؟)"
+              className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30"
               dir="rtl"
               value={context}
               onChange={(e) => setContext(e.target.value)}
             />
             <Button 
-              className="w-full h-14 text-xl font-bold gap-3" 
+              className="w-full h-14 text-xl font-bold gap-3 shadow-md" 
               onClick={handleOptimize}
               disabled={loading}
             >
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6" />}
-              {loading ? "جاري سحب وتحليل البيانات..." : "بدء التحليل السياقي (TRL 6)"}
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
+              {loading ? "جاري قراءة وتحليل جدولك..." : "ابدأ التحليل الذكي"}
             </Button>
           </CardContent>
         </Card>
 
-        {analyzedData && (
-          <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
-            <div className="bg-muted/50 p-3 rounded-lg border flex items-center justify-between">
-              <span className="text-xs font-bold text-primary">مواعيد تم فحصها</span>
-              <Badge variant="secondary">{analyzedData.appointments}</Badge>
-            </div>
-            <div className="bg-muted/50 p-3 rounded-lg border flex items-center justify-between">
-              <span className="text-xs font-bold text-primary">مهام تم تحليلها</span>
-              <Badge variant="secondary">{analyzedData.tasks}</Badge>
-            </div>
-          </div>
-        )}
-
         {suggestion && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
             <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md">
-              <CardHeader>
+              <CardHeader className="pb-2 border-b border-emerald-500/10">
                 <CardTitle className="text-emerald-700 flex items-center gap-2 text-xl">
-                  <BrainCircuit className="h-6 w-6" /> برهان المستوى السادس (النتيجة)
+                  <Sparkles className="h-6 w-6" /> تحليل منظّم الذكي
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-right" dir="rtl">
                   {suggestion.summaryAnalysis}
                 </div>
+                
+                {suggestion.personalizedSuggestions && suggestion.personalizedSuggestions.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h4 className="font-bold text-emerald-800 text-lg border-r-4 border-emerald-500 pr-3">توصيات مخصصة:</h4>
+                    <ul className="grid gap-2">
+                      {suggestion.personalizedSuggestions.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 bg-white/50 p-3 rounded-lg border border-emerald-100">
+                          <Check className="h-5 w-5 text-emerald-600 mt-1 shrink-0" />
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
