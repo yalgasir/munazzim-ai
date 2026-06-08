@@ -34,6 +34,7 @@ pinned: false
 - **AI Engine:** Google Genkit (Gemini 1.5 Flash)
 - **Database:** Firebase Firestore / LocalStorage Sync
 - **UI:** ShadCN & Tailwind CSS (RTL Support)
+- **Deployment:** Docker for Hugging Face Spaces
 
 ---
 *تم تطوير هذا المشروع ليكون الحل الأمثل للمستخدم العربي الباحث عن الإنتاجية بنظام هندسي متين.*
