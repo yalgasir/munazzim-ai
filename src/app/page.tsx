@@ -99,36 +99,47 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            title="المواعيد النشطة" 
-            value={appointments.length} 
-            icon={<CalendarIcon className="h-6 w-6" />}
-            gradient="from-blue-600 to-indigo-700"
-          />
-          <StatCard 
-            title="معدل الإنجاز" 
-            value={`${completionRate}%`} 
-            icon={<CheckCircle2 className="h-6 w-6" />}
-            gradient="from-emerald-500 to-teal-600"
-          />
-          <StatCard 
-            title="المهام القائمة" 
-            value={pendingTasks.length} 
-            icon={<Clock className="h-6 w-6" />}
-            gradient="from-amber-500 to-orange-600"
-          />
-          <StatCard 
-            title="أولويات حرجة" 
-            value={highPriorityCount} 
-            icon={<AlertCircle className="h-6 w-6" />}
-            gradient="from-rose-500 to-red-600"
-          />
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-primary to-blue-700 text-white shadow-xl">
+            <div className="flex justify-between items-start mb-4">
+              <CalendarIcon className="h-6 w-6 opacity-80" />
+              <Badge className="bg-white/20 hover:bg-white/30 border-none text-white">نشط</Badge>
+            </div>
+            <p className="text-sm opacity-80 mb-1">المواعيد المسجلة</p>
+            <h3 className="text-3xl font-bold">{appointments.length}</h3>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
+            <div className="flex justify-between items-start mb-4">
+              <CheckCircle2 className="h-6 w-6 opacity-80" />
+              <Badge className="bg-white/20 hover:bg-white/30 border-none text-white">إنجاز</Badge>
+            </div>
+            <p className="text-sm opacity-80 mb-1">معدل الإنجاز</p>
+            <h3 className="text-3xl font-bold">{completionRate}%</h3>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl">
+            <div className="flex justify-between items-start mb-4">
+              <Clock className="h-6 w-6 opacity-80" />
+              <Badge className="bg-white/20 hover:bg-white/30 border-none text-white">قائم</Badge>
+            </div>
+            <p className="text-sm opacity-80 mb-1">المهام المتبقية</p>
+            <h3 className="text-3xl font-bold">{pendingTasks.length}</h3>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-xl">
+            <div className="flex justify-between items-start mb-4">
+              <AlertCircle className="h-6 w-6 opacity-80" />
+              <Badge className="bg-white/20 hover:bg-white/30 border-none text-white">تنبيه</Badge>
+            </div>
+            <p className="text-sm opacity-80 mb-1">أولويات حرجة</p>
+            <h3 className="text-3xl font-bold">{highPriorityCount}</h3>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="shadow-lg border-primary/10 overflow-hidden">
             <CardHeader className="bg-muted/30 border-b">
-              <CardTitle className="text-xl">جدول المواعيد المتكامل</CardTitle>
+              <CardTitle className="text-xl">آخر المواعيد المتكاملة</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
@@ -147,7 +158,7 @@ export default function Dashboard() {
 
           <Card className="shadow-lg border-primary/10 overflow-hidden">
             <CardHeader className="bg-muted/30 border-b">
-              <CardTitle className="text-xl">حالة النظام (TRL 5 Integrity)</CardTitle>
+              <CardTitle className="text-xl">حالة النظام (TRL 5)</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -170,7 +181,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center">
-                  * جميع البيانات في هذه اللوحة تعكس حالة النظام الفرعي المتكامل في بيئة ذات صلة.
+                  * تعكس هذه اللوحة بياناتك الحقيقية المسجلة في النظام الفرعي المتكامل.
                 </p>
               </div>
             </CardContent>
@@ -179,26 +190,4 @@ export default function Dashboard() {
       </div>
     </AppLayout>
   );
-}
-
-function StatCard({ title, value, icon, gradient }: any) {
-  return (
-    <Card className={cn("border-none shadow-xl text-white bg-gradient-to-br", gradient)}>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-white/80 text-sm font-medium mb-1">{title}</p>
-            <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
-          </div>
-          <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function cn(...inputs: any) {
-  return inputs.filter(Boolean).join(" ");
 }
