@@ -3,8 +3,11 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+// التحقق من صحة المفتاح (يجب أن يبدأ بـ AIza)
+const isValidKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY.startsWith("AIza");
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyMockKey",
+  apiKey: isValidKey ? process.env.NEXT_PUBLIC_FIREBASE_API_KEY : "AIzaSyMockKey_DemoMode",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "munazzim.firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "munazzim",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "munazzim.appspot.com",
@@ -15,5 +18,8 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// تصدير حالة التهيئة لنعرف إذا كنا في وضع المحاكاة أو الاتصال الحقيقي
+export const isFirebaseConfigured = isValidKey;
 
 export { auth, db };
