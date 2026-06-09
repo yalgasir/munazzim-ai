@@ -1,10 +1,4 @@
-
 import { NextResponse } from 'next/server';
-
-/**
- * @fileOverview [Evidence for TRL 8] نظام مراقبة صحة النظام.
- * يثبت هذا الملف أن النظام مزود بأدوات مراقبة لضمان الموثوقية (Reliability).
- */
 
 export async function GET() {
   const healthData = {

@@ -1,10 +1,4 @@
-
 import { NextResponse } from 'next/server';
-
-/**
- * @fileOverview مسار API مستقل تماماً لاختبار الاتصال بـ OpenRouter.
- * يضمن هذا المسار إرجاع JSON دائماً لتجنب أخطاء التحليل في الواجهة الأمامية.
- */
 
 export async function GET() {
   return NextResponse.json({ ok: true, message: "API route is working" });
@@ -15,10 +9,9 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENROUTER_API_KEY;
     const modelName = process.env.OPENROUTER_MODEL || "openrouter/free";
     
-    // التحقق من وجود مفتاح API
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'OPENROUTER_API_KEY is missing in environment variables' },
+        { error: 'OPENROUTER_API_KEY is missing' },
         { status: 500 }
       );
     }
@@ -28,7 +21,7 @@ export async function POST(req: Request) {
       body = await req.json();
     } catch (e) {
       return NextResponse.json(
-        { error: 'Invalid JSON body in request' },
+        { error: 'Invalid JSON body' },
         { status: 400 }
       );
     }
@@ -41,7 +34,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // اتصال مباشر بـ OpenRouter لضمان العزل
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -78,7 +70,6 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('API Route Error:', error);
     return NextResponse.json(
       { error: error.message || 'Internal Server Error' },
       { status: 500 }

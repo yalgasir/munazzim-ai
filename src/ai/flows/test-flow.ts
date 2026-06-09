@@ -1,7 +1,4 @@
 'use server';
-/**
- * @fileOverview تدفق اختبار مع تنظيف المخرجات من الماركدوان.
- */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';

@@ -1,9 +1,7 @@
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// التحقق من صحة المفتاح (يجب أن يبدأ بـ AIza)
 const isValidKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY.startsWith("AIza");
 
 const firebaseConfig = {
@@ -19,7 +17,6 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تصدير حالة التهيئة لنعرف إذا كنا في وضع المحاكاة أو الاتصال الحقيقي
 export const isFirebaseConfigured = isValidKey;
 
 export { auth, db };

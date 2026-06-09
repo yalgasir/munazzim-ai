@@ -55,8 +55,8 @@ export async function optimizeSchedule(input: OptimizeScheduleInput): Promise<Op
 
 const cleanText = (text: string) => {
   return text
-    .replace(/[#*`|_~]/g, '') // إزالة كافة رموز الماركدوان الشائعة
-    .replace(/-{3,}/g, '') // إزالة الفواصل الطويلة
+    .replace(/[#*`|_~]/g, '')
+    .replace(/-{3,}/g, '')
     .replace(/Markdown/gi, '')
     .trim();
 };
@@ -88,7 +88,6 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
       throw new Error('لم يتم استلام رد من المساعد الذكي.');
     }
 
-    // تنظيف إضافي لضمان خلو النص من أي تنسيقات
     output.summaryAnalysis = cleanText(output.summaryAnalysis);
     output.personalizedSuggestions = output.personalizedSuggestions.map(cleanText);
 
