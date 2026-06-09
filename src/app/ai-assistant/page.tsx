@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,37 +44,42 @@ export default function AIAssistantPage() {
       let currentAppointments: any[] = [];
       let currentTasks: any[] = [];
 
-      if (isFirebaseConfigured) {
-        const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-        const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
-        const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
-        
-        currentAppointments = appSnap.docs.map(doc => ({
-          title: doc.data().title || "موعد بدون عنوان",
-          startTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "00:00"}:00Z`,
-          endTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "01:00"}:00Z`,
-        }));
-        
-        currentTasks = taskSnap.docs.map(doc => ({
-          description: doc.data().description || "مهمة بدون وصف",
-          priority: doc.data().priority || "Medium",
-          isCompleted: !!doc.data().isCompleted,
-        }));
-      } else {
-        const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
-        const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
-        
-        currentAppointments = allApps.filter((a: any) => a.userId === userId).map((a: any) => ({
-          title: a.title,
-          startTime: `${a.date}T${a.time || "00:00"}:00Z`,
-          endTime: `${a.date}T${a.time || "01:00"}:00Z`,
-        }));
-        
-        currentTasks = allTasks.filter((t: any) => t.userId === userId).map((t: any) => ({
-          description: t.description,
-          priority: t.priority,
-          isCompleted: t.isCompleted,
-        }));
+      try {
+        if (isFirebaseConfigured) {
+          const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
+          const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
+          const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
+          
+          currentAppointments = appSnap.docs.map(doc => ({
+            title: doc.data().title || "موعد بدون عنوان",
+            startTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "00:00"}:00Z`,
+            endTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "01:00"}:00Z`,
+          }));
+          
+          currentTasks = taskSnap.docs.map(doc => ({
+            description: doc.data().description || "مهمة بدون وصف",
+            priority: doc.data().priority || "Medium",
+            isCompleted: !!doc.data().isCompleted,
+          }));
+        } else {
+          const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
+          const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
+          
+          currentAppointments = allApps.filter((a: any) => a.userId === userId).map((a: any) => ({
+            title: a.title,
+            startTime: `${a.date}T${a.time || "00:00"}:00Z`,
+            endTime: `${a.date}T${a.time || "01:00"}:00Z`,
+          }));
+          
+          currentTasks = allTasks.filter((t: any) => t.userId === userId).map((t: any) => ({
+            description: t.description,
+            priority: t.priority,
+            isCompleted: t.isCompleted,
+          }));
+        }
+      } catch (dbError) {
+        console.error("Database fetch error:", dbError);
+        // الاستمرار ببيانات فارغة في حال فشل جلب البيانات من DB
       }
 
       const result = await optimizeSchedule({
@@ -84,17 +88,19 @@ export default function AIAssistantPage() {
         productivityContext: context,
       });
 
-      setSuggestion(result);
-      toast({
-        title: "تم التحليل",
-        description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
-      });
+      if (result) {
+        setSuggestion(result);
+        toast({
+          title: "تم التحليل",
+          description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
+        });
+      }
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
       toast({ 
         variant: "destructive", 
-        title: "خطأ في الاتصال", 
-        description: "حدثت مشكلة غير متوقعة. يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى." 
+        title: "عذراً، حدث خطأ", 
+        description: "واجه المساعد مشكلة في معالجة طلبك. يرجى التحقق من إعدادات API Key والمحاولة مرة أخرى." 
       });
     } finally {
       setLoading(false);
@@ -115,14 +121,14 @@ export default function AIAssistantPage() {
             أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
           <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Gemini 1.5 Pro
+            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Gemini 1.5
           </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
             <Textarea 
-              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: تعبان وما ودي أسوي شيء، أو كيف أرتب يومي؟)"
+              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: عندي موعدين اليوم 10 ص و 12 م رتب لي)"
               className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
               dir="rtl"
               value={context}
@@ -134,7 +140,7 @@ export default function AIAssistantPage() {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "جاري قراءة وتحليل جدولك..." : "ابدأ التحليل الذكي"}
+              {loading ? "جاري الاتصال بالمحرك والتحليل..." : "ابدأ التحليل الذكي"}
             </Button>
           </CardContent>
         </Card>
@@ -144,7 +150,7 @@ export default function AIAssistantPage() {
             <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md border-r-4 border-r-emerald-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-emerald-700 flex items-center gap-2 text-xl">
-                  <Sparkles className="h-6 w-6" /> تحليل منظّم الذكي
+                  <Sparkles className="h-6 w-6" /> رد منظّم الذكي
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
@@ -155,7 +161,7 @@ export default function AIAssistantPage() {
                 {suggestion.personalizedSuggestions && suggestion.personalizedSuggestions.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-bold text-emerald-800 text-lg flex items-center gap-2">
-                      <Check className="h-5 w-5" /> توصيات مقترحة لليوم:
+                      <Check className="h-5 w-5" /> توصيات مقترحة:
                     </h4>
                     <div className="grid gap-2">
                       {suggestion.personalizedSuggestions.map((s, i) => (
@@ -173,7 +179,7 @@ export default function AIAssistantPage() {
                 {suggestion.conflictsDetected && suggestion.conflictsDetected.length > 0 && (
                   <div className="mt-8 space-y-3">
                     <h4 className="font-bold text-amber-700 text-lg flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5" /> تنبيهات بخصوص التعارضات:
+                      <AlertCircle className="h-5 w-5" /> تنبيهات هامة:
                     </h4>
                     <div className="grid gap-2">
                       {suggestion.conflictsDetected.map((c, i) => (
@@ -196,6 +202,3 @@ export default function AIAssistantPage() {
     </AppLayout>
   );
 }
-
-
-

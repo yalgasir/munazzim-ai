@@ -32,8 +32,12 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
   },
   async (input) => {
     const currentDate = new Date().toISOString().split('T')[0];
-    const modelName = (process.env.OPENROUTER_MODEL || 'openrouter/free') as any;
+    const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
     
+    if (!process.env.OPENROUTER_API_KEY) {
+      throw new Error('OPENROUTER_API_KEY is missing');
+    }
+
     const { output } = await prompt(input, { 
       model: `openai/${modelName}`,
       context: { currentDate } 
@@ -46,4 +50,3 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
 export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
   return nlpAppointmentCreatorFlow(input);
 }
-

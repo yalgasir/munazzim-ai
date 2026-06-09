@@ -82,7 +82,15 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    const modelName = (process.env.OPENROUTER_MODEL || 'openrouter/free') as any;
+    // استخدام نموذج Gemini 1.5 Flash كافتراضي لأنه أسرع وأكثر استقراراً في النسخ المجانية
+    const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
+
+    if (!process.env.OPENROUTER_API_KEY) {
+      return {
+        summaryAnalysis: "عذراً، يبدو أن مفتاح البرمجة (API Key) غير مهيأ في النظام. يرجى التأكد من إعدادات البيئة.",
+        personalizedSuggestions: ["تأكد من إضافة OPENROUTER_API_KEY في ملف .env"],
+      };
+    }
 
     try {
       const { output } = await prompt(input, {
@@ -90,10 +98,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
       });
 
       if (!output) {
-        return {
-          summaryAnalysis: "عذراً، لم أتمكن من تحليل جدولك حالياً. يرجى المحاولة لاحقاً.",
-          personalizedSuggestions: ["تأكد من اتصالك بالإنترنت", "حاول كتابة تفاصيل أكثر عن يومك"],
-        };
+        throw new Error('No output from model');
       }
 
       return {
@@ -104,8 +109,8 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('AI Flow Error:', error);
       return {
-        summaryAnalysis: "أواجه ضغطاً في الاتصال حالياً. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والبدء بالمهمة الأصغر لإنجازها.",
-        personalizedSuggestions: ["حاول إعادة المحاولة بعد دقيقة", "تأكد من إضافة مهامك في قائمة المهام أولاً"],
+        summaryAnalysis: "أواجه حالياً ضغطاً في الاتصال بمحرك الذكاء الاصطناعي. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً.",
+        personalizedSuggestions: ["حاول إعادة المحاولة بعد ثوانٍ", "تأكد من استقرار اتصالك بالإنترنت"],
       };
     }
   }
