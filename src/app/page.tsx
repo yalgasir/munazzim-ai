@@ -22,6 +22,11 @@ import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
+/**
+ * @fileOverview Core Dashboard component.
+ * Provides a real-time overview of tasks and appointments.
+ */
+
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<any[]>([]);
