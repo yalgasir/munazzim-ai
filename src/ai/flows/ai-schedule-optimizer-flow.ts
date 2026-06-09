@@ -72,7 +72,7 @@ const prompt = ai.definePrompt({
 2. حلل التعارضات الزمنية إن وجدت.
 3. قدم اقتراحات محددة بناءً على قائمة المهام.
 4. الرد باللغة العربية الفصحى والودودة.
-5. لا تستخدم أي رموز Markdown نهائياً.`,
+5. لا تستخدم أي رموز Markdown نهائياً (مثل النجوم أو المربعات).`,
 });
 
 const aiScheduleOptimizerFlow = ai.defineFlow(
@@ -82,19 +82,21 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    // استخدام نموذج Gemini 2.0 Flash عبر OpenRouter
     const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
     if (!process.env.OPENROUTER_API_KEY) {
       return {
-        summaryAnalysis: "عذراً، يبدو أن مفتاح البرمجة (API Key) غير مهيأ في النظام. يرجى التأكد من إعدادات البيئة.",
-        personalizedSuggestions: ["تأكد من إضافة OPENROUTER_API_KEY في ملف .env"],
+        summaryAnalysis: "تنبيه: مفتاح البرمجة (API Key) لـ OpenRouter غير موجود. يرجى إضافته في الإعدادات لتفعيل التحليل الذكي.",
+        personalizedSuggestions: ["تأكد من إعداد OPENROUTER_API_KEY في ملف البيئة"],
       };
     }
 
     try {
       const { output } = await prompt(input, {
         model: `openai/${modelName}`,
+        config: {
+          temperature: 0.7,
+        }
       });
 
       if (!output) {
@@ -104,13 +106,19 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
       return {
         summaryAnalysis: cleanText(output.summaryAnalysis),
         personalizedSuggestions: (output.personalizedSuggestions || []).map(cleanText),
-        conflictsDetected: output.conflictsDetected,
+        conflictsDetected: (output.conflictsDetected || []).map(c => ({
+          ...c,
+          appointment1: cleanText(c.appointment1),
+          appointment2: cleanText(c.appointment2),
+          reason: cleanText(c.reason),
+          suggestion: cleanText(c.suggestion),
+        })),
       };
     } catch (error: any) {
       console.error('AI Flow Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً ضغطاً في الاتصال بمحرك الذكاء الاصطناعي عبر OpenRouter. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً.",
-        personalizedSuggestions: ["حاول إعادة المحاولة بعد ثوانٍ", "تأكد من استقرار اتصالك بالإنترنت"],
+        summaryAnalysis: "أواجه حالياً ضغطاً بسيطاً في الاتصال بمحرك Gemini عبر OpenRouter. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً لتقليل التوتر.",
+        personalizedSuggestions: ["حاول تحديث الصفحة والمحاولة مرة أخرى", "تأكد من تفعيل مفتاح OpenRouter"],
       };
     }
   }
