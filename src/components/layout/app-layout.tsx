@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -11,8 +10,7 @@ import {
   CheckSquare, 
   BarChart3, 
   Sparkles, 
-  Settings, 
-  LogOut,
+  Settings,
   User as UserIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,8 +28,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const menuItems = [
@@ -50,14 +46,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
 
   if (!mounted) {
     return (
@@ -112,19 +100,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <AvatarFallback><UserIcon /></AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col group-data-[collapsible=icon]:hidden text-right">
-                    <span className="text-sm font-medium">مستخدم منظّم</span>
-                    <span className="text-xs text-sidebar-foreground/70">تطوير مستمر</span>
+                    <span className="text-sm font-medium">مستخدم عام</span>
+                    <span className="text-xs text-sidebar-foreground/70">دخول مباشر</span>
                   </div>
                 </div>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={handleLogout}
-                  className="w-full justify-start gap-3 text-red-100 hover:bg-red-500/10 hover:text-red-200"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
-                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
