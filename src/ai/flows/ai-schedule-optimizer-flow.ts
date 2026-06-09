@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -37,29 +38,42 @@ const OptimizeScheduleOutputSchema = z.object({
       suggestion: z.string(),
     })
   ).optional(),
-  priorityAdjustments: z.array(
-    z.object({
-      taskDescription: z.string(),
-      originalPriority: z.string(),
-      suggestedPriority: z.string(),
-      reason: z.string(),
-    })
-  ).optional(),
 });
 
 export type OptimizeScheduleOutput = z.infer<typeof OptimizeScheduleOutputSchema>;
 
-export async function optimizeSchedule(input: OptimizeScheduleInput): Promise<OptimizeScheduleOutput> {
-  return aiScheduleOptimizerFlow(input);
-}
-
 const cleanText = (text: string) => {
+  if (!text) return '';
   return text
     .replace(/[#*`|_~]/g, '')
     .replace(/-{3,}/g, '')
     .replace(/Markdown/gi, '')
     .trim();
 };
+
+const prompt = ai.definePrompt({
+  name: 'aiScheduleOptimizerPrompt',
+  input: { schema: OptimizeScheduleInputSchema },
+  output: { schema: OptimizeScheduleOutputSchema },
+  prompt: `أنت مساعد عربي متخصص في إدارة الوقت. قم بتحليل جدول المواعيد والمهام الحالي للمستخدم.
+  
+  السياق الإضافي من المستخدم: {{{productivityContext}}}
+  
+  المواعيد:
+  {{#each currentAppointments}}
+  - {{{title}}} من {{{startTime}}} إلى {{{endTime}}}
+  {{/each}}
+  
+  المهام:
+  {{#each currentTasks}}
+  - {{{description}}} (الأولوية: {{{priority}}}, مكتملة: {{{isCompleted}}})
+  {{/each}}
+  
+  قواعد صارمة: 
+  1. لا تستخدم Markdown نهائياً.
+  2. الرد باللغة العربية فقط.
+  3. قدم تحليلاً شاملاً وتوصيات عملية لزيادة الإنتاجية.`,
+});
 
 const aiScheduleOptimizerFlow = ai.defineFlow(
   {
@@ -70,20 +84,27 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
   async (input) => {
     const modelName = (process.env.OPENROUTER_MODEL || 'openrouter/free') as any;
 
-    const { output } = await ai.generate({
-      model: `openai/${modelName}`,
-      input,
-      system: `أنت مساعد عربي متخصص في إدارة الوقت. قواعد صارمة: لا تستخدم Markdown نهائياً. الرد باللغة العربية فقط. لا تشرح طريقة تفكيرك. اجعل الرد نصاً بسيطاً وسهل القراءة.`,
-      prompt: `حلل البيانات التالية وقدم نصائح مرتبة: ${JSON.stringify(input)}`,
-    });
+    try {
+      const { output } = await prompt(input, {
+        model: `openai/${modelName}`,
+      });
 
-    if (!output) {
-      throw new Error('لم يتم استلام رد من المساعد الذكي.');
+      if (!output) {
+        throw new Error('لم يتم استلام رد من المساعد الذكي.');
+      }
+
+      return {
+        summaryAnalysis: cleanText(output.summaryAnalysis),
+        personalizedSuggestions: (output.personalizedSuggestions || []).map(cleanText),
+        conflictsDetected: output.conflictsDetected,
+      };
+    } catch (error: any) {
+      console.error('Flow Error:', error);
+      throw error;
     }
-
-    output.summaryAnalysis = cleanText(output.summaryAnalysis);
-    output.personalizedSuggestions = output.personalizedSuggestions.map(cleanText);
-
-    return output;
   }
 );
+
+export async function optimizeSchedule(input: OptimizeScheduleInput): Promise<OptimizeScheduleOutput> {
+  return aiScheduleOptimizerFlow(input);
+}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -37,26 +38,30 @@ export default function AIAssistantPage() {
 
       if (isFirebaseConfigured) {
         const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-        const qTasks = query(collection(db, "tasks"), where("where", "==", userId));
+        const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
         const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
+        
         currentAppointments = appSnap.docs.map(doc => ({
-          title: doc.data().title,
+          title: doc.data().title || "موعد بدون عنوان",
           startTime: `${doc.data().date}T${doc.data().time || "00:00"}:00Z`,
           endTime: `${doc.data().date}T${doc.data().time || "01:00"}:00Z`,
         }));
+        
         currentTasks = taskSnap.docs.map(doc => ({
-          description: doc.data().description,
-          priority: doc.data().priority,
-          isCompleted: doc.data().isCompleted,
+          description: doc.data().description || "مهمة بدون وصف",
+          priority: doc.data().priority || "Medium",
+          isCompleted: !!doc.data().isCompleted,
         }));
       } else {
         const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
         const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
+        
         currentAppointments = allApps.filter((a: any) => a.userId === userId).map((a: any) => ({
           title: a.title,
           startTime: `${a.date}T${a.time || "00:00"}:00Z`,
           endTime: `${a.date}T${a.time || "01:00"}:00Z`,
         }));
+        
         currentTasks = allTasks.filter((t: any) => t.userId === userId).map((t: any) => ({
           description: t.description,
           priority: t.priority,
@@ -70,13 +75,22 @@ export default function AIAssistantPage() {
         productivityContext: context,
       });
 
+      if (!result) {
+        throw new Error("لم يتمكن المساعد من تحليل البيانات حالياً.");
+      }
+
       setSuggestion(result);
       toast({
         title: "تم التحليل بنجاح",
         description: "قام المساعد بمراجعة جدولك ومهامك الحالية.",
       });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "خطأ", description: error.message });
+      console.error("AI Assistant Error:", error);
+      toast({ 
+        variant: "destructive", 
+        title: "خطأ في الاتصال", 
+        description: "حدثت مشكلة أثناء معالجة طلبك بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى." 
+      });
     } finally {
       setLoading(false);
     }
