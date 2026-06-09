@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Send, BrainCircuit, Loader2, Database } from "lucide-react";
+import { Sparkles, BrainCircuit, Loader2, Check, Cpu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
@@ -38,7 +37,7 @@ export default function AIAssistantPage() {
 
       if (isFirebaseConfigured) {
         const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-        const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
+        const qTasks = query(collection(db, "tasks"), where("where", "==", userId));
         const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
         currentAppointments = appSnap.docs.map(doc => ({
           title: doc.data().title,
@@ -96,6 +95,9 @@ export default function AIAssistantPage() {
           <p className="text-muted-foreground max-w-xl">
             أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
+          <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
+            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Gemini 1.5 Pro
+          </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card">
