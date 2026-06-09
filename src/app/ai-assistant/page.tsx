@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, BrainCircuit, Loader2, Check, Cpu } from "lucide-react";
+import { Sparkles, BrainCircuit, Loader2, Check, Cpu, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
@@ -28,6 +28,15 @@ export default function AIAssistantPage() {
 
   const handleOptimize = async () => {
     if (!user) return;
+    if (!context.trim()) {
+      toast({
+        variant: "destructive",
+        title: "تنبيه",
+        description: "يرجى كتابة شيء للمساعد الذكي ليتمكن من مساعدتك.",
+      });
+      return;
+    }
+
     setLoading(true);
     setSuggestion(null);
 
@@ -43,8 +52,8 @@ export default function AIAssistantPage() {
         
         currentAppointments = appSnap.docs.map(doc => ({
           title: doc.data().title || "موعد بدون عنوان",
-          startTime: `${doc.data().date}T${doc.data().time || "00:00"}:00Z`,
-          endTime: `${doc.data().date}T${doc.data().time || "01:00"}:00Z`,
+          startTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "00:00"}:00Z`,
+          endTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "01:00"}:00Z`,
         }));
         
         currentTasks = taskSnap.docs.map(doc => ({
@@ -75,21 +84,17 @@ export default function AIAssistantPage() {
         productivityContext: context,
       });
 
-      if (!result) {
-        throw new Error("لم يتمكن المساعد من تحليل البيانات حالياً.");
-      }
-
       setSuggestion(result);
       toast({
-        title: "تم التحليل بنجاح",
-        description: "قام المساعد بمراجعة جدولك ومهامك الحالية.",
+        title: "تم التحليل",
+        description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
       });
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
       toast({ 
         variant: "destructive", 
         title: "خطأ في الاتصال", 
-        description: "حدثت مشكلة أثناء معالجة طلبك بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى." 
+        description: "حدثت مشكلة غير متوقعة. يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى." 
       });
     } finally {
       setLoading(false);
@@ -114,17 +119,17 @@ export default function AIAssistantPage() {
           </Badge>
         </div>
 
-        <Card className="border-primary/10 shadow-lg bg-card">
+        <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
             <Textarea 
-              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: كيف أرتب مهامي لليوم؟ هل يوجد تعارض في مواعيدي؟)"
-              className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30"
+              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: تعبان وما ودي أسوي شيء، أو كيف أرتب يومي؟)"
+              className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
               dir="rtl"
               value={context}
               onChange={(e) => setContext(e.target.value)}
             />
             <Button 
-              className="w-full h-14 text-xl font-bold gap-3 shadow-md" 
+              className="w-full h-14 text-xl font-bold gap-3 shadow-md active:scale-[0.98] transition-transform" 
               onClick={handleOptimize}
               disabled={loading}
             >
@@ -136,28 +141,51 @@ export default function AIAssistantPage() {
 
         {suggestion && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-            <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md">
-              <CardHeader className="pb-2 border-b border-emerald-500/10">
+            <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md border-r-4 border-r-emerald-500">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-emerald-700 flex items-center gap-2 text-xl">
                   <Sparkles className="h-6 w-6" /> تحليل منظّم الذكي
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-right" dir="rtl">
+              <CardContent className="pt-2">
+                <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-right mb-6" dir="rtl">
                   {suggestion.summaryAnalysis}
                 </div>
                 
                 {suggestion.personalizedSuggestions && suggestion.personalizedSuggestions.length > 0 && (
-                  <div className="mt-6 space-y-3">
-                    <h4 className="font-bold text-emerald-800 text-lg border-r-4 border-emerald-500 pr-3">توصيات مخصصة:</h4>
-                    <ul className="grid gap-2">
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-emerald-800 text-lg flex items-center gap-2">
+                      <Check className="h-5 w-5" /> توصيات مقترحة لليوم:
+                    </h4>
+                    <div className="grid gap-2">
                       {suggestion.personalizedSuggestions.map((s, i) => (
-                        <li key={i} className="flex items-start gap-2 bg-white/50 p-3 rounded-lg border border-emerald-100">
-                          <Check className="h-5 w-5 text-emerald-600 mt-1 shrink-0" />
-                          <span>{s}</span>
-                        </li>
+                        <div key={i} className="flex items-start gap-3 bg-white/60 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                          <div className="h-6 w-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                            {i + 1}
+                          </div>
+                          <span className="text-foreground font-medium">{s}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                  </div>
+                )}
+                
+                {suggestion.conflictsDetected && suggestion.conflictsDetected.length > 0 && (
+                  <div className="mt-8 space-y-3">
+                    <h4 className="font-bold text-amber-700 text-lg flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5" /> تنبيهات بخصوص التعارضات:
+                    </h4>
+                    <div className="grid gap-2">
+                      {suggestion.conflictsDetected.map((c, i) => (
+                        <div key={i} className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                          <p className="font-bold text-amber-900 mb-1">{c.appointment1} و {c.appointment2}</p>
+                          <p className="text-sm text-amber-800 opacity-80 mb-2">{c.reason}</p>
+                          <div className="text-sm font-bold text-amber-900 bg-white/50 p-2 rounded">
+                            اقتراح: {c.suggestion}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>

@@ -47,7 +47,6 @@ const cleanText = (text: string) => {
   return text
     .replace(/[#*`|_~]/g, '')
     .replace(/-{3,}/g, '')
-    .replace(/Markdown/gi, '')
     .trim();
 };
 
@@ -55,24 +54,26 @@ const prompt = ai.definePrompt({
   name: 'aiScheduleOptimizerPrompt',
   input: { schema: OptimizeScheduleInputSchema },
   output: { schema: OptimizeScheduleOutputSchema },
-  prompt: `أنت مساعد عربي متخصص في إدارة الوقت. قم بتحليل جدول المواعيد والمهام الحالي للمستخدم.
-  
-  السياق الإضافي من المستخدم: {{{productivityContext}}}
-  
-  المواعيد:
-  {{#each currentAppointments}}
-  - {{{title}}} من {{{startTime}}} إلى {{{endTime}}}
-  {{/each}}
-  
-  المهام:
-  {{#each currentTasks}}
-  - {{{description}}} (الأولوية: {{{priority}}}, مكتملة: {{{isCompleted}}})
-  {{/each}}
-  
-  قواعد صارمة: 
-  1. لا تستخدم Markdown نهائياً.
-  2. الرد باللغة العربية فقط.
-  3. قدم تحليلاً شاملاً وتوصيات عملية لزيادة الإنتاجية.`,
+  prompt: `أنت مساعد 'منظّم' الذكي، خبير في علم النفس والإنتاجية. مهمتك هي تحليل جدول المستخدم وتقديم نصائح عملية.
+
+حالة المستخدم أو سؤاله: {{{productivityContext}}}
+
+المواعيد الحالية:
+{{#each currentAppointments}}
+- {{{title}}} (من {{{startTime}}} إلى {{{endTime}}})
+{{/each}}
+
+المهام المعلقة:
+{{#each currentTasks}}
+- {{{description}}} (الأولوية: {{{priority}}}, مكتملة: {{{isCompleted}}})
+{{/each}}
+
+تعليمات هامة:
+1. إذا كان المستخدم يشعر بالتعب أو الإحباط (مثل قوله 'تعبان')، ابدأ بكلمات تشجيعية وانصحه بأخذ استراحة أو تقليل ضغط المهام.
+2. حلل التعارضات الزمنية إن وجدت.
+3. قدم اقتراحات محددة بناءً على قائمة المهام.
+4. الرد باللغة العربية الفصحى والودودة.
+5. لا تستخدم أي رموز Markdown نهائياً.`,
 });
 
 const aiScheduleOptimizerFlow = ai.defineFlow(
@@ -90,7 +91,10 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
       });
 
       if (!output) {
-        throw new Error('لم يتم استلام رد من المساعد الذكي.');
+        return {
+          summaryAnalysis: "عذراً، لم أتمكن من تحليل جدولك حالياً. يرجى المحاولة لاحقاً.",
+          personalizedSuggestions: ["تأكد من اتصالك بالإنترنت", "حاول كتابة تفاصيل أكثر عن يومك"],
+        };
       }
 
       return {
@@ -99,8 +103,12 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
         conflictsDetected: output.conflictsDetected,
       };
     } catch (error: any) {
-      console.error('Flow Error:', error);
-      throw error;
+      console.error('AI Flow Error:', error);
+      // إرجاع رد افتراضي بدلاً من الانهيار
+      return {
+        summaryAnalysis: "أواجه ضغطاً في الاتصال حالياً. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والبدء بالمهمة الأصغر لإنجازها.",
+        personalizedSuggestions: ["حاول إعادة المحاولة بعد دقيقة", "تأكد من إضافة مهامك في قائمة المهام أولاً"],
+      };
     }
   }
 );
