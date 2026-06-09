@@ -1,4 +1,3 @@
-
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -104,7 +103,6 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
       };
     } catch (error: any) {
       console.error('AI Flow Error:', error);
-      // إرجاع رد افتراضي بدلاً من الانهيار
       return {
         summaryAnalysis: "أواجه ضغطاً في الاتصال حالياً. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والبدء بالمهمة الأصغر لإنجازها.",
         personalizedSuggestions: ["حاول إعادة المحاولة بعد دقيقة", "تأكد من إضافة مهامك في قائمة المهام أولاً"],
