@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
     if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: "OpenRouter API Key is missing" },
+        { error: "API Key missing" },
         { status: 500 }
       );
     }
@@ -19,16 +19,13 @@ export async function POST(req: Request) {
       headers: {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://munazzim.app",
-        "X-Title": "Munazzim App",
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL || "openrouter/free",
         messages: [
           {
             role: "system",
-            content:
-              "أنت 'منظّم'، مساعد ذكاء اصطناعي خبير في إدارة الوقت والإنتاجية. أجب دائماً باللغة العربية. ركز على تقديم نصائح عملية، حل تعارضات المواعيد، وترتيب الأولويات. إذا سألك المستخدم عن ترتيب جدول، قدم له تحليلاً منطقياً. اجعل ردودك ودودة ومهنية وبدون تنسيقات Markdown معقدة.",
+            content: "أنت 'منظّم'، مساعد ذكاء اصطناعي خبير في إدارة الوقت والإنتاجية. أجب دائماً باللغة العربية. اجعل ردودك ودودة ومهنية وبدون تنسيقات Markdown معقدة.",
           },
           {
             role: "user",
@@ -40,9 +37,8 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("OpenRouter API Error:", errorData);
       return NextResponse.json(
-        { error: errorData.error?.message || "خطأ في الاتصال بالنموذج" },
+        { error: errorData.error?.message || "Error" },
         { status: response.status }
       );
     }
@@ -50,18 +46,8 @@ export async function POST(req: Request) {
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content;
 
-    if (!reply) {
-      return NextResponse.json({ reply: "عذراً، لم أتمكن من توليد رد حالياً." });
-    }
-
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply: reply || "عذراً، لم أتمكن من توليد رد." });
   } catch (error: any) {
-    console.error("Chat API Route Error:", error);
-    return NextResponse.json(
-      {
-        error: error?.message || "حدث خطأ غير متوقع",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error?.message }, { status: 500 });
   }
 }

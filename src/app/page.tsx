@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -78,7 +77,7 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-right">
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">مرحباً بك في منظّم</h1>
-            <p className="text-muted-foreground">لديك {pendingTasks.length} مهام معلقة اليوم. لنبدأ الإنجاز!</p>
+            <p className="text-muted-foreground">لديك {pendingTasks.length} مهام معلقة اليوم.</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="gap-2" asChild>
@@ -94,7 +93,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard title="إجمالي المهام" value={tasks.length} icon={<Activity />} color="blue" />
           <StatCard title="كفاءة الإنجاز" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" />
@@ -103,7 +101,6 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Quick List - Recent Tasks */}
           <Card className="lg:col-span-2 shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-xl font-bold">آخر المهام</CardTitle>
@@ -134,7 +131,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* AI Insights Card */}
           <Card className="bg-primary/5 border-primary/20 shadow-inner">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-primary">

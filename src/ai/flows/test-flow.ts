@@ -3,12 +3,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const TestInputSchema = z.string().describe('نص الاختبار');
+const TestInputSchema = z.string();
 export type TestInput = z.infer<typeof TestInputSchema>;
 
 const TestOutputSchema = z.object({
-  response: z.string().describe('رد النموذج'),
-  modelUsed: z.string().describe('اسم النموذج المستخدم'),
+  response: z.string(),
+  modelUsed: z.string(),
 });
 export type TestOutput = z.infer<typeof TestOutputSchema>;
 
@@ -31,9 +31,7 @@ const testFlow = ai.defineFlow(
         system: `أنت مساعد عربي. لا تستخدم رموز Markdown مثل # أو * نهائياً. أجب بنص عادي فقط.`,
       });
 
-      const cleanResponse = (text || '')
-        .replace(/[#*`|_~]/g, '')
-        .trim();
+      const cleanResponse = (text || '').replace(/[#*`|_~]/g, '').trim();
 
       return {
         response: cleanResponse || 'لا يوجد رد.',

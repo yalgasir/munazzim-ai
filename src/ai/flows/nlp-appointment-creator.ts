@@ -3,35 +3,25 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const NLPAppointmentCreatorInputSchema = z
-  .string()
-  .describe('وصف الموعد باللغة الطبيعية.');
-export type NLPAppointmentCreatorInput = z.infer<
-  typeof NLPAppointmentCreatorInputSchema
->;
+const NLPAppointmentCreatorInputSchema = z.string();
+export type NLPAppointmentCreatorInput = z.infer<typeof NLPAppointmentCreatorInputSchema>;
 
 const NLPAppointmentCreatorOutputSchema = z.object({
-  title: z.string().describe('عنوان الموعد.'),
-  description: z.string().optional().describe('تفاصيل إضافية.'),
-  date: z.string().describe('التاريخ بصيغة YYYY-MM-DD.'),
-  time: z.string().optional().describe('الوقت بصيغة HH:MM (24 ساعة).'),
-  durationMinutes: z.number().int().default(60).describe('المدة بالدقائق.'),
-  attendees: z.array(z.string()).optional().describe('أسماء الحضور.'),
-  allDay: z.boolean().default(false).describe('هل هو حدث طوال اليوم؟'),
+  title: z.string(),
+  description: z.string().optional(),
+  date: z.string(),
+  time: z.string().optional(),
+  durationMinutes: z.number().int().default(60),
+  attendees: z.array(z.string()).optional(),
+  allDay: z.boolean().default(false),
 });
-export type NLPAppointmentCreatorOutput = z.infer<
-  typeof NLPAppointmentCreatorOutputSchema
->;
+export type NLPAppointmentCreatorOutput = z.infer<typeof NLPAppointmentCreatorOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'nlpAppointmentCreatorPrompt',
   input: { schema: NLPAppointmentCreatorInputSchema },
   output: { schema: NLPAppointmentCreatorOutputSchema },
-  prompt: `أنت مساعد ذكاء اصطناعي متخصص في تحليل طلبات المواعيد.
-استخرج المعلومات التالية وحولها إلى JSON.
-تاريخ اليوم هو: {{currentDate}}
-
-مدخلات المستخدم: {{{it}}}`,
+  prompt: `أنت مساعد ذكاء اصطناعي متخصص في تحليل طلبات المواعيد. استخرج المعلومات التالية وحولها إلى JSON. تاريخ اليوم هو: {{currentDate}} مدخلات المستخدم: {{{it}}}`,
 });
 
 const nlpAppointmentCreatorFlow = ai.defineFlow(
@@ -53,8 +43,6 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
   }
 );
 
-export async function nlpAppointmentCreator(
-  input: NLPAppointmentCreatorInput
-): Promise<NLPAppointmentCreatorOutput> {
+export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
   return nlpAppointmentCreatorFlow(input);
 }
