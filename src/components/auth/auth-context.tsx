@@ -2,6 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
+/**
+ * @fileOverview Authentication context for managing global user state.
+ * Supports public guest access as requested by project requirements.
+ */
+
 interface AuthContextType {
   user: any | null;
   loading: boolean;

@@ -30,6 +30,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
+/**
+ * @fileOverview Core application layout component with sidebar navigation.
+ */
+
 const menuItems = [
   { title: "لوحة التحكم", icon: LayoutDashboard, href: "/" },
   { title: "التقويم", icon: CalendarDays, href: "/calendar" },

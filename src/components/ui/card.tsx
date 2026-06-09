@@ -2,6 +2,10 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * @fileOverview Layout card component used throughout the dashboard and assistant views.
+ */
+
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
