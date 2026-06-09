@@ -46,3 +46,4 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
 export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
   return nlpAppointmentCreatorFlow(input);
 }
+
