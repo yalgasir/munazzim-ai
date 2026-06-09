@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -79,10 +80,15 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">مرحباً بك في منظّم</h1>
             <p className="text-muted-foreground">لديك {pendingTasks.length} مهام معلقة اليوم.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button variant="outline" className="gap-2" asChild>
               <Link href="/tasks">
                 <Plus className="h-4 w-4" /> مهمة جديدة
+              </Link>
+            </Button>
+            <Button variant="outline" className="gap-2" asChild>
+              <Link href="/appointments">
+                <CalendarIcon className="h-4 w-4" /> موعد جديد
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg" asChild>
