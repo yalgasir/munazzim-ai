@@ -40,7 +40,10 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
 
     const { output } = await prompt(input, { 
       model: `openai/${modelName}`,
-      context: { currentDate } 
+      config: {
+        // إعدادات إضافية لـ OpenRouter لضمان الاستقرار
+        version: '1.0'
+      }
     });
     
     return output!;

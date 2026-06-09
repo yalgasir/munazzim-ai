@@ -24,7 +24,7 @@ const testFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const modelName = process.env.OPENROUTER_MODEL || 'openrouter/free';
+      const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
       const { text } = await ai.generate({
         model: `openai/${modelName}`,
         prompt: input,
@@ -38,8 +38,8 @@ const testFlow = ai.defineFlow(
         modelUsed: modelName,
       };
     } catch (error: any) {
-      throw new Error(error.message || 'فشل الاتصال');
+      console.error('Test Flow Error:', error);
+      throw new Error(error.message || 'فشل الاتصال بـ OpenRouter');
     }
   }
 );
-

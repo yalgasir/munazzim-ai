@@ -82,7 +82,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    // استخدام نموذج Gemini 1.5 Flash كافتراضي لأنه أسرع وأكثر استقراراً في النسخ المجانية
+    // استخدام نموذج Gemini 2.0 Flash عبر OpenRouter
     const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
     if (!process.env.OPENROUTER_API_KEY) {
@@ -109,7 +109,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('AI Flow Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً ضغطاً في الاتصال بمحرك الذكاء الاصطناعي. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً.",
+        summaryAnalysis: "أواجه حالياً ضغطاً في الاتصال بمحرك الذكاء الاصطناعي عبر OpenRouter. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً.",
         personalizedSuggestions: ["حاول إعادة المحاولة بعد ثوانٍ", "تأكد من استقرار اتصالك بالإنترنت"],
       };
     }

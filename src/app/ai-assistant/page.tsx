@@ -79,7 +79,6 @@ export default function AIAssistantPage() {
         }
       } catch (dbError) {
         console.error("Database fetch error:", dbError);
-        // الاستمرار ببيانات فارغة في حال فشل جلب البيانات من DB
       }
 
       const result = await optimizeSchedule({
@@ -90,17 +89,25 @@ export default function AIAssistantPage() {
 
       if (result) {
         setSuggestion(result);
-        toast({
-          title: "تم التحليل",
-          description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
-        });
+        if (result.summaryAnalysis.includes("عذراً")) {
+           toast({
+            variant: "destructive",
+            title: "تنبيه من المساعد",
+            description: "واجه المساعد صعوبة في الاتصال بـ OpenRouter، يرجى التحقق من API Key.",
+          });
+        } else {
+          toast({
+            title: "تم التحليل",
+            description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
+          });
+        }
       }
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
       toast({ 
         variant: "destructive", 
-        title: "عذراً، حدث خطأ", 
-        description: "واجه المساعد مشكلة في معالجة طلبك. يرجى التحقق من إعدادات API Key والمحاولة مرة أخرى." 
+        title: "خطأ في الاتصال", 
+        description: "حدثت مشكلة غير متوقعة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter." 
       });
     } finally {
       setLoading(false);
@@ -121,7 +128,7 @@ export default function AIAssistantPage() {
             أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
           <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Gemini 1.5
+            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Gemini 1.5 via OpenRouter
           </Badge>
         </div>
 
@@ -140,7 +147,7 @@ export default function AIAssistantPage() {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "جاري الاتصال بالمحرك والتحليل..." : "ابدأ التحليل الذكي"}
+              {loading ? "جاري الاتصال بـ OpenRouter..." : "ابدأ التحليل الذكي"}
             </Button>
           </CardContent>
         </Card>
