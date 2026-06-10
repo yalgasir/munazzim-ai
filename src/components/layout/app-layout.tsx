@@ -30,17 +30,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-/**
- * @fileOverview Core application layout component with sidebar navigation.
- */
-
 const menuItems = [
-  { title: "لوحة التحكم", icon: LayoutDashboard, href: "/" },
-  { title: "التقويم", icon: CalendarDays, href: "/calendar" },
-  { title: "المواعيد", icon: CalendarCheck, href: "/appointments" },
-  { title: "المهام", icon: CheckSquare, href: "/tasks" },
-  { title: "مساعد الذكاء الاصطناعي", icon: Sparkles, href: "/ai-assistant" },
-  { title: "الإحصائيات", icon: BarChart3, href: "/stats" },
+  { title: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { title: "Calendar", icon: CalendarDays, href: "/calendar" },
+  { title: "Appointments", icon: CalendarCheck, href: "/appointments" },
+  { title: "Tasks", icon: CheckSquare, href: "/tasks" },
+  { title: "AI Assistant", icon: Sparkles, href: "/ai-assistant" },
+  { title: "Statistics", icon: BarChart3, href: "/stats" },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -66,14 +62,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background" dir="rtl">
-        <Sidebar side="right" collapsible="icon" className="border-l bg-sidebar text-sidebar-foreground">
+      <div className="flex min-h-screen w-full bg-background" dir="ltr">
+        <Sidebar side="left" collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
           <SidebarHeader className="p-4 flex flex-row items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-primary">
-              <span className="text-xl font-bold">م</span>
+              <span className="text-xl font-bold">M</span>
             </div>
             <span className="text-xl font-bold font-headline group-data-[collapsible=icon]:hidden">
-              منظّم
+              Munazzim
             </span>
           </SidebarHeader>
           <SidebarContent>
@@ -103,9 +99,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <AvatarImage src={userAvatar} />
                     <AvatarFallback><UserIcon /></AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col group-data-[collapsible=icon]:hidden text-right">
-                    <span className="text-sm font-medium">مستخدم عام</span>
-                    <span className="text-xs text-sidebar-foreground/70">دخول مباشر</span>
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
+                    <span className="text-sm font-medium">Guest User</span>
+                    <span className="text-xs text-sidebar-foreground/70">Direct Access</span>
                   </div>
                 </div>
               </SidebarMenuItem>
@@ -131,5 +127,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-

@@ -32,8 +32,6 @@ export default function Dashboard() {
   const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
 
   useEffect(() => {
-    // محاكاة التحقق من وجود المفتاح في السيرفر
-    // في الواقع يتم تمريره عبر env
     const checkApiKey = async () => {
       try {
         const res = await fetch('/api/health');
@@ -88,10 +86,10 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-8 max-w-7xl mx-auto" dir="rtl">
+      <div className="flex flex-col gap-8 max-w-7xl mx-auto" dir="ltr">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-right">
-            <h1 className="text-3xl font-bold font-headline text-primary mb-1">لوحة تحكم منظّم</h1>
+          <div className="text-left">
+            <h1 className="text-3xl font-bold font-headline text-primary mb-1">Munazzim Dashboard</h1>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
                 <Cpu className="h-3.5 w-3.5" />
@@ -99,37 +97,37 @@ export default function Dashboard() {
               </Badge>
               <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
                 <Key className="h-3.5 w-3.5" />
-                {apiKeyStatus === "active" ? "المفتاح متصل" : "المفتاح مفقود"}
+                {apiKeyStatus === "active" ? "API Key Connected" : "API Key Missing"}
               </Badge>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" className="gap-2 shadow-sm" asChild>
               <Link href="/ai-assistant">
-                <TrendingUp className="h-4 w-4" /> تحليل ذكي
+                <TrendingUp className="h-4 w-4" /> Smart Analysis
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg" asChild>
               <Link href="/tasks">
-                <Plus className="h-4 w-4" /> إضافة مهمة
+                <Plus className="h-4 w-4" /> Add Task
               </Link>
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="إجمالي المهام" value={tasks.length} icon={<Activity />} color="blue" />
-          <StatCard title="كفاءة الإنجاز" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" />
-          <StatCard title="المواعيد" value={appointments.length} icon={<CalendarIcon />} color="purple" />
+          <StatCard title="Total Tasks" value={tasks.length} icon={<Activity />} color="blue" />
+          <StatCard title="Completion Rate" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" />
+          <StatCard title="Appointments" value={appointments.length} icon={<CalendarIcon />} color="purple" />
           <StatCard title="NASA TRL" value="8" icon={<TrendingUp />} color="amber" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2 shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-bold">المهام الحالية</CardTitle>
+              <CardTitle className="text-xl font-bold">Current Tasks</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/tasks" className="gap-1">عرض الكل <ArrowRight className="h-4 w-4" /></Link>
+                <Link href="/tasks" className="gap-1">View All <ArrowRight className="h-4 w-4" /></Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -146,11 +144,11 @@ export default function Dashboard() {
                       {task.description}
                     </span>
                   </div>
-                  <Badge variant="outline">{task.priority === 'High' ? 'عالية' : 'عادية'}</Badge>
+                  <Badge variant="outline">{task.priority === 'High' ? 'High' : 'Normal'}</Badge>
                 </div>
               ))}
               {tasks.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">لا توجد مهام مضافة بعد.</p>
+                <p className="text-center text-muted-foreground py-8">No tasks added yet.</p>
               )}
             </CardContent>
           </Card>
@@ -158,18 +156,18 @@ export default function Dashboard() {
           <Card className="bg-primary/5 border-primary/20 shadow-inner">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-primary">
-                <TrendingUp className="h-5 w-5" /> لمحة النظام
+                <TrendingUp className="h-5 w-5" /> System Overview
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm leading-relaxed">
-              <p>يعمل النظام حالياً بأعلى مستويات الجاهزية التقنية NASA TRL 8.</p>
+              <p>The system is currently operating at NASA TRL 8 readiness level.</p>
               <div className="p-3 bg-white rounded-lg border border-primary/10">
-                <p className="font-bold text-primary mb-1 text-xs">حالة المحرك:</p>
-                <p className="text-xs">MythoMax-L2-13B متصل وجاهز للتحليل السياقي.</p>
+                <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
+                <p className="text-xs">MythoMax-L2-13B connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">تاريخ التحديث الأخير: 4 مارس 2025</p>
+              <p className="text-xs text-muted-foreground italic">Last Update: March 4, 2025</p>
               <Button className="w-full mt-2" size="sm" asChild>
-                <Link href="/ai-assistant">فتح المساعد الذكي</Link>
+                <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>
             </CardContent>
           </Card>

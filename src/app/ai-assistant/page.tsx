@@ -30,8 +30,8 @@ export default function AIAssistantPage() {
     if (!context.trim()) {
       toast({
         variant: "destructive",
-        title: "تنبيه",
-        description: "يرجى كتابة شيء للمساعد الذكي ليتمكن من مساعدتك.",
+        title: "Alert",
+        description: "Please write something for the AI Assistant to help you.",
       });
       return;
     }
@@ -51,13 +51,13 @@ export default function AIAssistantPage() {
           const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
 
           currentAppointments = appSnap.docs.map(doc => ({
-            title: doc.data().title || "موعد بدون عنوان",
+            title: doc.data().title || "Untitled Appointment",
             startTime: `${doc.data().date || new Date().toISOString().split("T")[0]}T${doc.data().time || "00:00"}:00Z`,
             endTime: `${doc.data().date || new Date().toISOString().split("T")[0]}T${doc.data().time || "01:00"}:00Z`,
           }));
 
           currentTasks = taskSnap.docs.map(doc => ({
-            description: doc.data().description || "مهمة بدون وصف",
+            description: doc.data().description || "Untitled Task",
             priority: doc.data().priority || "Medium",
             isCompleted: !!doc.data().isCompleted,
           }));
@@ -90,16 +90,16 @@ export default function AIAssistantPage() {
       if (result) {
         setSuggestion(result);
         toast({
-          title: "تم التحليل",
-          description: "قام المساعد بمراجعة طلبك وجدولك الحالي بنجاح باستخدام محرك MythoMax.",
+          title: "Analysis Complete",
+          description: "The assistant has reviewed your request and schedule successfully.",
         });
       }
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
       toast({
         variant: "destructive",
-        title: "خطأ في الاتصال",
-        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء MythoMax. يرجى التأكد من المفتاح.",
+        title: "Connection Error",
+        description: "There was a problem communicating with the MythoMax AI engine.",
       });
     } finally {
       setLoading(false);
@@ -110,18 +110,18 @@ export default function AIAssistantPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto flex flex-col gap-8" dir="rtl">
+      <div className="max-w-4xl mx-auto flex flex-col gap-8" dir="ltr">
         <div className="flex flex-col items-center text-center gap-2">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm border border-primary/20">
             <BrainCircuit className="h-8 w-8" />
           </div>
 
           <h1 className="text-3xl font-bold font-headline text-primary">
-            المساعد الذكي (MythoMax L2)
+            AI Assistant (MythoMax L2)
           </h1>
 
           <p className="text-muted-foreground max-w-xl">
-            أنا مساعدك الذكي المعتمد على محرك MythoMax لإدارة وقتك وإنتاجيتك بوعي كامل بسياق مهامك.
+            I am your intelligent assistant powered by MythoMax to manage your time and productivity with full context awareness.
           </p>
 
           <Badge
@@ -129,16 +129,16 @@ export default function AIAssistantPage() {
             className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary"
           >
             <Cpu className="h-3.5 w-3.5" />
-            المحرك النشط: MythoMax-L2-13B
+            Active Engine: MythoMax-L2-13B
           </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
             <Textarea
-              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: كيف يمكنني موازنة مهامي المهنية مع وقتي الخاص اليوم؟)"
-              className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
-              dir="rtl"
+              placeholder="How can I help you today? (e.g., How can I balance my work tasks with my personal time today?)"
+              className="min-h-[140px] text-lg p-4 text-left border-primary/20 focus:ring-primary/30 transition-all"
+              dir="ltr"
               value={context}
               onChange={(e) => setContext(e.target.value)}
             />
@@ -149,29 +149,29 @@ export default function AIAssistantPage() {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "جاري الاتصال بمحرك MythoMax..." : "ابدأ التحليل الذكي"}
+              {loading ? "Connecting to MythoMax..." : "Start Intelligent Analysis"}
             </Button>
           </CardContent>
         </Card>
 
         {suggestion && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-            <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md border-r-4 border-r-emerald-500">
+            <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-md border-l-4 border-l-emerald-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-emerald-700 flex items-center gap-2 text-xl">
-                  <Sparkles className="h-6 w-6" /> رد منظّم الذكي
+                  <Sparkles className="h-6 w-6" /> Munazzim AI Response
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="pt-2">
-                <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-right mb-6" dir="rtl">
+                <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-left mb-6" dir="ltr">
                   {suggestion.summaryAnalysis}
                 </div>
 
                 {suggestion.personalizedSuggestions && suggestion.personalizedSuggestions.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-bold text-emerald-800 text-lg flex items-center gap-2">
-                      <Check className="h-5 w-5" /> توصيات مقترحة:
+                      <Check className="h-5 w-5" /> Recommended Steps:
                     </h4>
 
                     <div className="grid gap-2">

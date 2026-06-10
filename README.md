@@ -1,5 +1,5 @@
 ---
-title: Munazzim | منظّم
+title: Munazzim | AI Organizer
 emoji: 🚀
 colorFrom: blue
 colorTo: indigo
@@ -7,36 +7,36 @@ sdk: docker
 app_port: 3000
 ---
 
-# 🚀 تطبيق منظّم (Munazzim) - الإصدار الاحترافي
+# 🚀 Munazzim - Professional Edition
 
-نظام متكامل لإدارة الوقت والإنتاجية يعتمد على الذكاء الاصطناعي الواعي بالسياق، تم تطويره وفق معايير الجاهزية التقنية الصارمة **(NASA TRL 8)** لضمان استقرار وموثوقية النظام في البيئات التشغيلية الحقيقية.
+A comprehensive AI-powered time and productivity management system, developed according to strict **NASA TRL 8** technical readiness standards to ensure system stability and reliability in real operational environments.
 
-**آخر تحديث للوثيقة: 4 مارس 2025**
+**Last Document Update: March 4, 2025**
 
-## 🧠 المحرك السيادي (AI Engine)
-يعمل التطبيق حالياً بمحرك **MythoMax-L2-13B** (عبر OpenRouter)، وهو نموذج لغوي متخصص في فهم السياق وتقديم استشارات زمنية دقيقة باللغة العربية، مما يضمن:
-- **خصوصية عالية:** معالجة البيانات عبر قنوات مؤمنة.
-- **ذكاء سياقي:** تحليل التداخلات بين المواعيد والمهام بدقة بشرية.
-- **استجابة عربية فصحى:** لغة عربية سليمة ومهنية.
+## 🧠 AI Autonomy Engine
+The application currently runs on the **MythoMax-L2-13B** engine (via OpenRouter), a language model specialized in understanding context and providing precise temporal consultations, ensuring:
+- **High Privacy:** Data processing via secured channels.
+- **Contextual Intelligence:** Accurate analysis of overlaps between appointments and tasks.
+- **Professional Output:** Sophisticated and clear English communication.
 
-## ✨ المميزات التقنية الرئيسية
-- **المساعد الذكي (AI Assistant):** استشارة ذكية لتحسين الجدول اليومي بناءً على الضغط والمهام الحالية.
-- **تحليلات الأداء (Advanced Stats):** لوحة بيانات تفاعلية تعرض مؤشرات الأداء الرئيسي (KPIs).
-- **إدارة المواعيد والمهام:** نظام مزامنة لحظي يعتمد على Firebase Firestore.
-- **جاهزية NASA TRL 8:** تم اختبار وتأهيل كافة المكونات للعمل كنظام نهائي مكتمل (System Qualified).
+## ✨ Key Technical Features
+- **AI Assistant:** Intelligent consultation to optimize daily schedules based on current workload.
+- **Advanced Stats:** Interactive dashboard displaying Key Performance Indicators (KPIs).
+- **Appointment & Task Management:** Real-time synchronization based on Firebase Firestore.
+- **NASA TRL 8 Readiness:** All components tested and qualified as a complete final system.
 
-## 🛠 المواصفات الفنية (Technical Stack)
-- **الواجهة البرمجية:** Next.js 15 (App Router).
-- **محرك الذكاء:** Gryphe MythoMax-L2-13B.
-- **قاعدة البيانات:** Firebase Firestore.
-- **التنسيق:** Tailwind CSS & Shadcn UI.
-- **نظام التتبع:** OpenTelemetry (Node.js SDK).
+## 🛠 Technical Stack
+- **Framework:** Next.js 15 (App Router).
+- **AI Engine:** Gryphe MythoMax-L2-13B.
+- **Database:** Firebase Firestore.
+- **Styling:** Tailwind CSS & Shadcn UI.
+- **Tracking:** OpenTelemetry (Node.js SDK).
 
-## 📊 حالة الجاهزية التقنية (NASA TRL)
-1. **TRL 1-3:** تم الانتهاء من إثبات المفهوم والبحث الأولي.
-2. **TRL 4-6:** تم التحقق من المكونات وتكاملها في بيئة مخبرية.
-3. **TRL 7:** تم عرض النموذج في بيئة تشغيلية (Hugging Face Spaces).
-4. **TRL 8:** **(الحالة الحالية)** النظام مكتمل ومؤهل تقنياً للخدمة الفعلية.
+## 📊 NASA Technical Readiness Level (TRL)
+1. **TRL 1-3:** Initial research and proof of concept completed.
+2. **TRL 4-6:** Component validation and integration in lab environment.
+3. **TRL 7:** Prototype demonstration in operational environment (Hugging Face Spaces).
+4. **TRL 8:** **(Current Status)** System technically complete and qualified for service.
 
 ---
-**تطوير وابتكار:** فريق منظّم الهندسي - مارس 2025
+**Developed by:** Munazzim Engineering Team - March 2025

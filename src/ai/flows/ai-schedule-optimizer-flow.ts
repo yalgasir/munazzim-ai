@@ -51,37 +51,37 @@ const cleanText = (text: string) => {
 function buildPrompt(input: OptimizeScheduleInput) {
   const appointments = input.currentAppointments.length
     ? input.currentAppointments
-        .map((a) => `- ${a.title} من ${a.startTime} إلى ${a.endTime}`)
+        .map((a) => `- ${a.title} from ${a.startTime} to ${a.endTime}`)
         .join('\n')
-    : 'لا توجد مواعيد مسجلة.';
+    : 'No registered appointments.';
 
   const tasks = input.currentTasks.length
     ? input.currentTasks
         .map(
           (t) =>
-            `- ${t.description}، الأولوية: ${t.priority}، مكتملة: ${t.isCompleted ? 'نعم' : 'لا'}`
+            `- ${t.description}, Priority: ${t.priority}, Completed: ${t.isCompleted ? 'Yes' : 'No'}`
         )
         .join('\n')
-    : 'لا توجد مهام مسجلة.';
+    : 'No registered tasks.';
 
   return `
-أنت مساعد "منظّم" الذكي، خبير في الإنتاجية وإدارة الوقت.
+You are the "Munazzim" AI assistant, an expert in productivity and time management.
 
-حالة المستخدم أو سؤاله:
-${input.productivityContext || 'لا يوجد سياق إضافي.'}
+User context or question:
+${input.productivityContext || 'No additional context.'}
 
-المواعيد الحالية:
+Current Appointments:
 ${appointments}
 
-المهام المعلقة:
+Pending Tasks:
 ${tasks}
 
-المطلوب:
-1. قدم تحليل مختصر لحالة المستخدم.
-2. قدم 3 توصيات عملية ومباشرة.
-3. اذكر أي تعارضات زمنية إن وجدت.
-4. الرد باللغة العربية الفصحى.
-5. لا تستخدم Markdown ولا رموز خاصة.
+Requirements:
+1. Provide a concise analysis of the user's situation.
+2. Provide 3 direct, actionable recommendations.
+3. Mention any time conflicts if found.
+4. Respond in professional English.
+5. Do not use Markdown or special symbols.
 `;
 }
 
@@ -93,34 +93,33 @@ function extractSuggestions(text: string): string[] {
 
   const suggestions = lines.filter(
     (line) =>
-      line.includes('التوصية') ||
-      line.includes('اقترح') ||
-      line.includes('ابدأ') ||
-      line.includes('خصص') ||
-      line.includes('راجع') ||
-      line.includes('رتب')
+      line.toLowerCase().includes('recommend') ||
+      line.toLowerCase().includes('suggest') ||
+      line.toLowerCase().includes('start') ||
+      line.toLowerCase().includes('allocate') ||
+      line.toLowerCase().includes('review') ||
+      line.toLowerCase().includes('organize')
   );
 
   if (suggestions.length >= 3) return suggestions.slice(0, 3);
 
   return [
-    'ابدأ بالمهام ذات الأولوية العالية أولاً.',
-    'اترك وقتاً فاصلاً بين المواعيد لتجنب الضغط والتعارض.',
-    'راجع جدولك في نهاية اليوم وحدد ما سيتم نقله لليوم التالي.',
+    'Start with high-priority tasks first.',
+    'Leave buffer time between appointments to avoid stress.',
+    'Review your schedule at the end of the day and move unfinished tasks.',
   ];
 }
 
 export async function optimizeSchedule(
   input: OptimizeScheduleInput
 ): Promise<OptimizeScheduleOutput> {
-  // استخدام MythoMax 13B كما طلب المستخدم
   const modelName = process.env.OPENROUTER_MODEL || 'gryphe/mythomax-l2-13b';
 
   if (!process.env.OPENROUTER_API_KEY) {
     return {
       summaryAnalysis:
-        'تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته لتفعيل التحليل الذكي.',
-      personalizedSuggestions: ['تأكد من إعداد OPENROUTER_API_KEY في إعدادات البيئة.'],
+        'Alert: OPENROUTER_API_KEY is not currently available. Please add it to activate intelligent analysis.',
+      personalizedSuggestions: ['Ensure OPENROUTER_API_KEY is set in environment settings.'],
       conflictsDetected: [],
     };
   }
@@ -140,7 +139,7 @@ export async function optimizeSchedule(
           {
             role: 'system',
             content:
-              'أنت مساعد عربي متخصص في إدارة الوقت والإنتاجية. رد دائماً بالعربية وبأسلوب واضح ومباشر.',
+              'You are a professional English AI assistant specializing in time management and productivity. Always respond in clear, direct English.',
           },
           {
             role: 'user',
@@ -159,10 +158,10 @@ export async function optimizeSchedule(
 
       return {
         summaryAnalysis:
-          'حدث خطأ في الاتصال بمحرك الذكاء الاصطناعي. يرجى التحقق من المفتاح في الإعدادات.',
+          'A connection error occurred with the AI engine. Please check your API key.',
         personalizedSuggestions: [
-          'تأكد من وجود OPENROUTER_API_KEY.',
-          'حاول إعادة المحاولة لاحقاً.',
+          'Verify OPENROUTER_API_KEY exists.',
+          'Try again later.',
         ],
         conflictsDetected: [],
       };
@@ -174,11 +173,11 @@ export async function optimizeSchedule(
     if (!aiText) {
       return {
         summaryAnalysis:
-          'تم الاتصال بالموديل، لكن لم يتم توليد رد واضح. حاول إعادة صياغة طلبك.',
+          'Connected to model, but no clear response was generated. Try rephrasing your request.',
         personalizedSuggestions: [
-          'اكتب مهامك ومواعيدك بشكل أوضح.',
-          'حدد أوقات المواعيد بدقة.',
-          'اذكر المهام الأعلى أولوية.',
+          'Write your tasks and appointments more clearly.',
+          'Specify appointment times accurately.',
+          'Mention the highest priority tasks.',
         ],
         conflictsDetected: [],
       };
@@ -194,10 +193,10 @@ export async function optimizeSchedule(
 
     return {
       summaryAnalysis:
-        'أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء. يرجى التأكد من الاتصال.',
+        'I am currently experiencing technical difficulties accessing the AI engine. Please check your connection.',
       personalizedSuggestions: [
-        'تحقق من إعدادات البيئة.',
-        'أعد تشغيل السيرفر بعد أي تعديل.',
+        'Check environment settings.',
+        'Restart the server after any modification.',
       ],
       conflictsDetected: [],
     };
