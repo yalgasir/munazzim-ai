@@ -113,7 +113,7 @@ function extractSuggestions(text: string): string[] {
 export async function optimizeSchedule(
   input: OptimizeScheduleInput
 ): Promise<OptimizeScheduleOutput> {
-  const modelName = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free';
+  const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
 
   if (!process.env.OPENROUTER_API_KEY) {
     return {
@@ -165,7 +165,7 @@ export async function optimizeSchedule(
           'حدث خطأ في الاتصال بـ Qwen3.6 Plus عبر OpenRouter. تحقق من المفتاح واسم الموديل في إعدادات البيئة.',
         personalizedSuggestions: [
           'تأكد من وجود OPENROUTER_API_KEY.',
-          'تأكد من أن OPENROUTER_MODEL يساوي qwen/qwen3.6-plus:free.',
+          'تأكد من أن OPENROUTER_MODEL يساوي qwen/qwen3-30b-a3b:free.',
           'أعد تشغيل التطبيق أو Hugging Face Space بعد تحديث الإعدادات.',
         ],
         conflictsDetected: [],
