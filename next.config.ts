@@ -55,6 +55,7 @@ const nextConfig: NextConfig = {
     ],
     allowedDevOrigins: [
       '*.cloudworkstations.dev',
+      '*.firebase.google.com',
       'localhost:3000',
       '127.0.0.1:3000'
     ],
