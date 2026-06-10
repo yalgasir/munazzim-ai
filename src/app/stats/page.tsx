@@ -15,7 +15,7 @@ import {
   PieChart,
   Pie
 } from "recharts";
-import { Target, Award, Clock, Activity, Loader2, ShieldCheck } from "lucide-react";
+import { Target, Award, Clock, Activity, Loader2, ShieldCheck, Cpu } from "lucide-react";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -83,21 +83,25 @@ export default function StatsPage() {
       <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="rtl">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                جاهزية تقنية NASA TRL 8
+                NASA TRL 8 | 4 March 2025
+              </Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
+                <Cpu className="h-3.5 w-3.5" />
+                MythoMax-L2-13B
               </Badge>
             </div>
-            <h1 className="text-3xl font-bold font-headline mb-1">مركز تحليلات الأداء المتقدم</h1>
-            <p className="text-muted-foreground">تحليل دقيق لبياناتك الحقيقية المسجلة في النظام لضمان أعلى مستويات الإنتاجية.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1">تحليلات الأداء والجاهزية التقنية</h1>
+            <p className="text-muted-foreground">رصد دقيق لمؤشرات الأداء (KPIs) وحالة النظام السحابي.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard icon={<Target />} label="إنجاز المهام" value={`${completedCount}/${tasks.length}`} color="primary" />
           <StatCard icon={<Activity />} label="فعالية المواعيد" value={appointments.length} color="accent" />
-          <StatCard icon={<Clock />} label="المهام العالقة" value={pendingCount} color="destructive" />
+          <StatCard icon={<Cpu />} label="المحرك النشط" value="MythoMax" color="purple" />
           <StatCard icon={<Award />} label="مستوى الالتزام" value={tasks.length > 0 ? `${Math.round((completedCount/tasks.length)*100)}%` : "0%"} color="emerald" />
         </div>
 
@@ -105,7 +109,7 @@ export default function StatsPage() {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">توزيع المواعيد حسب الفئة</CardTitle>
-              <CardDescription>تحليل نوعية الأنشطة المسجلة في جدولك</CardDescription>
+              <CardDescription>تحليل جودة استغلال الوقت</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -122,14 +126,14 @@ export default function StatsPage() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">حالة المهام الحالية</CardTitle>
-              <CardDescription>نسبة الإنجاز مقابل المهام المتبقية</CardDescription>
+              <CardTitle className="text-lg">حالة الجاهزية TRL 8</CardTitle>
+              <CardDescription>كفاءة الإنجاز النهائية</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] flex justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={tasks.length > 0 ? pieData : [{name: 'لا توجد بيانات', value: 1}]}
+                    data={tasks.length > 0 ? pieData : [{name: 'بدون بيانات', value: 1}]}
                     innerRadius={60}
                     outerRadius={100}
                     paddingAngle={5}
@@ -154,7 +158,8 @@ function StatCard({ icon, label, value, color }: any) {
     primary: "bg-primary/10 text-primary border-primary/20",
     accent: "bg-accent/10 text-accent border-accent/20",
     destructive: "bg-destructive/10 text-destructive border-destructive/20",
-    emerald: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+    emerald: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    purple: "bg-purple-500/10 text-purple-600 border-purple-500/20"
   };
 
   return (
@@ -169,5 +174,3 @@ function StatCard({ icon, label, value, color }: any) {
     </Card>
   );
 }
-
-

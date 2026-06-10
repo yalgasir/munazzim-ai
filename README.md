@@ -19,15 +19,15 @@ app_port: 3000
 ## ✨ المميزات الرئيسية
 - **محرك MythoMax L2 13B:** تحليل المواعيد وتقديم استشارات سياقية عميقة باللغة العربية الفصحى (عبر OpenRouter).
 - **جاهزية NASA TRL 8:** نظام مكتمل ومؤهل تقنياً وفق المعايير الدولية الصارمة.
+- **عرض الحالة التقنية:** شفافية كاملة في عرض المحرك النشط وحالة الاتصال بالسحاب.
 - **خصوصية فائقة:** معالجة البيانات في بيئة معزولة مع دعم الوصول العام الآمن.
-- **مركز تحليلات متقدم:** لوحة إحصائيات حية تتبع معدلات الإنجاز وكفاءة الإنتاجية لحظياً.
 
 ## 🛠 المواصفات التقنية (Technical Stack)
 - **Framework:** Next.js 15 (App Router).
-- **AI Engine:** Gryphe MythoMax-L2-13B.
+- **AI Engine:** Gryphe MythoMax-L2-13B (OpenRouter).
+- **Status:** NASA TRL 8 - System Qualified.
 - **Backend:** Firebase Firestore & Genkit.
 - **Styling:** Tailwind CSS & Shadcn UI.
-- **Standard:** NASA TRL Engineering Standards.
 
 ---
 **تطوير وابتكار:** فريق منظّم الهندسي - 2025

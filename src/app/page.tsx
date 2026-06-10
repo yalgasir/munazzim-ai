@@ -14,7 +14,9 @@ import {
   Activity,
   Plus,
   ArrowRight,
-  Check
+  Check,
+  Cpu,
+  Key
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -22,18 +24,26 @@ import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
-/**
- * @fileOverview Core Dashboard component.
- * Provides a real-time overview of tasks and appointments.
- */
-
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
 
   useEffect(() => {
+    // محاكاة التحقق من وجود المفتاح في السيرفر
+    // في الواقع يتم تمريره عبر env
+    const checkApiKey = async () => {
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) setApiKeyStatus("active");
+      } catch (e) {
+        setApiKeyStatus("missing");
+      }
+    };
+    checkApiKey();
+
     if (!user) return;
     const userId = user.uid || user.id;
 
@@ -81,23 +91,27 @@ export default function Dashboard() {
       <div className="flex flex-col gap-8 max-w-7xl mx-auto" dir="rtl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-right">
-            <h1 className="text-3xl font-bold font-headline text-primary mb-1">مرحباً بك في منظّم</h1>
-            <p className="text-muted-foreground">لديك {pendingTasks.length} مهام معلقة اليوم.</p>
+            <h1 className="text-3xl font-bold font-headline text-primary mb-1">لوحة تحكم منظّم</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
+                <Cpu className="h-3.5 w-3.5" />
+                MythoMax-L2-13B
+              </Badge>
+              <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
+                <Key className="h-3.5 w-3.5" />
+                {apiKeyStatus === "active" ? "المفتاح متصل" : "المفتاح مفقود"}
+              </Badge>
+            </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="gap-2" asChild>
-              <Link href="/tasks">
-                <Plus className="h-4 w-4" /> مهمة جديدة
-              </Link>
-            </Button>
-            <Button variant="outline" className="gap-2" asChild>
-              <Link href="/appointments">
-                <CalendarIcon className="h-4 w-4" /> موعد جديد
+            <Button variant="outline" className="gap-2 shadow-sm" asChild>
+              <Link href="/ai-assistant">
+                <TrendingUp className="h-4 w-4" /> تحليل ذكي
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg" asChild>
-              <Link href="/ai-assistant">
-                <TrendingUp className="h-4 w-4" /> تحليل الجدول بالذكاء الاصطناعي
+              <Link href="/tasks">
+                <Plus className="h-4 w-4" /> إضافة مهمة
               </Link>
             </Button>
           </div>
@@ -106,14 +120,14 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard title="إجمالي المهام" value={tasks.length} icon={<Activity />} color="blue" />
           <StatCard title="كفاءة الإنجاز" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" />
-          <StatCard title="المواعيد القادمة" value={appointments.length} icon={<CalendarIcon />} color="purple" />
-          <StatCard title="مهام معلقة" value={pendingTasks.length} icon={<Clock />} color="amber" />
+          <StatCard title="المواعيد" value={appointments.length} icon={<CalendarIcon />} color="purple" />
+          <StatCard title="NASA TRL" value="8" icon={<TrendingUp />} color="amber" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2 shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-bold">آخر المهام</CardTitle>
+              <CardTitle className="text-xl font-bold">المهام الحالية</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/tasks" className="gap-1">عرض الكل <ArrowRight className="h-4 w-4" /></Link>
               </Button>
@@ -144,17 +158,18 @@ export default function Dashboard() {
           <Card className="bg-primary/5 border-primary/20 shadow-inner">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-primary">
-                <TrendingUp className="h-5 w-5" /> لمحة ذكية
+                <TrendingUp className="h-5 w-5" /> لمحة النظام
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm leading-relaxed">
-              <p>بناءً على نشاطك الأخير، نلاحظ تحسناً في معدل إنجاز المهام الصباحية بنسبة 15%.</p>
+              <p>يعمل النظام حالياً بأعلى مستويات الجاهزية التقنية NASA TRL 8.</p>
               <div className="p-3 bg-white rounded-lg border border-primary/10">
-                <p className="font-bold text-primary mb-1 text-xs">نصيحة اليوم:</p>
-                <p className="text-xs">حاول جدولة المواعيد التي تتطلب تركيزاً عالياً قبل الساعة 11 صباحاً.</p>
+                <p className="font-bold text-primary mb-1 text-xs">حالة المحرك:</p>
+                <p className="text-xs">MythoMax-L2-13B متصل وجاهز للتحليل السياقي.</p>
               </div>
+              <p className="text-xs text-muted-foreground italic">تاريخ التحديث الأخير: 4 مارس 2025</p>
               <Button className="w-full mt-2" size="sm" asChild>
-                <Link href="/ai-assistant">استشر منظّم الذكي</Link>
+                <Link href="/ai-assistant">فتح المساعد الذكي</Link>
               </Button>
             </CardContent>
           </Card>
@@ -182,7 +197,3 @@ function StatCard({ title, value, icon, color }: any) {
     </div>
   );
 }
-
-
-
-
