@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Check,
   Cpu,
-  Key
+  Key,
+  CalendarPlus
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -31,16 +32,15 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
-  const [currentDate, setCurrentDate] = useState("");
+  const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
-    // Generate the actual current date on mount to avoid hydration mismatch
-    const dateStr = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    setCurrentDate(dateStr);
+    // Generate dynamic date in DD/MM/YYYY format
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    setFormattedDate(`${day}/${month}/${year}`);
 
     const checkApiKey = async () => {
       try {
@@ -113,8 +113,8 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" className="gap-2 shadow-sm" asChild>
-              <Link href="/ai-assistant">
-                <TrendingUp className="h-4 w-4" /> Smart Analysis
+              <Link href="/appointments">
+                <CalendarPlus className="h-4 w-4" /> Add New Appointment
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg" asChild>
@@ -175,7 +175,7 @@ export default function Dashboard() {
                 <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
                 <p className="text-xs">MythoMax-L2-13B via OpenRouter connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Last Updated: {currentDate || "Loading date..."}</p>
+              <p className="text-xs text-muted-foreground italic">Last Updated: {formattedDate}</p>
               <Button className="w-full mt-2" size="sm" asChild>
                 <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>

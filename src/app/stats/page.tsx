@@ -30,17 +30,16 @@ export default function StatsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [updateDate, setUpdateDate] = useState("");
+  const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
     setMounted(true);
-    // Set dynamic update date on mount using system clock
-    const dateStr = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    setUpdateDate(dateStr);
+    // Generate dynamic date in DD/MM/YYYY format
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    setFormattedDate(`${day}/${month}/${year}`);
     
     if (!user) return;
     const userId = user.uid || user.id;
@@ -96,7 +95,7 @@ export default function StatsPage() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                NASA TRL 8 | Updated: {updateDate || "Today"}
+                NASA TRL 8 | Updated: {formattedDate}
               </Badge>
               <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
                 <Cpu className="h-3.5 w-3.5" />
