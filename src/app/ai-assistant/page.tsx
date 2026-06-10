@@ -121,7 +121,7 @@ export default function AIAssistantPage() {
             أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
           <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-            <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Qwen 30B via OpenRouter
+          <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Qwen3.6 Plus via OpenRouter
           </Badge>
         </div>
 

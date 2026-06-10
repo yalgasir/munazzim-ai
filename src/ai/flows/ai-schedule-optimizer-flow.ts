@@ -82,7 +82,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
   },
   async (input) => {
     // استخدام موديل qwen المطلوبه
-    const modelName = 'qwen/qwen3-30b-a3b:free';
+    const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3.6-plus:free';
 
     if (!process.env.OPENROUTER_API_KEY) {
       return {
