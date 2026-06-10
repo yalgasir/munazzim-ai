@@ -60,6 +60,16 @@ const nextConfig: NextConfig = {
       '127.0.0.1:3000'
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(config.externals || []), 
+        '@opentelemetry/exporter-jaeger',
+        '@opentelemetry/exporter-zipkin',
+        '@opentelemetry/sdk-node'
+      ];
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
