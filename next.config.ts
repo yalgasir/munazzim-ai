@@ -41,7 +41,9 @@ const nextConfig: NextConfig = {
       '@genkit-ai/flow',
       '@genkit-ai/dotprompt',
       'openai',
-      'zod'
+      'zod',
+      '@opentelemetry/sdk-node',
+      '@opentelemetry/api'
     ],
     allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'],
   },
