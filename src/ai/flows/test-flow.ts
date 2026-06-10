@@ -1,7 +1,6 @@
 
 'use server';
 
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const TestInputSchema = z.string();
@@ -14,35 +13,30 @@ const TestOutputSchema = z.object({
 export type TestOutput = z.infer<typeof TestOutputSchema>;
 
 export async function runTestAI(prompt: string): Promise<TestOutput> {
-  return testFlow(prompt);
-}
-
-const testFlow = ai.defineFlow(
-  {
-    name: 'testFlow',
-    inputSchema: TestInputSchema,
-    outputSchema: TestOutputSchema,
-  },
-  async (input) => {
-    try {
-      const modelName = 'qwen/qwen3.6-plus';
-      const { text } = await ai.generate({
-        model: `openai/${modelName}`,
-        prompt: input,
-        system: `أنت مساعد عربي. لا تستخدم رموز Markdown مثل # أو * نهائياً. أجب بنص عادي فقط.`,
-      });
-
-      const cleanResponse = (text || '').replace(/[#*`|_~]/g, '').trim();
-
-      return {
-        response: cleanResponse || 'لا يوجد رد.',
-        modelUsed: modelName,
-      };
-    } catch (error: any) {
-      console.error('Test Flow Error:', error);
-      throw new Error(error.message || 'فشل الاتصال بـ OpenRouter');
-    }
+  const modelName = 'gryphe/mythomax-l2-13b';
+  
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY missing');
   }
-);
 
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: modelName,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7
+    })
+  });
 
+  const data = await response.json();
+  const text = data?.choices?.[0]?.message?.content || 'لا يوجد رد';
+
+  return {
+    response: text.replace(/[#*`|_~]/g, '').trim(),
+    modelUsed: modelName,
+  };
+}

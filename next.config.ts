@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -52,7 +53,8 @@ const nextConfig: NextConfig = {
       '*.cloudworkstations.dev',
       '*.firebase.google.com',
       'localhost:3000',
-      '127.0.0.1:3000'
+      '127.0.0.1:3000',
+      '9000-firebase-studio-1780447069878.cluster-uodogxybdfdkiqhne5y6pr6j4w.cloudworkstations.dev'
     ],
   },
   webpack: (config, { isServer }) => {
@@ -68,5 +70,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
-

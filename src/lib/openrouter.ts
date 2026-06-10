@@ -1,3 +1,4 @@
+
 export async function askMunazzimAI(prompt: string) {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -8,19 +9,19 @@ export async function askMunazzimAI(prompt: string) {
         "X-Title": "Munazzim AI Time Manager"
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "qwen/qwen3.6-plus",
+        model: "gryphe/mythomax-l2-13b",
         messages: [
           {
             role: "system",
-            content: "You are Munazzim AI, an Arabic assistant specialized in time management, task planning, and productivity."
+            content: "أنت مساعد 'منظّم' الذكي، خبير في إدارة الوقت والإنتاجية. أجب دائماً باللغة العربية بأسلوب مهني وواضح."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.4,
-        max_tokens: 700
+        temperature: 0.6,
+        max_tokens: 800
       })
     });
   
@@ -30,6 +31,5 @@ export async function askMunazzimAI(prompt: string) {
     }
   
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "No answer generated.";
+    return data.choices?.[0]?.message?.content || "عذراً، لم أتمكن من توليد رد حالياً.";
   }
-

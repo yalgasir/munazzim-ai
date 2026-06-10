@@ -1,7 +1,6 @@
 
 'use server';
 
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const NLPAppointmentCreatorInputSchema = z.string();
@@ -18,40 +17,48 @@ const NLPAppointmentCreatorOutputSchema = z.object({
 });
 export type NLPAppointmentCreatorOutput = z.infer<typeof NLPAppointmentCreatorOutputSchema>;
 
-const prompt = ai.definePrompt({
-  name: 'nlpAppointmentCreatorPrompt',
-  input: { schema: NLPAppointmentCreatorInputSchema },
-  output: { schema: NLPAppointmentCreatorOutputSchema },
-  prompt: `أنت مساعد ذكاء اصطناعي متخصص في تحليل طلبات المواعيد. استخرج المعلومات التالية وحولها إلى JSON. تاريخ اليوم هو: {{currentDate}} مدخلات المستخدم: {{{it}}}`,
-});
-
-const nlpAppointmentCreatorFlow = ai.defineFlow(
-  {
-    name: 'nlpAppointmentCreatorFlow',
-    inputSchema: NLPAppointmentCreatorInputSchema,
-    outputSchema: NLPAppointmentCreatorOutputSchema,
-  },
-  async (input) => {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const modelName = process.env.OPENROUTER_MODEL || "qwen/qwen3.6-plus";
-    
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error('OPENROUTER_API_KEY is missing');
-    }
-
-    const { output } = await prompt(input, { 
-      model: `openai/${modelName}`,
-      config: {
-        version: '1.0'
-      }
-    });
-    
-    return output!;
-  }
-);
-
+/**
+ * استخدام MythoMax عبر OpenRouter لتحليل المواعيد
+ */
 export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
-  return nlpAppointmentCreatorFlow(input);
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY is missing');
+  }
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gryphe/mythomax-l2-13b",
+      messages: [
+        {
+          role: "system",
+          content: `أنت مساعد ذكاء اصطناعي متخصص في تحليل طلبات المواعيد. استخرج المعلومات وحولها إلى JSON صالح فقط. تاريخ اليوم: ${currentDate}. يجب أن يحتوي الرد على JSON فقط بالحقول: title, description, date, time, durationMinutes, allDay.`
+        },
+        {
+          role: "user",
+          content: input
+        }
+      ],
+      response_format: { type: "json_object" }
+    })
+  });
+
+  if (!response.ok) throw new Error('OpenRouter connection failed');
+  const data = await response.json();
+  const result = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+  
+  return {
+    title: result.title || "موعد جديد",
+    description: result.description,
+    date: result.date || currentDate,
+    time: result.time,
+    durationMinutes: result.durationMinutes || 60,
+    allDay: !!result.allDay
+  };
 }
-
-
