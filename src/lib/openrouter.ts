@@ -8,7 +8,7 @@ export async function askMunazzimAI(prompt: string) {
         "X-Title": "Munazzim AI Time Manager"
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "qwen/qwen3.6-plus:free",
+        model: process.env.OPENROUTER_MODEL || "qwen/qwen3-30b-a3b:free",
         messages: [
           {
             role: "system",

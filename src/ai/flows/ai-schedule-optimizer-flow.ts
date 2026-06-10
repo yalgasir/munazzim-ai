@@ -1,4 +1,3 @@
-
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -81,7 +80,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
+    const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
 
     if (!process.env.OPENROUTER_API_KEY) {
       return {
@@ -92,7 +91,6 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
 
     try {
       const { output } = await prompt(input, {
-        // Use the openai/ prefix because we are using the genkitx-openai plugin
         model: `openai/${modelName}`,
         config: {
           temperature: 0.7,
@@ -115,7 +113,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Genkit Flow Execution Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء الاصطناعي. نصيحتي السريعة هي مراجعة أهم مهامك اليوم والبدء بالأكثر إلحاحاً.",
+        summaryAnalysis: "أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء الاصطناعي الجديد. نصيحتي السريعة هي مراجعة أهم مهامك اليوم والبدء بالأكثر إلحاحاً.",
         personalizedSuggestions: ["حاول تحديث الصفحة لاحقاً", "تأكد من استقرار اتصال الإنترنت"],
       };
     }
