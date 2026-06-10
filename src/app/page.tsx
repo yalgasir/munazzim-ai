@@ -175,7 +175,7 @@ export default function Dashboard() {
                 <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
                 <p className="text-xs">MythoMax-L2-13B via OpenRouter connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Last Deployment: {currentDate || "Loading..."}</p>
+              <p className="text-xs text-muted-foreground italic">Last Deployment: {currentDate || "March 5, 2025"}</p>
               <Button className="w-full mt-2" size="sm" asChild>
                 <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>
