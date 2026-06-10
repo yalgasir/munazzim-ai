@@ -81,7 +81,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    // موديل كوين الجديد
+    // استخدام موديل qwen المطلوبه
     const modelName = 'qwen/qwen3-30b-a3b:free';
 
     if (!process.env.OPENROUTER_API_KEY) {

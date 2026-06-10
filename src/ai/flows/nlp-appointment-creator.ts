@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -32,7 +33,7 @@ const nlpAppointmentCreatorFlow = ai.defineFlow(
   },
   async (input) => {
     const currentDate = new Date().toISOString().split('T')[0];
-    const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
+    const modelName = 'qwen/qwen3-30b-a3b:free';
     
     if (!process.env.OPENROUTER_API_KEY) {
       throw new Error('OPENROUTER_API_KEY is missing');

@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -24,7 +25,7 @@ const testFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
+      const modelName = 'qwen/qwen3-30b-a3b:free';
       const { text } = await ai.generate({
         model: `openai/${modelName}`,
         prompt: input,
