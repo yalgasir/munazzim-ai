@@ -113,7 +113,7 @@ function extractSuggestions(text: string): string[] {
 export async function optimizeSchedule(
   input: OptimizeScheduleInput
 ): Promise<OptimizeScheduleOutput> {
-  const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3.6-plus:free';
+  const modelName = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free';
 
   if (!process.env.OPENROUTER_API_KEY) {
     return {
@@ -125,6 +125,10 @@ export async function optimizeSchedule(
   }
 
   try {
+     console.log("================================");
+     console.log("MODEL USED:", modelName);
+     console.log("API KEY EXISTS:", !!process.env.OPENROUTER_API_KEY);
+     console.log("================================");
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
