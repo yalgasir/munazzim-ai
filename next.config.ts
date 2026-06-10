@@ -48,8 +48,16 @@ const nextConfig: NextConfig = {
       '@opentelemetry/sdk-trace-node',
       '@opentelemetry/resources',
       '@opentelemetry/semantic-conventions',
+      '@opentelemetry/exporter-jaeger',
+      '@opentelemetry/exporter-zipkin',
+      '@opentelemetry/instrumentation',
+      'google-auth-library'
     ],
-    allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'],
+    allowedDevOrigins: [
+      '*.cloudworkstations.dev',
+      'localhost:3000',
+      '127.0.0.1:3000'
+    ],
   },
 };
 
