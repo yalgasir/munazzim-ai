@@ -21,3 +21,4 @@ export const isFirebaseConfigured = isValidKey;
 
 export { auth, db };
 
+

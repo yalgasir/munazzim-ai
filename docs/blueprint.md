@@ -20,3 +20,4 @@
 - A clean, card-based responsive design with meticulous attention to Arabic RTL conventions for text flow and component alignment. Generous spacing and clear hierarchy will improve readability and user experience on all devices.
 - Subtle and purposeful animations will enhance user feedback during task completion, calendar view transitions, and notification alerts, providing a fluid and intuitive interaction without distraction.
 
+

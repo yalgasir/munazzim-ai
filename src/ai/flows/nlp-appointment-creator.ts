@@ -54,3 +54,4 @@ export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): 
   return nlpAppointmentCreatorFlow(input);
 }
 
+
