@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
       '@opentelemetry/sdk-node',
       '@opentelemetry/api',
       '@opentelemetry/instrumentation',
+      '@opentelemetry/exporter-jaeger',
+      '@opentelemetry/exporter-zipkin',
       'google-auth-library'
     ],
     allowedDevOrigins: [
