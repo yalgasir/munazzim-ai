@@ -30,7 +30,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverExternalPackages: ['genkit', 'genkitx-openai', '@genkit-ai/core', '@genkit-ai/google-genai'],
+    allowedDevOrigins: ['*.cloudworkstations.dev'],
+  },
 };
 
 export default nextConfig;
-
