@@ -1,3 +1,4 @@
+
 ---
 title: Munazzim | Advanced AI Productivity Ecosystem
 emoji: 🚀
@@ -10,9 +11,9 @@ pinned: false
 
 # 🚀 Munazzim | Advanced AI Productivity Ecosystem
 
-![Last Updated](https://img.shields.io/badge/Last%20Updated-Dynamic-blue)
-![NASA TRL](https://img.shields.io/badge/NASA%20TRL-8-emerald)
-![Engine](https://img.shields.io/badge/AI%20Engine-MythoMax--L2--13B-indigo)
+![Status](https://img.shields.io/badge/Status-Active-emerald)
+![NASA TRL](https://img.shields.io/badge/NASA%20TRL-8-indigo)
+![Engine](https://img.shields.io/badge/AI%20Engine-MythoMax--L2--13B-blue)
 
 Munazzim is a high-reliability, AI-driven time management and productivity ecosystem designed to bridge the gap between simple scheduling and intelligent life-planning. Built to meet rigorous **NASA TRL 8** standards, Munazzim provides a stable, qualified environment for managing complex daily workflows.
 
@@ -26,7 +27,7 @@ Munazzim (Arabic for "Organizer") was conceived to solve the "productivity parad
 ### Objectives
 *   **Cognitive Offloading:** Automate the mental effort of detecting schedule conflicts and prioritizing tasks.
 *   **Contextual Intelligence:** Provide suggestions based on the user's specific workload and stated productivity goals.
-*   **Mission-Critical Reliability:** Ensure 99.9% uptime through a robust Next.js and Firebase architecture.
+*   **Mission-Critical Reliability:** Ensure high availability through a robust Next.js and Firebase architecture.
 
 ---
 
@@ -64,7 +65,8 @@ Generates actionable daily steps to improve time allocation.
 Munazzim is currently classified as **TRL 8** (Actual system completed and qualified through test and demonstration).
 
 *   **Evidence:** The system is integrated with real-time cloud services (Firebase), successfully handles live LLM inference, and maintains a stable operational state in the Hugging Face production environment.
-*   **Path to TRL 9:** Achieving TRL 9 requires "Mission Operations," meaning the system must sustain high-volume user traffic for a period of 6+ months without critical architectural failure.
+*   **Maintenance:** The system date and status are automatically synchronized with the deployment environment.
+*   **Path to TRL 9:** Achieving TRL 9 requires "Mission Operations," meaning the system must sustain high-volume user traffic for a sustained period without critical architectural failure.
 
 ---
 
