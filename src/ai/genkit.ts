@@ -1,6 +1,6 @@
 
 import { genkit } from 'genkit';
-import { openai } from 'genkitx-openai';
+import { openAI } from 'genkitx-openai';
 
 /**
  * @fileOverview AI Configuration for Munazzim project.
@@ -9,7 +9,7 @@ import { openai } from 'genkitx-openai';
 
 export const ai = genkit({
   plugins: [
-    openai({
+    openAI({
       apiKey: process.env.OPENROUTER_API_KEY,
       baseURL: 'https://openrouter.ai/api/v1',
     }),
