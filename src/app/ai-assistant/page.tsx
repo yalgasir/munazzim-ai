@@ -89,25 +89,17 @@ export default function AIAssistantPage() {
 
       if (result) {
         setSuggestion(result);
-        if (result.summaryAnalysis.includes("عذراً")) {
-           toast({
-            variant: "destructive",
-            title: "تنبيه من المساعد",
-            description: "واجه المساعد صعوبة في الاتصال بـ OpenRouter، يرجى التحقق من API Key.",
-          });
-        } else {
-          toast({
-            title: "تم التحليل",
-            description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
-          });
-        }
+        toast({
+          title: "تم التحليل",
+          description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
+        });
       }
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
       toast({ 
         variant: "destructive", 
         title: "خطأ في الاتصال", 
-        description: "حدثت مشكلة غير متوقعة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter." 
+        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter." 
       });
     } finally {
       setLoading(false);
@@ -177,25 +169,6 @@ export default function AIAssistantPage() {
                             {i + 1}
                           </div>
                           <span className="text-foreground font-medium">{s}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {suggestion.conflictsDetected && suggestion.conflictsDetected.length > 0 && (
-                  <div className="mt-8 space-y-3">
-                    <h4 className="font-bold text-amber-700 text-lg flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5" /> تنبيهات هامة:
-                    </h4>
-                    <div className="grid gap-2">
-                      {suggestion.conflictsDetected.map((c, i) => (
-                        <div key={i} className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-                          <p className="font-bold text-amber-900 mb-1">{c.appointment1} و {c.appointment2}</p>
-                          <p className="text-sm text-amber-800 opacity-80 mb-2">{c.reason}</p>
-                          <div className="text-sm font-bold text-amber-900 bg-white/50 p-2 rounded">
-                            اقتراح: {c.suggestion}
-                          </div>
                         </div>
                       ))}
                     </div>

@@ -68,11 +68,10 @@ const prompt = ai.definePrompt({
 {{/each}}
 
 تعليمات هامة:
-1. إذا كان المستخدم يشعر بالتعب أو الإحباط (مثل قوله 'تعبان')، ابدأ بكلمات تشجيعية وانصحه بأخذ استراحة أو تقليل ضغط المهام.
+1. إذا كان المستخدم يشعر بالتعب أو الإحباط، ابدأ بكلمات تشجيعية وانصحه بأخذ استراحة.
 2. حلل التعارضات الزمنية إن وجدت.
 3. قدم اقتراحات محددة بناءً على قائمة المهام.
-4. الرد باللغة العربية الفصحى والودودة.
-5. لا تستخدم أي رموز Markdown نهائياً (مثل النجوم أو المربعات).`,
+4. الرد باللغة العربية الفصحى والودودة وبدون أي رموز Markdown.`,
 });
 
 const aiScheduleOptimizerFlow = ai.defineFlow(
@@ -82,12 +81,13 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
+    // استخدم موديل مستقر من قوقل عبر أوبن روتر
     const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
     if (!process.env.OPENROUTER_API_KEY) {
       return {
-        summaryAnalysis: "تنبيه: مفتاح البرمجة (API Key) لـ OpenRouter غير موجود. يرجى إضافته في الإعدادات لتفعيل التحليل الذكي.",
-        personalizedSuggestions: ["تأكد من إعداد OPENROUTER_API_KEY في ملف البيئة"],
+        summaryAnalysis: "تنبيه: مفتاح البرمجة (API Key) غير موجود. يرجى إضافته لتفعيل التحليل الذكي.",
+        personalizedSuggestions: ["تأكد من إعداد OPENROUTER_API_KEY في الإعدادات"],
       };
     }
 
@@ -99,9 +99,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
         }
       });
 
-      if (!output) {
-        throw new Error('No output from model');
-      }
+      if (!output) throw new Error('No output from model');
 
       return {
         summaryAnalysis: cleanText(output.summaryAnalysis),
@@ -117,8 +115,8 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('AI Flow Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً ضغطاً بسيطاً في الاتصال بمحرك Gemini عبر OpenRouter. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً لتقليل التوتر.",
-        personalizedSuggestions: ["حاول تحديث الصفحة والمحاولة مرة أخرى", "تأكد من تفعيل مفتاح OpenRouter"],
+        summaryAnalysis: "أواجه حالياً ضغطاً بسيطاً في الاتصال بالمحرك الذكي. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً لتقليل التوتر.",
+        personalizedSuggestions: ["حاول تحديث الصفحة والمحاولة مرة أخرى"],
       };
     }
   }
