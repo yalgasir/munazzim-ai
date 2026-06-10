@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -80,11 +81,12 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
+    // موديل كوين الجديد
+    const modelName = 'qwen/qwen3-30b-a3b:free';
 
     if (!process.env.OPENROUTER_API_KEY) {
       return {
-        summaryAnalysis: "تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته في ملف .env لتفعيل التحليل الذكي.",
+        summaryAnalysis: "تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته لتفعيل التحليل الذكي.",
         personalizedSuggestions: ["تأكد من إعداد المفتاح في إعدادات البيئة"],
       };
     }
