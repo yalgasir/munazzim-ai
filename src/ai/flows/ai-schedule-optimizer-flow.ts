@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -53,7 +54,7 @@ const prompt = ai.definePrompt({
   name: 'aiScheduleOptimizerPrompt',
   input: { schema: OptimizeScheduleInputSchema },
   output: { schema: OptimizeScheduleOutputSchema },
-  prompt: `أنت مساعد 'منظّم' الذكي، خبير في علم النفس والإنتاجية. مهمتك هي تحليل جدول المستخدم وتقديم نصائح عملية.
+  prompt: `أنت مساعد 'منظّم' الذكي، خبير في الإنتاجية. حلل جدول المستخدم وقدم نصائح عملية.
 
 حالة المستخدم أو سؤاله: {{{productivityContext}}}
 
@@ -67,11 +68,10 @@ const prompt = ai.definePrompt({
 - {{{description}}} (الأولوية: {{{priority}}}, مكتملة: {{{isCompleted}}})
 {{/each}}
 
-تعليمات هامة:
-1. إذا كان المستخدم يشعر بالتعب أو الإحباط، ابدأ بكلمات تشجيعية وانصحه بأخذ استراحة.
-2. حلل التعارضات الزمنية إن وجدت.
-3. قدم اقتراحات محددة بناءً على قائمة المهام.
-4. الرد باللغة العربية الفصحى والودودة وبدون أي رموز Markdown.`,
+تعليمات:
+1. الرد باللغة العربية الفصحى.
+2. لا تستخدم أي رموز Markdown نهائياً.
+3. قدم تحليل ملخص وتوصيات محددة.`,
 });
 
 const aiScheduleOptimizerFlow = ai.defineFlow(
@@ -81,13 +81,13 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    // استخدم موديل مستقر من قوقل عبر أوبن روتر
+    const apiKey = process.env.OPENROUTER_API_KEY;
     const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!apiKey) {
       return {
-        summaryAnalysis: "تنبيه: مفتاح البرمجة (API Key) غير موجود. يرجى إضافته لتفعيل التحليل الذكي.",
-        personalizedSuggestions: ["تأكد من إعداد OPENROUTER_API_KEY في الإعدادات"],
+        summaryAnalysis: "تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته لتفعيل التحليل الذكي الكامل.",
+        personalizedSuggestions: ["تأكد من إعداد المفتاح في ملف .env"],
       };
     }
 
@@ -99,7 +99,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
         }
       });
 
-      if (!output) throw new Error('No output from model');
+      if (!output) throw new Error('Model returned no output');
 
       return {
         summaryAnalysis: cleanText(output.summaryAnalysis),
@@ -113,10 +113,10 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
         })),
       };
     } catch (error: any) {
-      console.error('AI Flow Error:', error);
+      console.error('Genkit Flow Execution Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً ضغطاً بسيطاً في الاتصال بالمحرك الذكي. نصيحتي السريعة لك هي ترتيب مهامك حسب الأولوية والتركيز على المهمة الأهم حالياً لتقليل التوتر.",
-        personalizedSuggestions: ["حاول تحديث الصفحة والمحاولة مرة أخرى"],
+        summaryAnalysis: "أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء الاصطناعي. نصيحتي السريعة هي مراجعة أهم مهامك اليوم والبدء بالأكثر إلحاحاً لتقليل التوتر.",
+        personalizedSuggestions: ["حاول تحديث الصفحة لاحقاً", "تأكد من استقرار اتصال الإنترنت"],
       };
     }
   }

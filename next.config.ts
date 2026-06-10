@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -31,8 +32,18 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    serverExternalPackages: ['genkit', 'genkitx-openai', '@genkit-ai/core', '@genkit-ai/google-genai'],
-    allowedDevOrigins: ['*.cloudworkstations.dev'],
+    serverExternalPackages: [
+      'genkit',
+      'genkitx-openai',
+      '@genkit-ai/core',
+      '@genkit-ai/google-genai',
+      '@genkit-ai/ai',
+      '@genkit-ai/flow',
+      '@genkit-ai/dotprompt',
+      'openai',
+      'zod'
+    ],
+    allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'],
   },
 };
 
