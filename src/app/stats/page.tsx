@@ -34,7 +34,12 @@ export default function StatsPage() {
 
   useEffect(() => {
     setMounted(true);
-    setUpdateDate("March 5, 2025");
+    const lastUpdateDate = new Date("2025-03-05").toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    setUpdateDate(lastUpdateDate);
     
     if (!user) return;
     const userId = user.uid || user.id;
@@ -90,7 +95,7 @@ export default function StatsPage() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                NASA TRL 8 | {updateDate}
+                NASA TRL 8 | Updated: {updateDate}
               </Badge>
               <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
                 <Cpu className="h-3.5 w-3.5" />

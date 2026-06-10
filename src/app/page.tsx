@@ -34,8 +34,13 @@ export default function Dashboard() {
   const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
-    // Set date on client side to avoid hydration mismatch
-    setCurrentDate("March 5, 2025");
+    // Synchronize to the latest deployment date
+    const lastUpdateDate = new Date("2025-03-05").toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    setCurrentDate(lastUpdateDate);
 
     const checkApiKey = async () => {
       try {
@@ -168,9 +173,9 @@ export default function Dashboard() {
               <p>The system is currently operating at NASA TRL 8 readiness level.</p>
               <div className="p-3 bg-white rounded-lg border border-primary/10">
                 <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
-                <p className="text-xs">MythoMax-L2-13B connected and ready for contextual analysis.</p>
+                <p className="text-xs">MythoMax-L2-13B via OpenRouter connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Last Update: {currentDate || "Loading..."}</p>
+              <p className="text-xs text-muted-foreground italic">Last Deployment: {currentDate || "Loading..."}</p>
               <Button className="w-full mt-2" size="sm" asChild>
                 <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>

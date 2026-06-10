@@ -15,7 +15,7 @@ A comprehensive AI-powered time and productivity management system, developed ac
 **Last Document Update: March 5, 2025**
 
 ## 🧠 AI Autonomy Engine
-The application currently runs on the **MythoMax-L2-13B** engine (via OpenRouter), a language model specialized in understanding context and providing precise temporal consultations, ensuring:
+The application is powered by the **MythoMax-L2-13B via OpenRouter** engine, a language model specialized in understanding context and providing precise temporal consultations, ensuring:
 - **High Privacy:** Data processing via secured channels.
 - **Contextual Intelligence:** Accurate analysis of overlaps between appointments and tasks.
 - **Professional Output:** Sophisticated and clear English communication.
@@ -28,7 +28,7 @@ The application currently runs on the **MythoMax-L2-13B** engine (via OpenRouter
 
 ## 🛠 Technical Stack
 - **Framework:** Next.js 15 (App Router).
-- **AI Engine:** Gryphe MythoMax-L2-13B.
+- **AI Engine:** MythoMax-L2-13B via OpenRouter.
 - **Database:** Firebase Firestore.
 - **Styling:** Tailwind CSS & Shadcn UI.
 - **Tracking:** OpenTelemetry (Node.js SDK).
