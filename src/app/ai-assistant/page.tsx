@@ -91,7 +91,7 @@ export default function AIAssistantPage() {
         setSuggestion(result);
         toast({
           title: "تم التحليل",
-          description: "قام المساعد بمراجعة طلبك وجدولك الحالي بنجاح.",
+          description: "قام المساعد بمراجعة طلبك وجدولك الحالي بنجاح باستخدام محرك MythoMax.",
         });
       }
     } catch (error: any) {
@@ -99,7 +99,7 @@ export default function AIAssistantPage() {
       toast({
         variant: "destructive",
         title: "خطأ في الاتصال",
-        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح API الخاص بك.",
+        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء MythoMax. يرجى التأكد من المفتاح.",
       });
     } finally {
       setLoading(false);
@@ -117,11 +117,11 @@ export default function AIAssistantPage() {
           </div>
 
           <h1 className="text-3xl font-bold font-headline text-primary">
-            المساعد الذكي للإنتاجية
+            المساعد الذكي (MythoMax L2)
           </h1>
 
           <p className="text-muted-foreground max-w-xl">
-            أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
+            أنا مساعدك الذكي المعتمد على محرك MythoMax لإدارة وقتك وإنتاجيتك بوعي كامل بسياق مهامك.
           </p>
 
           <Badge
@@ -129,14 +129,14 @@ export default function AIAssistantPage() {
             className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary"
           >
             <Cpu className="h-3.5 w-3.5" />
-            محرك الذكاء: MythoMax-L2-13B
+            المحرك النشط: MythoMax-L2-13B
           </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
             <Textarea
-              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: عندي موعدين اليوم 10 ص و 12 م رتب لي المهام بينهما)"
+              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: كيف يمكنني موازنة مهامي المهنية مع وقتي الخاص اليوم؟)"
               className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
               dir="rtl"
               value={context}
@@ -149,7 +149,7 @@ export default function AIAssistantPage() {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "جاري الاتصال بالمحرك الذكي..." : "ابدأ التحليل الذكي"}
+              {loading ? "جاري الاتصال بمحرك MythoMax..." : "ابدأ التحليل الذكي"}
             </Button>
           </CardContent>
         </Card>
