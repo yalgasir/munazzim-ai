@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,29 +18,29 @@ export default function CalendarPage() {
   }, []);
 
   const appointments = [
-    { id: 1, title: "اجتماع إداري", time: "09:00", type: "عمل" },
-    { id: 2, title: "حصة تدريبية", time: "17:00", type: "صحة" },
+    { id: 1, title: "Management Meeting", time: "09:00", type: "Work" },
+    { id: 2, title: "Training Session", time: "17:00", type: "Health" },
   ];
 
   const formattedDate = mounted && date 
-    ? date.toLocaleDateString('ar-SA', { day: 'numeric', month: 'long' })
+    ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'long' })
     : "...";
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col gap-6" dir="ltr">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-headline mb-1">التقويم</h1>
-            <p className="text-muted-foreground">جدولك الزمني الشهري واليومي.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1">Calendar</h1>
+            <p className="text-muted-foreground">Your monthly and daily schedule.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">اليوم</Button>
-            <Button variant="outline" size="sm">أسبوع</Button>
-            <Button size="sm">شهر</Button>
+            <Button variant="outline" size="sm">Today</Button>
+            <Button variant="outline" size="sm">Week</Button>
+            <Button size="sm">Month</Button>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              إضافة حدث
+              Add Event
             </Button>
           </div>
         </div>
@@ -73,7 +72,7 @@ export default function CalendarPage() {
           <div className="flex flex-col gap-6">
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">أحداث {formattedDate}</CardTitle>
+                <CardTitle className="text-lg">Events for {formattedDate}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {appointments.length > 0 ? (
@@ -85,18 +84,18 @@ export default function CalendarPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-center py-8">لا توجد أحداث لهذا اليوم.</p>
+                  <p className="text-muted-foreground text-center py-8">No events for this day.</p>
                 )}
               </CardContent>
             </Card>
 
             <Card className="shadow-sm bg-accent/5">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold">تذكير سريع</CardTitle>
+                <CardTitle className="text-sm font-semibold">Quick Reminder</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  تذكر أن تخصص 15 دقيقة في نهاية اليوم لمراجعة إنجازاتك والتخطيط لليوم التالي.
+                  Remember to take 15 minutes at the end of the day to review your achievements and plan for tomorrow.
                 </p>
               </CardContent>
             </Card>
@@ -106,8 +105,3 @@ export default function CalendarPage() {
     </AppLayout>
   );
 }
-
-
-
-
-

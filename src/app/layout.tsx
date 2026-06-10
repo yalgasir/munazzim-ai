@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/auth/auth-context";
 
 export const metadata: Metadata = {
-  title: 'Munazzim | AI Time Management',
+  title: 'Munazzim AI Time Manager',
   description: 'Modern time management and scheduling app powered by AI',
 };
 

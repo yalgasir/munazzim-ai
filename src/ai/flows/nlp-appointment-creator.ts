@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'genkit';
@@ -17,9 +16,6 @@ const NLPAppointmentCreatorOutputSchema = z.object({
 });
 export type NLPAppointmentCreatorOutput = z.infer<typeof NLPAppointmentCreatorOutputSchema>;
 
-/**
- * استخدام MythoMax عبر OpenRouter لتحليل المواعيد
- */
 export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is missing');
@@ -38,7 +34,7 @@ export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): 
       messages: [
         {
           role: "system",
-          content: `أنت مساعد ذكاء اصطناعي متخصص في تحليل طلبات المواعيد. استخرج المعلومات وحولها إلى JSON صالح فقط. تاريخ اليوم: ${currentDate}. يجب أن يحتوي الرد على JSON فقط بالحقول: title, description, date, time, durationMinutes, allDay.`
+          content: `You are an AI assistant specializing in parsing appointment requests. Extract information and return only valid JSON. Today's date: ${currentDate}. Response MUST be JSON with fields: title, description, date, time, durationMinutes, allDay.`
         },
         {
           role: "user",
@@ -54,7 +50,7 @@ export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): 
   const result = JSON.parse(data.choices?.[0]?.message?.content || "{}");
   
   return {
-    title: result.title || "موعد جديد",
+    title: result.title || "New Appointment",
     description: result.description,
     date: result.date || currentDate,
     time: result.time,

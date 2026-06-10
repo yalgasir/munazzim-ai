@@ -21,11 +21,11 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "openrouter/free",
+        model: process.env.OPENROUTER_MODEL || "gryphe/mythomax-l2-13b",
         messages: [
           {
             role: "system",
-            content: "أنت 'منظّم'، مساعد ذكاء اصطناعي خبير في إدارة الوقت والإنتاجية. أجب دائماً باللغة العربية. اجعل ردودك ودودة ومهنية وبدون تنسيقات Markdown معقدة.",
+            content: "You are 'Munazzim', an AI productivity assistant. Respond always in English. Be friendly, professional, and do not use overly complex Markdown.",
           },
           {
             role: "user",
@@ -46,13 +46,8 @@ export async function POST(req: Request) {
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content;
 
-    return NextResponse.json({ reply: reply || "عذراً، لم أتمكن من توليد رد." });
+    return NextResponse.json({ reply: reply || "Sorry, I couldn't generate a reply." });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message }, { status: 500 });
   }
 }
-
-
-
-
-

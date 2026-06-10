@@ -7,7 +7,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    const modelName = process.env.OPENROUTER_MODEL || "openrouter/free";
+    const modelName = process.env.OPENROUTER_MODEL || "gryphe/mythomax-l2-13b";
     
     if (!apiKey) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: modelName,
         messages: [
-          { role: "system", content: "أنت مساعد ذكاء اصطناعي ودود. أجب باللغة العربية دائماً وبإيجاز." },
+          { role: "system", content: "You are a friendly AI assistant. Always respond in English and be concise." },
           { role: "user", content: prompt }
         ],
       }),
@@ -76,8 +76,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-
-
-
-

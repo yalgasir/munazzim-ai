@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,7 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 
@@ -34,7 +33,6 @@ export default function TasksPage() {
 
   useEffect(() => {
     if (!user) return;
-
     const userId = user.uid || user.id;
 
     if (isFirebaseConfigured) {
@@ -54,7 +52,6 @@ export default function TasksPage() {
 
       return () => unsubscribe();
     } else {
-      // وضع المحاكاة
       const loadLocalTasks = () => {
         const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
         const userTasks = allTasks.filter((t: any) => t.userId === userId);
@@ -95,9 +92,9 @@ export default function TasksPage() {
 
       setNewTask({ description: "", priority: "Medium" });
       setIsAddOpen(false);
-      toast({ title: "تمت الإضافة", description: "أضيفت المهمة بنجاح إلى قائمة مهامك." });
+      toast({ title: "Success", description: "Task added to your list." });
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل في حفظ المهمة." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to save task." });
     }
   };
 
@@ -112,7 +109,7 @@ export default function TasksPage() {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, isCompleted: !currentStatus } : t));
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل في تحديث الحالة." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to update status." });
     }
   };
 
@@ -126,55 +123,55 @@ export default function TasksPage() {
         localStorage.setItem("mock_tasks", JSON.stringify(filtered));
         setTasks(prev => prev.filter(t => t.id !== id));
       }
-      toast({ title: "تم الحذف", description: "تم حذف المهمة بنجاح." });
+      toast({ title: "Deleted", description: "Task removed." });
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل في الحذف." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete task." });
     }
   };
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 max-w-5xl mx-auto" dir="rtl">
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto" dir="ltr">
         <div className="flex items-center justify-between">
-          <div className="text-right">
-            <h1 className="text-3xl font-bold font-headline">قائمة مهامي</h1>
-            <p className="text-muted-foreground">تتبع إنجازاتك اليومية ورتب أولوياتك.</p>
+          <div className="text-left">
+            <h1 className="text-3xl font-bold font-headline">My Tasks</h1>
+            <p className="text-muted-foreground">Keep track of your daily tasks.</p>
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 h-11 px-6 shadow-md">
                 <Plus className="h-5 w-5" />
-                إضافة مهمة
+                Add Task
               </Button>
             </DialogTrigger>
-            <DialogContent dir="rtl">
-              <DialogHeader className="text-right">
-                <DialogTitle className="text-2xl font-bold">إضافة مهمة جديدة</DialogTitle>
+            <DialogContent dir="ltr">
+              <DialogHeader className="text-left">
+                <DialogTitle className="text-2xl font-bold">New Task</DialogTitle>
               </DialogHeader>
               <div className="grid gap-6 py-4">
-                <div className="space-y-2 text-right">
-                  <Label className="font-bold">وصف المهمة</Label>
+                <div className="space-y-2 text-left">
+                  <Label className="font-bold">Description</Label>
                   <Input 
-                    placeholder="ماذا تود إنجازه؟" 
+                    placeholder="What needs to be done?" 
                     value={newTask.description} 
                     onChange={(e) => setNewTask({...newTask, description: e.target.value})} 
                     className="h-11"
                   />
                 </div>
-                <div className="space-y-2 text-right">
-                  <Label className="font-bold">مستوى الأهمية</Label>
+                <div className="space-y-2 text-left">
+                  <Label className="font-bold">Priority</Label>
                   <Select value={newTask.priority} onValueChange={(v) => setNewTask({...newTask, priority: v})}>
-                    <SelectTrigger dir="rtl" className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="High">عالية جداً (أولوية قصوى)</SelectItem>
-                      <SelectItem value="Medium">متوسطة</SelectItem>
-                      <SelectItem value="Low">منخفضة</SelectItem>
+                      <SelectItem value="High">High Priority</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddTask} className="w-full h-12 text-lg font-bold">حفظ المهمة</Button>
+                <Button onClick={handleAddTask} className="w-full h-12 text-lg font-bold">Save Task</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -184,19 +181,19 @@ export default function TasksPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">جاري تحميل مهامك...</p>
+              <p className="text-muted-foreground">Loading tasks...</p>
             </div>
           ) : tasks.length > 0 ? (
             tasks.sort((a, b) => (a.isCompleted === b.isCompleted) ? 0 : a.isCompleted ? 1 : -1).map((task) => (
               <Card 
                 key={task.id} 
                 className={cn(
-                  "group transition-all border-r-4", 
-                  task.priority === "High" ? "border-r-red-500" : task.priority === "Medium" ? "border-r-amber-500" : "border-r-emerald-500",
+                  "group transition-all border-l-4", 
+                  task.priority === "High" ? "border-l-red-500" : task.priority === "Medium" ? "border-l-amber-500" : "border-l-emerald-500",
                   task.isCompleted && "opacity-75 grayscale-[0.5]"
                 )}
               >
-                <CardContent className="p-4 flex items-center gap-4 flex-row-reverse">
+                <CardContent className="p-4 flex items-center gap-4">
                   <button 
                     onClick={() => toggleTask(task.id, task.isCompleted)}
                     className="transition-transform active:scale-90"
@@ -207,20 +204,20 @@ export default function TasksPage() {
                       <Circle className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
                     )}
                   </button>
-                  <div className="flex-1 text-right">
+                  <div className="flex-1 text-left">
                     <span className={cn(
                       "text-lg font-medium transition-all", 
                       task.isCompleted && "line-through text-muted-foreground"
                     )}>
                       {task.description}
                     </span>
-                    <div className="flex items-center justify-end gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1">
                       {task.priority === "High" && (
                         <Badge variant="destructive" className="text-[10px] h-5 flex items-center gap-1">
-                          <Flag className="h-3 w-3" /> عاجل
+                          <Flag className="h-3 w-3" /> Urgent
                         </Badge>
                       )}
-                      <span className="text-[10px] text-muted-foreground">تمت الإضافة {new Date(task.createdAt).toLocaleDateString('ar-SA')}</span>
+                      <span className="text-[10px] text-muted-foreground">Added on {new Date(task.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <Button 
@@ -240,10 +237,10 @@ export default function TasksPage() {
                 <CheckCircle className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">كل شيء تحت السيطرة!</h3>
-                <p className="text-muted-foreground">لا توجد مهام معلقة حالياً. استمتع بوقتك أو أضف مهمة جديدة.</p>
+                <h3 className="text-lg font-bold">All caught up!</h3>
+                <p className="text-muted-foreground">No pending tasks. Enjoy your time or add a new task.</p>
               </div>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>إضافة مهمة</Button>
+              <Button variant="outline" onClick={() => setIsAddOpen(true)}>Add Task</Button>
             </Card>
           )}
         </div>
@@ -251,8 +248,3 @@ export default function TasksPage() {
     </AppLayout>
   );
 }
-
-
-
-
-

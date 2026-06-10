@@ -1,4 +1,3 @@
-
 export async function askMunazzimAI(prompt: string) {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -13,7 +12,7 @@ export async function askMunazzimAI(prompt: string) {
         messages: [
           {
             role: "system",
-            content: "أنت مساعد 'منظّم' الذكي، خبير في إدارة الوقت والإنتاجية. أجب دائماً باللغة العربية بأسلوب مهني وواضح."
+            content: "You are 'Munazzim AI', a highly skilled productivity and time management expert. Always respond in professional and clear English."
           },
           {
             role: "user",
@@ -31,5 +30,5 @@ export async function askMunazzimAI(prompt: string) {
     }
   
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "عذراً، لم أتمكن من توليد رد حالياً.";
+    return data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response at this time.";
   }

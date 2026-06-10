@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     id: "public-guest", 
     uid: "public-guest", 
     email: "guest@munazzim.app",
-    displayName: "مستخدم منظّم"
+    displayName: "Guest User"
   });
   const [loading] = useState(false);
 
@@ -36,6 +36,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-
-
-
