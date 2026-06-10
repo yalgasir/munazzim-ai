@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,10 +15,11 @@ import {
   PieChart,
   Pie
 } from "recharts";
-import { Target, Award, Clock, Activity, Loader2 } from "lucide-react";
+import { Target, Award, Clock, Activity, Loader2, ShieldCheck } from "lucide-react";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { Badge } from "@/components/ui/badge";
 
 const COLORS = ['#2963CC', '#52B2BF', '#F59E0B', '#EF4444'];
 
@@ -59,7 +59,6 @@ export default function StatsPage() {
     </AppLayout>
   );
 
-  // معالجة البيانات للرسوم البيانية
   const completedCount = tasks.filter(t => t.isCompleted).length;
   const pendingCount = tasks.filter(t => !t.isCompleted).length;
   
@@ -82,9 +81,17 @@ export default function StatsPage() {
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="rtl">
-        <div>
-          <h1 className="text-3xl font-bold font-headline mb-1">مركز تحليلات الأداء (TRL 8)</h1>
-          <p className="text-muted-foreground">تحليل دقيق لبياناتك الحقيقية المسجلة في النظام.</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                جاهزية تقنية NASA TRL 8
+              </Badge>
+            </div>
+            <h1 className="text-3xl font-bold font-headline mb-1">مركز تحليلات الأداء المتقدم</h1>
+            <p className="text-muted-foreground">تحليل دقيق لبياناتك الحقيقية المسجلة في النظام لضمان أعلى مستويات الإنتاجية.</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -162,6 +169,3 @@ function StatCard({ icon, label, value, color }: any) {
     </Card>
   );
 }
-
-
-
