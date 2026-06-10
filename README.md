@@ -15,14 +15,14 @@ pinned: false
 ![NASA TRL](https://img.shields.io/badge/NASA%20TRL-8-indigo)
 ![Engine](https://img.shields.io/badge/AI%20Engine-MythoMax--L2--13B-blue)
 
-Munazzim is a high-reliability, AI-driven time management and productivity ecosystem designed to bridge the gap between simple scheduling and intelligent life-planning. Built to meet rigorous **NASA TRL 8** standards, Munazzim provides a stable, qualified environment for managing complex daily workflows.
+Munazzim (Arabic for "Organizer") is a high-reliability, AI-driven time management and productivity ecosystem designed to bridge the gap between simple scheduling and intelligent life-planning. Built to meet rigorous **NASA TRL 8** standards, Munazzim provides a stable, qualified environment for managing complex daily workflows.
 
 ---
 
 ## 📖 Project Overview
 
 ### Purpose
-Munazzim (Arabic for "Organizer") was conceived to solve the "productivity paradox"—where users spend more time managing tools than doing actual work. It leverages Large Language Models (LLMs) to provide a cognitive layer over traditional calendars and task lists.
+Munazzim was conceived to solve the "productivity paradox"—where users spend more time managing tools than doing actual work. It leverages Large Language Models (LLMs) to provide a cognitive layer over traditional calendars and task lists.
 
 ### Objectives
 *   **Cognitive Offloading:** Automate the mental effort of detecting schedule conflicts and prioritizing tasks.
