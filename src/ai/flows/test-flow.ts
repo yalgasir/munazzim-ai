@@ -25,7 +25,7 @@ const testFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const modelName = 'qwen/qwen3-30b-a3b:free';
+      const modelName = 'qwen/qwen3.6-plus';
       const { text } = await ai.generate({
         model: `openai/${modelName}`,
         prompt: input,
