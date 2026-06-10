@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,9 +30,12 @@ export default function StatsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [updateDate, setUpdateDate] = useState("");
 
   useEffect(() => {
     setMounted(true);
+    setUpdateDate("March 5, 2025");
+    
     if (!user) return;
     const userId = user.uid || user.id;
 
@@ -63,12 +67,12 @@ export default function StatsPage() {
   const pendingCount = tasks.filter(t => !t.isCompleted).length;
   
   const pieData = [
-    { name: "منجزة", value: completedCount },
-    { name: "قيد الانتظار", value: pendingCount }
+    { name: "Completed", value: completedCount },
+    { name: "Pending", value: pendingCount }
   ];
 
   const categoryCounts = appointments.reduce((acc: any, app: any) => {
-    const type = app.type || "عام";
+    const type = app.type || "General";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
@@ -80,40 +84,40 @@ export default function StatsPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="rtl">
+      <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="ltr">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
+          <div className="text-left">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                NASA TRL 8 | 4 March 2025
+                NASA TRL 8 | {updateDate}
               </Badge>
               <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
                 <Cpu className="h-3.5 w-3.5" />
                 MythoMax-L2-13B
               </Badge>
             </div>
-            <h1 className="text-3xl font-bold font-headline mb-1">تحليلات الأداء والجاهزية التقنية</h1>
-            <p className="text-muted-foreground">رصد دقيق لمؤشرات الأداء (KPIs) وحالة النظام السحابي.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1">Performance Analytics & Technical Readiness</h1>
+            <p className="text-muted-foreground">Precise monitoring of Key Performance Indicators (KPIs) and system health.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard icon={<Target />} label="إنجاز المهام" value={`${completedCount}/${tasks.length}`} color="primary" />
-          <StatCard icon={<Activity />} label="فعالية المواعيد" value={appointments.length} color="accent" />
-          <StatCard icon={<Cpu />} label="المحرك النشط" value="MythoMax" color="purple" />
-          <StatCard icon={<Award />} label="مستوى الالتزام" value={tasks.length > 0 ? `${Math.round((completedCount/tasks.length)*100)}%` : "0%"} color="emerald" />
+          <StatCard icon={<Target />} label="Task Completion" value={`${completedCount}/${tasks.length}`} color="primary" />
+          <StatCard icon={<Activity />} label="Appointment Efficiency" value={appointments.length} color="accent" />
+          <StatCard icon={<Cpu />} label="Active Engine" value="MythoMax" color="purple" />
+          <StatCard icon={<Award />} label="Commitment Level" value={tasks.length > 0 ? `${Math.round((completedCount/tasks.length)*100)}%` : "0%"} color="emerald" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">توزيع المواعيد حسب الفئة</CardTitle>
-              <CardDescription>تحليل جودة استغلال الوقت</CardDescription>
+              <CardTitle className="text-lg">Appointments by Category</CardTitle>
+              <CardDescription>Analysis of time allocation quality</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData.length > 0 ? barData : [{name: 'لا يوجد', count: 0}]}>
+                <BarChart data={barData.length > 0 ? barData : [{name: 'No Data', count: 0}]}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                   <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
                   <YAxis fontSize={12} axisLine={false} tickLine={false} />
@@ -126,14 +130,14 @@ export default function StatsPage() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">حالة الجاهزية TRL 8</CardTitle>
-              <CardDescription>كفاءة الإنجاز النهائية</CardDescription>
+              <CardTitle className="text-lg">NASA TRL 8 Readiness Status</CardTitle>
+              <CardDescription>Final completion efficiency</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] flex justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={tasks.length > 0 ? pieData : [{name: 'بدون بيانات', value: 1}]}
+                    data={tasks.length > 0 ? pieData : [{name: 'No Data', value: 1}]}
                     innerRadius={60}
                     outerRadius={100}
                     paddingAngle={5}

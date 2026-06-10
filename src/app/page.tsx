@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,8 +31,12 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
+  const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
+    // Set date on client side to avoid hydration mismatch
+    setCurrentDate("March 5, 2025");
+
     const checkApiKey = async () => {
       try {
         const res = await fetch('/api/health');
@@ -165,7 +170,7 @@ export default function Dashboard() {
                 <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
                 <p className="text-xs">MythoMax-L2-13B connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Last Update: March 4, 2025</p>
+              <p className="text-xs text-muted-foreground italic">Last Update: {currentDate || "Loading..."}</p>
               <Button className="w-full mt-2" size="sm" asChild>
                 <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>
