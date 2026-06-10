@@ -5,7 +5,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, BrainCircuit, Loader2, Check, Cpu, AlertCircle } from "lucide-react";
+import { Sparkles, BrainCircuit, Loader2, Check, Cpu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
@@ -91,7 +91,7 @@ export default function AIAssistantPage() {
         setSuggestion(result);
         toast({
           title: "تم التحليل",
-          description: "قام المساعد بمراجعة طلبك وجدولك الحالي.",
+          description: "قام المساعد بمراجعة طلبك وجدولك الحالي بنجاح.",
         });
       }
     } catch (error: any) {
@@ -99,7 +99,7 @@ export default function AIAssistantPage() {
       toast({
         variant: "destructive",
         title: "خطأ في الاتصال",
-        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter.",
+        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح API الخاص بك.",
       });
     } finally {
       setLoading(false);
@@ -129,14 +129,14 @@ export default function AIAssistantPage() {
             className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary"
           >
             <Cpu className="h-3.5 w-3.5" />
-            محرك الذكاء: MythoMax 13B via OpenRouter
+            محرك الذكاء: MythoMax-L2-13B
           </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
             <Textarea
-              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: عندي موعدين اليوم 10 ص و 12 م رتب لي)"
+              placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: عندي موعدين اليوم 10 ص و 12 م رتب لي المهام بينهما)"
               className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
               dir="rtl"
               value={context}
@@ -149,7 +149,7 @@ export default function AIAssistantPage() {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "جاري الاتصال بـ OpenRouter..." : "ابدأ التحليل الذكي"}
+              {loading ? "جاري الاتصال بالمحرك الذكي..." : "ابدأ التحليل الذكي"}
             </Button>
           </CardContent>
         </Card>
@@ -197,4 +197,3 @@ export default function AIAssistantPage() {
     </AppLayout>
   );
 }
-

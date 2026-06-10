@@ -113,7 +113,8 @@ function extractSuggestions(text: string): string[] {
 export async function optimizeSchedule(
   input: OptimizeScheduleInput
 ): Promise<OptimizeScheduleOutput> {
-  const modelName = process.env.OPENROUTER_MODEL || 'qwen/qwen3-30b-a3b:free';
+  // استخدام MythoMax 13B كما طلب المستخدم
+  const modelName = process.env.OPENROUTER_MODEL || 'gryphe/mythomax-l2-13b';
 
   if (!process.env.OPENROUTER_API_KEY) {
     return {
@@ -125,10 +126,6 @@ export async function optimizeSchedule(
   }
 
   try {
-     console.log("================================");
-     console.log("MODEL USED:", modelName);
-     console.log("API KEY EXISTS:", !!process.env.OPENROUTER_API_KEY);
-     console.log("================================");
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -150,7 +147,7 @@ export async function optimizeSchedule(
             content: buildPrompt(input),
           },
         ],
-        temperature: 0.4,
+        temperature: 0.6,
         max_tokens: 800,
       }),
       cache: 'no-store',
@@ -162,11 +159,10 @@ export async function optimizeSchedule(
 
       return {
         summaryAnalysis:
-          'حدث خطأ في الاتصال بـ Qwen3.6 Plus عبر OpenRouter. تحقق من المفتاح واسم الموديل في إعدادات البيئة.',
+          'حدث خطأ في الاتصال بمحرك الذكاء الاصطناعي. يرجى التحقق من المفتاح في الإعدادات.',
         personalizedSuggestions: [
           'تأكد من وجود OPENROUTER_API_KEY.',
-          'تأكد من أن OPENROUTER_MODEL يساوي qwen/qwen3-30b-a3b:free.',
-          'أعد تشغيل التطبيق أو Hugging Face Space بعد تحديث الإعدادات.',
+          'حاول إعادة المحاولة لاحقاً.',
         ],
         conflictsDetected: [],
       };
@@ -198,14 +194,12 @@ export async function optimizeSchedule(
 
     return {
       summaryAnalysis:
-        'أواجه حالياً صعوبة تقنية في الوصول إلى Qwen3.6 Plus عبر OpenRouter. تأكد من المفتاح والاتصال ثم حاول مرة أخرى.',
+        'أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء. يرجى التأكد من الاتصال.',
       personalizedSuggestions: [
-        'تحقق من OPENROUTER_API_KEY.',
-        'تحقق من OPENROUTER_MODEL.',
+        'تحقق من إعدادات البيئة.',
         'أعد تشغيل السيرفر بعد أي تعديل.',
       ],
       conflictsDetected: [],
     };
   }
 }
-
