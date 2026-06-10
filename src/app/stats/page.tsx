@@ -34,12 +34,12 @@ export default function StatsPage() {
 
   useEffect(() => {
     setMounted(true);
-    const lastUpdateDate = new Date("2025-03-05").toLocaleDateString("en-US", {
+    // Set dynamic update date on mount
+    setUpdateDate(new Date().toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
-    setUpdateDate(lastUpdateDate);
+    }));
     
     if (!user) return;
     const userId = user.uid || user.id;

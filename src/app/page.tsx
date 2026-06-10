@@ -34,13 +34,12 @@ export default function Dashboard() {
   const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
-    // Synchronize to the latest deployment date
-    const lastUpdateDate = new Date("2025-03-05").toLocaleDateString("en-US", {
+    // Dynamically generate current date after mount to avoid hydration mismatch
+    setCurrentDate(new Date().toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
-    setCurrentDate(lastUpdateDate);
+    }));
 
     const checkApiKey = async () => {
       try {
@@ -175,7 +174,7 @@ export default function Dashboard() {
                 <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
                 <p className="text-xs">MythoMax-L2-13B via OpenRouter connected and ready for contextual analysis.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Last Deployment: {currentDate || "March 5, 2025"}</p>
+              <p className="text-xs text-muted-foreground italic">Last Deployment: {currentDate}</p>
               <Button className="w-full mt-2" size="sm" asChild>
                 <Link href="/ai-assistant">Open AI Assistant</Link>
               </Button>
