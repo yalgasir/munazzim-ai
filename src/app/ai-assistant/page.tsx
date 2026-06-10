@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,13 +49,13 @@ export default function AIAssistantPage() {
           const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
           const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
           const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
-          
+
           currentAppointments = appSnap.docs.map(doc => ({
             title: doc.data().title || "موعد بدون عنوان",
-            startTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "00:00"}:00Z`,
-            endTime: `${doc.data().date || new Date().toISOString().split('T')[0]}T${doc.data().time || "01:00"}:00Z`,
+            startTime: `${doc.data().date || new Date().toISOString().split("T")[0]}T${doc.data().time || "00:00"}:00Z`,
+            endTime: `${doc.data().date || new Date().toISOString().split("T")[0]}T${doc.data().time || "01:00"}:00Z`,
           }));
-          
+
           currentTasks = taskSnap.docs.map(doc => ({
             description: doc.data().description || "مهمة بدون وصف",
             priority: doc.data().priority || "Medium",
@@ -65,13 +64,13 @@ export default function AIAssistantPage() {
         } else {
           const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
           const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
-          
+
           currentAppointments = allApps.filter((a: any) => a.userId === userId).map((a: any) => ({
             title: a.title,
             startTime: `${a.date}T${a.time || "00:00"}:00Z`,
             endTime: `${a.date}T${a.time || "01:00"}:00Z`,
           }));
-          
+
           currentTasks = allTasks.filter((t: any) => t.userId === userId).map((t: any) => ({
             description: t.description,
             priority: t.priority,
@@ -97,10 +96,10 @@ export default function AIAssistantPage() {
       }
     } catch (error: any) {
       console.error("AI Assistant Error:", error);
-      toast({ 
-        variant: "destructive", 
-        title: "خطأ في الاتصال", 
-        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter." 
+      toast({
+        variant: "destructive",
+        title: "خطأ في الاتصال",
+        description: "حدثت مشكلة أثناء الاتصال بمحرك الذكاء. يرجى التأكد من مفتاح OpenRouter.",
       });
     } finally {
       setLoading(false);
@@ -116,26 +115,36 @@ export default function AIAssistantPage() {
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm border border-primary/20">
             <BrainCircuit className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold font-headline text-primary">المساعد الذكي للإنتاجية</h1>
+
+          <h1 className="text-3xl font-bold font-headline text-primary">
+            المساعد الذكي للإنتاجية
+          </h1>
+
           <p className="text-muted-foreground max-w-xl">
             أنا أقرأ جدول مواعيدك ومهامك المعلقة لأقدم لك أفضل طريقة لتنظيم يومك وتجنب التعارضات.
           </p>
-          <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-          <Cpu className="h-3.5 w-3.5" /> محرك الذكاء: Qwen3 30B via OpenRouter
+
+          <Badge
+            variant="outline"
+            className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary"
+          >
+            <Cpu className="h-3.5 w-3.5" />
+            محرك الذكاء: MythoMax 13B via OpenRouter
           </Badge>
         </div>
 
         <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
           <CardContent className="p-6 space-y-4">
-            <Textarea 
+            <Textarea
               placeholder="بماذا يمكنني مساعدتك اليوم؟ (مثال: عندي موعدين اليوم 10 ص و 12 م رتب لي)"
               className="min-h-[140px] text-lg p-4 text-right border-primary/20 focus:ring-primary/30 transition-all"
               dir="rtl"
               value={context}
               onChange={(e) => setContext(e.target.value)}
             />
-            <Button 
-              className="w-full h-14 text-xl font-bold gap-3 shadow-md active:scale-[0.98] transition-transform" 
+
+            <Button
+              className="w-full h-14 text-xl font-bold gap-3 shadow-md active:scale-[0.98] transition-transform"
               onClick={handleOptimize}
               disabled={loading}
             >
@@ -153,19 +162,24 @@ export default function AIAssistantPage() {
                   <Sparkles className="h-6 w-6" /> رد منظّم الذكي
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="pt-2">
                 <div className="leading-relaxed text-lg whitespace-pre-wrap font-medium text-right mb-6" dir="rtl">
                   {suggestion.summaryAnalysis}
                 </div>
-                
+
                 {suggestion.personalizedSuggestions && suggestion.personalizedSuggestions.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-bold text-emerald-800 text-lg flex items-center gap-2">
                       <Check className="h-5 w-5" /> توصيات مقترحة:
                     </h4>
+
                     <div className="grid gap-2">
                       {suggestion.personalizedSuggestions.map((s, i) => (
-                        <div key={i} className="flex items-start gap-3 bg-white/60 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 bg-white/60 p-4 rounded-xl border border-emerald-100 shadow-sm"
+                        >
                           <div className="h-6 w-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
                             {i + 1}
                           </div>
