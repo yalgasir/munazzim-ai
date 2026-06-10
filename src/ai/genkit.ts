@@ -1,17 +1,10 @@
-
 import { genkit } from 'genkit';
-import { openAI } from 'genkitx-openai';
 
 /**
- * @fileOverview AI Configuration for Munazzim project.
- * Configured for OpenRouter integration using OpenAI compatible plugin.
+ * Basic Genkit configuration.
+ * OpenRouter is now called directly from ai-schedule-optimizer-flow.ts.
  */
 
 export const ai = genkit({
-  plugins: [
-    openAI({
-      apiKey: process.env.OPENROUTER_API_KEY,
-      baseURL: 'https://openrouter.ai/api/v1',
-    }),
-  ],
+  plugins: [],
 });
