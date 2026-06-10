@@ -1,9 +1,10 @@
+
 import { genkit } from 'genkit';
 import { openai } from 'genkitx-openai';
 
 /**
  * @fileOverview AI Configuration for Munazzim project.
- * Uses Gemini 1.5 Pro/Flash models via OpenRouter provider.
+ * Configured for OpenRouter integration using OpenAI compatible plugin.
  */
 
 export const ai = genkit({
@@ -14,4 +15,3 @@ export const ai = genkit({
     }),
   ],
 });
-

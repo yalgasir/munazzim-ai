@@ -81,18 +81,18 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     outputSchema: OptimizeScheduleOutputSchema,
   },
   async (input) => {
-    const apiKey = process.env.OPENROUTER_API_KEY;
     const modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
-    if (!apiKey) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return {
-        summaryAnalysis: "تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته لتفعيل التحليل الذكي الكامل.",
-        personalizedSuggestions: ["تأكد من إعداد المفتاح في ملف .env"],
+        summaryAnalysis: "تنبيه: مفتاح OPENROUTER_API_KEY غير متوفر حالياً. يرجى إضافته في ملف .env لتفعيل التحليل الذكي.",
+        personalizedSuggestions: ["تأكد من إعداد المفتاح في إعدادات البيئة"],
       };
     }
 
     try {
       const { output } = await prompt(input, {
+        // Use the openai/ prefix because we are using the genkitx-openai plugin
         model: `openai/${modelName}`,
         config: {
           temperature: 0.7,
@@ -115,7 +115,7 @@ const aiScheduleOptimizerFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Genkit Flow Execution Error:', error);
       return {
-        summaryAnalysis: "أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء الاصطناعي. نصيحتي السريعة هي مراجعة أهم مهامك اليوم والبدء بالأكثر إلحاحاً لتقليل التوتر.",
+        summaryAnalysis: "أواجه حالياً صعوبة تقنية في الوصول إلى محرك الذكاء الاصطناعي. نصيحتي السريعة هي مراجعة أهم مهامك اليوم والبدء بالأكثر إلحاحاً.",
         personalizedSuggestions: ["حاول تحديث الصفحة لاحقاً", "تأكد من استقرار اتصال الإنترنت"],
       };
     }
