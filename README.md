@@ -1,3 +1,12 @@
+---
+title: Munazzim | Advanced AI Productivity Ecosystem
+emoji: 🚀
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # 🚀 Munazzim | Advanced AI Productivity Ecosystem
 
 ![Last Updated](https://img.shields.io/badge/Last%20Updated-March%205%2C%202025-blue)
@@ -122,8 +131,6 @@ Munazzim is currently classified as **TRL 8** (Actual system completed and quali
 ---
 
 ## 📸 Screenshots
-
-> *Note: Below are descriptions of visual sections. Screenshots are generated during deployment.*
 
 1.  **Dashboard View:** A high-level overview showing completion rates and the MythoMax status badge.
 2.  **AI Planner:** The interaction pane where users chat with the MythoMax engine.
