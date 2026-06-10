@@ -44,12 +44,6 @@ const nextConfig: NextConfig = {
       'zod',
       '@opentelemetry/sdk-node',
       '@opentelemetry/api',
-      '@opentelemetry/sdk-trace-base',
-      '@opentelemetry/sdk-trace-node',
-      '@opentelemetry/resources',
-      '@opentelemetry/semantic-conventions',
-      '@opentelemetry/exporter-jaeger',
-      '@opentelemetry/exporter-zipkin',
       '@opentelemetry/instrumentation',
       'google-auth-library'
     ],
