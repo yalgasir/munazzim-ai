@@ -112,14 +112,14 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button className="gap-2 shadow-lg h-11 px-6" asChild>
+            <Button className="gap-2 shadow-lg h-11 px-6 bg-primary text-white hover:bg-primary/90" asChild>
               <Link href="/appointments">
-                <CalendarPlus className="h-5 w-5" /> Add New Appointment
+                <CalendarPlus className="h-5 w-5 text-white" /> Add New Appointment
               </Link>
             </Button>
-            <Button className="gap-2 shadow-lg h-11 px-6" asChild>
+            <Button className="gap-2 shadow-lg h-11 px-6 bg-primary text-white hover:bg-primary/90" asChild>
               <Link href="/tasks">
-                <Plus className="h-5 w-5" /> Add Task
+                <Plus className="h-5 w-5 text-white" /> Add Task
               </Link>
             </Button>
           </div>
