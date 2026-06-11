@@ -58,3 +58,4 @@ export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): 
     allDay: !!result.allDay
   };
 }
+

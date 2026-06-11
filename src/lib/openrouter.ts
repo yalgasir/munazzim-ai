@@ -32,3 +32,4 @@ export async function askMunazzimAI(prompt: string) {
     const data = await response.json();
     return data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response at this time.";
   }
+

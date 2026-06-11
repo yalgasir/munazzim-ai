@@ -31,3 +31,4 @@ jobs:
           git add README.md
           # Only commit if there are changes
           git diff --quiet && git diff --staged --quiet || (git commit -m "docs: update last updated date to $(date +'%d/%m/%Y')" && git push)
+

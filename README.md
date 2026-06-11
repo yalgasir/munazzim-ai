@@ -72,3 +72,4 @@ Munazzim is currently classified as **TRL 8** (Actual system completed and quali
 
 **Last Updated: Automatically synchronized with the latest project build.**
 **Munazzim Engineering Team | TRL-8 Certified**
+

@@ -21,3 +21,4 @@
 - Subtle and purposeful animations will enhance user feedback during task completion, calendar view transitions, and notification alerts, providing a fluid and intuitive interaction without distraction.
 
 
+
