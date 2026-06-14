@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-const isValidKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY.startsWith("AIza");
+const isValidKey = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.startsWith("AIza");
 
 const firebaseConfig = {
   apiKey: isValidKey ? process.env.NEXT_PUBLIC_FIREBASE_API_KEY : "AIzaSyMockKey_DemoMode",
@@ -19,6 +19,8 @@ const db = getFirestore(app);
 
 export const isFirebaseConfigured = isValidKey;
 console.log("Firebase Configured:", isFirebaseConfigured);
+console.log("Firebase Configured:", isValidKey);
+console.log("Firebase Project:", firebaseConfig.projectId);
 
 export { auth, db };
 
