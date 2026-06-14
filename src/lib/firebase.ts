@@ -18,6 +18,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 export const isFirebaseConfigured = isValidKey;
+console.log("Firebase Configured:", isFirebaseConfigured);
 
 export { auth, db };
 
