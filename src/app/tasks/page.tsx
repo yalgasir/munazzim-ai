@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, CheckCircle, Circle, Loader2, Flag } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Circle, Loader2, Flag, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +35,6 @@ export default function TasksPage() {
     if (!user) return;
 
     if (isFirebaseConfigured) {
-      // Fetch all tasks for demo purposes
       const q = collection(db, "tasks");
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -186,46 +185,61 @@ export default function TasksPage() {
               <Card 
                 key={task.id} 
                 className={cn(
-                  "group transition-all border-l-4", 
-                  task.priority === "High" ? "border-l-red-500" : task.priority === "Medium" ? "border-l-amber-500" : "border-l-emerald-500",
-                  task.isCompleted && "opacity-75 grayscale-[0.5]"
+                  "group transition-all hover:shadow-lg border-primary/5 hover:border-primary/20 overflow-hidden", 
+                  task.isCompleted && "opacity-75 grayscale-[0.2]"
                 )}
               >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <button 
-                    onClick={() => toggleTask(task.id, task.isCompleted)}
-                    className="transition-transform active:scale-90"
-                  >
-                    {task.isCompleted ? (
-                      <CheckCircle className="h-8 w-8 text-emerald-500 fill-emerald-50" />
-                    ) : (
-                      <Circle className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
-                    )}
-                  </button>
-                  <div className="flex-1 text-left">
-                    <span className={cn(
-                      "text-lg font-medium transition-all", 
-                      task.isCompleted && "line-through text-muted-foreground"
-                    )}>
-                      {task.description}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1">
-                      {task.priority === "High" && (
-                        <Badge variant="destructive" className="text-[10px] h-5 flex items-center gap-1">
-                          <Flag className="h-3 w-3" /> Urgent
-                        </Badge>
+                <CardContent className="p-0 flex items-center gap-0 flex-row">
+                  <div className={cn(
+                    "w-2 self-stretch",
+                    task.priority === "High" ? "bg-red-500" : task.priority === "Medium" ? "bg-orange-500" : "bg-emerald-500"
+                  )} />
+                  <div className="flex-1 p-6 flex items-center gap-4 text-left">
+                    <button 
+                      onClick={() => toggleTask(task.id, task.isCompleted)}
+                      className="transition-transform active:scale-90"
+                    >
+                      {task.isCompleted ? (
+                        <CheckCircle className="h-8 w-8 text-emerald-500 fill-emerald-50" />
+                      ) : (
+                        <Circle className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
                       )}
-                      <span className="text-[10px] text-muted-foreground">Sync Active</span>
+                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn(
+                          "text-xl font-bold transition-all", 
+                          task.isCompleted ? "line-through text-muted-foreground" : "text-primary"
+                        )}>
+                          {task.description}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className={cn(
+                          "text-[10px] py-0 px-2 uppercase font-bold",
+                          task.priority === "High" ? "border-red-500 text-red-600 bg-red-50" : 
+                          task.priority === "Medium" ? "border-orange-500 text-orange-600 bg-orange-50" : 
+                          "border-emerald-500 text-emerald-600 bg-emerald-50"
+                        )}>
+                          {task.priority} Priority
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : "Just now"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => deleteTask(task.id)} 
-                    className="text-muted-foreground hover:text-destructive hover:bg-transparent md:opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
+                  <div className="p-4 bg-muted/30 group-hover:bg-destructive/10 transition-colors flex items-center border-l">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => deleteTask(task.id)} 
+                      className="text-muted-foreground hover:text-destructive hover:bg-transparent"
+                    >
+                      <Trash2 className="h-6 w-6" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))

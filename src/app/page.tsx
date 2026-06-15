@@ -18,7 +18,8 @@ import {
   Cpu,
   Key,
   CalendarPlus,
-  Sparkles
+  Sparkles,
+  AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -84,6 +85,7 @@ export default function Dashboard() {
   );
 
   const pendingTasks = tasks.filter(t => !t.isCompleted);
+  const highPriorityTasks = pendingTasks.filter(t => t.priority === "High");
   const completionRate = tasks.length > 0 ? Math.round(((tasks.length - pendingTasks.length) / tasks.length) * 100) : 0;
 
   return (
@@ -116,12 +118,19 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
             title="Total Tasks" 
             value={tasks.length} 
             icon={<Activity />} 
             color="blue" 
+            href="/tasks"
+          />
+          <StatCard 
+            title="Urgent Tasks" 
+            value={highPriorityTasks.length} 
+            icon={<AlertTriangle />} 
+            color="orange" 
             href="/tasks"
           />
           <StatCard 
@@ -226,7 +235,8 @@ function StatCard({ title, value, icon, color, href }: any) {
   const colors: any = {
     blue: "from-blue-600 to-blue-700 bg-blue-600",
     emerald: "from-emerald-600 to-emerald-700 bg-emerald-600",
-    purple: "from-purple-600 to-purple-700 bg-purple-600"
+    purple: "from-purple-600 to-purple-700 bg-purple-600",
+    orange: "from-orange-500 to-orange-600 bg-orange-500"
   };
 
   return (
