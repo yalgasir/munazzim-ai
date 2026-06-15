@@ -50,10 +50,8 @@ export default function Dashboard() {
     checkApiKey();
 
     if (!user) return;
-    const userId = user.uid || user.id;
 
     if (isFirebaseConfigured) {
-      // Sync appointments, tasks, and AI logs
       const qApps = query(collection(db, "appointments"));
       const qTasks = query(collection(db, "tasks"));
       const qAI = query(collection(db, "ai_logs"), orderBy("createdAt", "desc"), limit(1));
@@ -118,11 +116,28 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Tasks" value={tasks.length} icon={<Activity />} color="blue" />
-          <StatCard title="Completion Rate" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" />
-          <StatCard title="Appointments" value={appointments.length} icon={<CalendarIcon />} color="purple" />
-          <StatCard title="NASA TRL" value="8" icon={<TrendingUp />} color="amber" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard 
+            title="Total Tasks" 
+            value={tasks.length} 
+            icon={<Activity />} 
+            color="blue" 
+            href="/tasks"
+          />
+          <StatCard 
+            title="Completion Rate" 
+            value={`${completionRate}%`} 
+            icon={<CheckCircle2 />} 
+            color="emerald" 
+            href="/stats"
+          />
+          <StatCard 
+            title="Appointments" 
+            value={appointments.length} 
+            icon={<CalendarIcon />} 
+            color="purple" 
+            href="/appointments"
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -180,11 +195,24 @@ export default function Dashboard() {
             </Card>
 
             <Card className="border-muted bg-muted/20">
-              <CardContent className="p-4 text-[10px] text-muted-foreground">
-                <p className="font-bold mb-1">System Health:</p>
-                <p>Firebase Firestore: Connected</p>
-                <p>Project: studio-5856019500-6395d</p>
-                <p className="mt-2">Last Updated: {formattedDate}</p>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-bold text-primary">System Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-xs p-2 bg-white rounded-lg border border-primary/5">
+                  <span className="text-muted-foreground">Engine Status</span>
+                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Active</Badge>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2 bg-white rounded-lg border border-primary/5">
+                  <span className="text-muted-foreground">Last Updated</span>
+                  <span className="font-bold">{formattedDate}</span>
+                </div>
+                <Button className="w-full h-9 text-xs gap-2" variant="outline" asChild>
+                  <Link href="/ai-assistant">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Open AI Assistant
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -194,21 +222,22 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon, color }: any) {
+function StatCard({ title, value, icon, color, href }: any) {
   const colors: any = {
     blue: "from-blue-600 to-blue-700 bg-blue-600",
     emerald: "from-emerald-600 to-emerald-700 bg-emerald-600",
-    amber: "from-amber-600 to-amber-700 bg-amber-600",
     purple: "from-purple-600 to-purple-700 bg-purple-600"
   };
 
   return (
-    <div className={cn("p-6 rounded-2xl bg-gradient-to-br text-white shadow-md hover:shadow-lg transition-all", colors[color])}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
+    <Link href={href} className="block transition-transform active:scale-[0.98]">
+      <div className={cn("p-6 rounded-2xl bg-gradient-to-br text-white shadow-md hover:shadow-lg transition-all h-full", colors[color])}>
+        <div className="flex justify-between items-start mb-4">
+          <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
+        </div>
+        <p className="text-sm opacity-90 mb-1">{title}</p>
+        <h3 className="text-3xl font-bold">{value}</h3>
       </div>
-      <p className="text-sm opacity-90 mb-1">{title}</p>
-      <h3 className="text-3xl font-bold">{value}</h3>
-    </div>
+    </Link>
   );
 }
