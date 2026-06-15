@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, query, onSnapshot, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 
 export default function AppointmentsPage() {
@@ -33,13 +33,19 @@ export default function AppointmentsPage() {
     if (!user) return;
 
     if (isFirebaseConfigured) {
-      const q = query(
-        collection(db, "appointments"),
-        where("userId", "==", user.uid || user.id)
-      );
+      // Fetch all appointments for the guest demo to ensure visibility of existing items
+      const q = collection(db, "appointments");
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const apps = snapshot.docs.map(doc => {
+          const data = doc.data();
+          // Handle "Value: YYYY-MM-DD" format seen in user's database
+          let cleanDate = data.date || "";
+          if (typeof cleanDate === 'string' && cleanDate.startsWith("Value: ")) {
+            cleanDate = cleanDate.replace("Value: ", "");
+          }
+          return { id: doc.id, ...data, date: cleanDate };
+        });
         setAppointments(apps);
         setLoading(false);
       }, (error) => {
@@ -117,7 +123,7 @@ export default function AppointmentsPage() {
   };
 
   const filtered = appointments.filter(app => 
-    app.title.toLowerCase().includes(search.toLowerCase())
+    (app.title || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -144,7 +150,7 @@ export default function AppointmentsPage() {
                 <div className="space-y-2 text-left">
                   <Label className="text-sm font-bold">Appointment Title</Label>
                   <Input 
-                    placeholder="e.g., Doctor Visit"
+                    placeholder="e.g., Project Meeting"
                     value={newAppointment.title} 
                     onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})} 
                     className="h-11"
@@ -163,7 +169,7 @@ export default function AppointmentsPage() {
                   <div className="space-y-2 text-left">
                     <Label className="text-sm font-bold">Time</Label>
                     <Input 
-                      placeholder="04:00 PM" 
+                      placeholder="10:00" 
                       value={newAppointment.time} 
                       onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})} 
                       className="h-11"
@@ -201,7 +207,7 @@ export default function AppointmentsPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground animate-pulse">Loading schedule...</p>
+              <p className="text-muted-foreground animate-pulse">Syncing with Cloud Database...</p>
             </div>
           ) : filtered.length > 0 ? (
             filtered.map(app => (
@@ -249,7 +255,7 @@ export default function AppointmentsPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold">No appointments found</h3>
-                <p className="text-muted-foreground max-w-[300px]">Start adding appointments to organize your time.</p>
+                <p className="text-muted-foreground max-w-[300px]">Connected to Firebase but no appointments found. Add one to see it sync!</p>
               </div>
               <Button variant="outline" onClick={() => setIsAddOpen(true)}>Add Now</Button>
             </Card>
@@ -259,4 +265,3 @@ export default function AppointmentsPage() {
     </AppLayout>
   );
 }
-

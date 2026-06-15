@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 
 export default function TasksPage() {
@@ -33,13 +33,10 @@ export default function TasksPage() {
 
   useEffect(() => {
     if (!user) return;
-    const userId = user.uid || user.id;
 
     if (isFirebaseConfigured) {
-      const q = query(
-        collection(db, "tasks"),
-        where("userId", "==", userId)
-      );
+      // Fetch all tasks for demo purposes
+      const q = collection(db, "tasks");
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const tsks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -53,6 +50,7 @@ export default function TasksPage() {
       return () => unsubscribe();
     } else {
       const loadLocalTasks = () => {
+        const userId = user.uid || user.id;
         const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
         const userTasks = allTasks.filter((t: any) => t.userId === userId);
         setTasks(userTasks);
@@ -181,7 +179,7 @@ export default function TasksPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading tasks...</p>
+              <p className="text-muted-foreground">Syncing Tasks...</p>
             </div>
           ) : tasks.length > 0 ? (
             tasks.sort((a, b) => (a.isCompleted === b.isCompleted) ? 0 : a.isCompleted ? 1 : -1).map((task) => (
@@ -217,7 +215,7 @@ export default function TasksPage() {
                           <Flag className="h-3 w-3" /> Urgent
                         </Badge>
                       )}
-                      <span className="text-[10px] text-muted-foreground">Added on {new Date(task.createdAt).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-muted-foreground">Sync Active</span>
                     </div>
                   </div>
                   <Button 
@@ -238,7 +236,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold">All caught up!</h3>
-                <p className="text-muted-foreground">No pending tasks. Enjoy your time or add a new task.</p>
+                <p className="text-muted-foreground">Connected to Firestore. No tasks found.</p>
               </div>
               <Button variant="outline" onClick={() => setIsAddOpen(true)}>Add Task</Button>
             </Card>
@@ -248,4 +246,3 @@ export default function TasksPage() {
     </AppLayout>
   );
 }
-
