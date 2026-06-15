@@ -17,29 +17,27 @@ import {
   Check,
   Cpu,
   Key,
-  CalendarPlus
+  CalendarPlus,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [latestInsight, setLatestInsight] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
   const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
-    // Generate dynamic date in DD/MM/YYYY format
     const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    setFormattedDate(`${day}/${month}/${year}`);
+    setFormattedDate(`${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`);
 
     const checkApiKey = async () => {
       try {
@@ -55,8 +53,10 @@ export default function Dashboard() {
     const userId = user.uid || user.id;
 
     if (isFirebaseConfigured) {
-      const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-      const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
+      // Sync appointments, tasks, and AI logs
+      const qApps = query(collection(db, "appointments"));
+      const qTasks = query(collection(db, "tasks"));
+      const qAI = query(collection(db, "ai_logs"), orderBy("createdAt", "desc"), limit(1));
 
       const unsubApps = onSnapshot(qApps, (snapshot) => {
         setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -67,18 +67,13 @@ export default function Dashboard() {
         setLoading(false);
       });
 
-      return () => { unsubApps(); unsubTasks(); };
-    } else {
-      const loadLocalData = () => {
-        const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
-        const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
-        setAppointments(allApps.filter((a: any) => a.userId === userId));
-        setTasks(allTasks.filter((t: any) => t.userId === userId));
-        setLoading(false);
-      };
-      loadLocalData();
-      window.addEventListener('storage', loadLocalData);
-      return () => window.removeEventListener('storage', loadLocalData);
+      const unsubAI = onSnapshot(qAI, (snapshot) => {
+        if (!snapshot.empty) {
+          setLatestInsight(snapshot.docs[0].data());
+        }
+      });
+
+      return () => { unsubApps(); unsubTasks(); unsubAI(); };
     }
   }, [user]);
 
@@ -101,12 +96,11 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">Munazzim Dashboard</h1>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
-                <Cpu className="h-3.5 w-3.5" />
-                MythoMax-L2-13B
+                <Cpu className="h-3.5 w-3.5" /> Workspace: studio-5856019500
               </Badge>
               <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
                 <Key className="h-3.5 w-3.5" />
-                {apiKeyStatus === "active" ? "API Key Connected" : "API Key Missing"}
+                {apiKeyStatus === "active" ? "AI Engine Connected" : "AI Offline"}
               </Badge>
             </div>
           </div>
@@ -134,7 +128,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2 shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-bold">Current Tasks</CardTitle>
+              <CardTitle className="text-xl font-bold">Workspace Tasks</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/tasks" className="gap-1">View All <ArrowRight className="h-4 w-4" /></Link>
               </Button>
@@ -153,33 +147,47 @@ export default function Dashboard() {
                       {task.description}
                     </span>
                   </div>
-                  <Badge variant="outline">{task.priority === 'High' ? 'High' : 'Normal'}</Badge>
+                  <Badge variant="outline">{task.priority}</Badge>
                 </div>
               ))}
-              {tasks.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No tasks added yet.</p>
-              )}
+              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No shared tasks found in the database.</p>}
             </CardContent>
           </Card>
 
-          <Card className="bg-primary/5 border-primary/20 shadow-inner">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-primary">
-                <TrendingUp className="h-5 w-5" /> System Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm leading-relaxed">
-              <p>The system is currently operating at NASA TRL 8 readiness level.</p>
-              <div className="p-3 bg-white rounded-lg border border-primary/10">
-                <p className="font-bold text-primary mb-1 text-xs">Engine Status:</p>
-                <p className="text-xs">MythoMax-L2-13B via OpenRouter connected and ready for contextual analysis.</p>
-              </div>
-              <p className="text-xs text-muted-foreground italic">Last Updated: {formattedDate}</p>
-              <Button className="w-full mt-2" size="sm" asChild>
-                <Link href="/ai-assistant">Open AI Assistant</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col gap-6">
+            <Card className="bg-primary/5 border-primary/20 shadow-inner">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-primary">
+                  <Sparkles className="h-5 w-5" /> Latest AI Insight
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm leading-relaxed">
+                {latestInsight ? (
+                  <>
+                    <p className="italic font-medium">"{latestInsight.analysis.substring(0, 150)}..."</p>
+                    <div className="p-3 bg-white rounded-lg border border-primary/10">
+                      <p className="font-bold text-primary mb-1 text-[10px] uppercase tracking-wider">Persisted at:</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(latestInsight.createdAt).toLocaleString()}</p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground italic">No AI interactions recorded in this workspace group yet.</p>
+                )}
+                <Button className="w-full mt-2" size="sm" asChild>
+                  <Link href="/ai-assistant">Consult Assistant</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-muted bg-muted/20">
+              <CardContent className="p-4 text-[10px] text-muted-foreground">
+                <p className="font-bold mb-1">System Health:</p>
+                <p>Firebase Firestore: Connected</p>
+                <p>Project: studio-5856019500-6395d</p>
+                <p className="mt-2">Last Updated: {formattedDate}</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
@@ -204,4 +212,3 @@ function StatCard({ title, value, icon, color }: any) {
     </div>
   );
 }
-
