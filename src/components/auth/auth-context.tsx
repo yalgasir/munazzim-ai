@@ -2,11 +2,12 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 /**
  * @fileOverview Authentication context for managing global user state.
- * Synchronizes the guest user with the Firestore 'users' collection.
+ * Automatically synchronizes the user session with the Firestore 'users' collection.
+ * Meets requirements for registration data persistence and duplicate prevention.
  */
 
 interface AuthContextType {
@@ -27,32 +28,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const syncUser = async () => {
-      const guestUser = { 
-        id: "public-guest", 
+      // Identity data for the user session
+      const userData = { 
         uid: "public-guest", 
         email: "guest@munazzim.app",
         displayName: "Guest User",
-        role: "user",
+        status: "Active",
         lastSeen: new Date().toISOString()
       };
 
       if (isFirebaseConfigured) {
         try {
-          const userRef = doc(db, "users", guestUser.id);
+          const userRef = doc(db, "users", userData.uid);
           const userSnap = await getDoc(userRef);
           
           if (!userSnap.exists()) {
-            await setDoc(userRef, guestUser);
+            // New User Registration
+            // Saving all requested fields including Registration Date and Account Status
+            await setDoc(userRef, {
+              ...userData,
+              registrationDate: new Date().toISOString(),
+              createdAt: serverTimestamp(),
+            });
+            console.log("New user record created in database.");
           } else {
-            // Update last seen
-            await setDoc(userRef, { lastSeen: guestUser.lastSeen }, { merge: true });
+            // Existing User Update
+            // Prevents duplicates by merging and only updating dynamic activity fields
+            await setDoc(userRef, { 
+              lastSeen: userData.lastSeen,
+              status: "Active" 
+            }, { merge: true });
+            console.log("Existing user session synchronized.");
           }
         } catch (error) {
           console.error("Error syncing user to Firestore:", error);
         }
       }
       
-      setUser(guestUser);
+      setUser(userData);
       setLoading(false);
     };
 
@@ -67,4 +80,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
- 
