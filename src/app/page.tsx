@@ -120,18 +120,16 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Total Tasks" 
-            value={tasks.length} 
+            title="Total Tasks & Appointments" 
+            value={tasks.length + appointments.length} 
             icon={<Activity />} 
             color="blue" 
-            href="/tasks"
           />
           <StatCard 
-            title="Urgent Tasks" 
+            title="Tasks" 
             value={highPriorityTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
-            href="/tasks"
           />
           <StatCard 
             title="Completion Rate" 
@@ -241,15 +239,27 @@ function StatCard({ title, value, icon, color, href }: any) {
     orange: "from-orange-500 to-orange-600 bg-orange-500"
   };
 
-  return (
-    <Link href={href} className="block transition-transform active:scale-[0.98]">
-      <div className={cn("p-6 rounded-2xl bg-gradient-to-br text-white shadow-md hover:shadow-lg transition-all h-full", colors[color])}>
-        <div className="flex justify-between items-start mb-4">
-          <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
-        </div>
-        <p className="text-sm opacity-90 mb-1">{title}</p>
-        <h3 className="text-3xl font-bold">{value}</h3>
+  const content = (
+    <div className={cn(
+      "p-6 rounded-2xl bg-gradient-to-br text-white shadow-md transition-all h-full", 
+      colors[color],
+      href ? "hover:shadow-lg cursor-pointer" : "cursor-default"
+    )}>
+      <div className="flex justify-between items-start mb-4">
+        <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
       </div>
-    </Link>
+      <p className="text-sm opacity-90 mb-1">{title}</p>
+      <h3 className="text-3xl font-bold">{value}</h3>
+    </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block transition-transform active:scale-[0.98]">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }
