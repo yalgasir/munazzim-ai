@@ -19,8 +19,7 @@ import {
   Key,
   CalendarPlus,
   Sparkles,
-  AlertTriangle,
-  ExternalLink
+  AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -223,12 +222,6 @@ export default function Dashboard() {
                       <Sparkles className="h-3.5 w-3.5" />
                       Open AI Assistant
                     </Link>
-                  </Button>
-                  <Button className="w-full h-9 text-xs gap-2" variant="secondary" asChild>
-                    <a href="https://huggingface.co/spaces/yalgasir/ai-time-manager" target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      View on Hugging Face
-                    </a>
                   </Button>
                 </div>
               </CardContent>
