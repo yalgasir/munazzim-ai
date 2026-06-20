@@ -130,7 +130,7 @@ export default function Dashboard() {
             value={highPriorityTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
-            href="/tasks?add=true"
+            href="/tasks"
           />
           <StatCard 
             title="Completion Rate" 
