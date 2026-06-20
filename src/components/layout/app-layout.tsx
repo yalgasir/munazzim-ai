@@ -113,7 +113,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <SidebarTrigger />
             <div className="flex-1" />
-            <Button variant="ghost" size="icon" className="cursor-default hover:bg-transparent">
+            <Button variant="ghost" size="icon" className="cursor-default pointer-events-none hover:bg-transparent">
               <Settings className="h-5 w-5" />
             </Button>
           </header>
