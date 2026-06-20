@@ -130,6 +130,7 @@ export default function Dashboard() {
             value={highPriorityTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
+            href="/tasks"
           />
           <StatCard 
             title="Completion Rate" 
@@ -243,7 +244,7 @@ function StatCard({ title, value, icon, color, href }: any) {
     <div className={cn(
       "p-6 rounded-2xl bg-gradient-to-br text-white shadow-md transition-all h-full", 
       colors[color],
-      href ? "hover:shadow-lg cursor-pointer" : "cursor-default"
+      href ? "hover:shadow-lg cursor-pointer hover:scale-[1.02]" : "cursor-default"
     )}>
       <div className="flex justify-between items-start mb-4">
         <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
