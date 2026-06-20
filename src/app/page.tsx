@@ -9,8 +9,6 @@ import {
   Calendar as CalendarIcon, 
   CheckCircle2, 
   Clock,
-  TrendingUp,
-  Loader2,
   Activity,
   Plus,
   ArrowRight,
@@ -24,7 +22,7 @@ import {
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
-import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
@@ -73,6 +71,8 @@ export default function Dashboard() {
       });
 
       return () => { unsubApps(); unsubTasks(); unsubAI(); };
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -111,7 +111,7 @@ export default function Dashboard() {
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg h-11 px-6 bg-primary text-white hover:bg-primary/90" asChild>
-              <Link href="/tasks">
+              <Link href="/tasks?add=true">
                 <Plus className="h-5 w-5 text-white" /> Add Task
               </Link>
             </Button>
@@ -130,7 +130,7 @@ export default function Dashboard() {
             value={highPriorityTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
-            href="/tasks"
+            href="/tasks?add=true"
           />
           <StatCard 
             title="Completion Rate" 
@@ -229,6 +229,25 @@ export default function Dashboard() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+function Loader2({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("animate-spin", className)}
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
   );
 }
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, CheckCircle, Circle, Loader2, Flag, AlertCircle } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Circle, Loader2, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,14 +22,22 @@ import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { collection, addDoc, query, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
+import { useSearchParams } from "next/navigation";
 
-export default function TasksPage() {
+function TasksContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newTask, setNewTask] = useState({ description: "", priority: "Medium" });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (searchParams.get("add") === "true") {
+      setIsAddOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -131,7 +139,7 @@ export default function TasksPage() {
       <div className="flex flex-col gap-6 max-w-5xl mx-auto" dir="ltr">
         <div className="flex items-center justify-between">
           <div className="text-left">
-            <h1 className="text-3xl font-bold font-headline">My Tasks</h1>
+            <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
             <p className="text-muted-foreground">Keep track of your daily tasks.</p>
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -143,7 +151,7 @@ export default function TasksPage() {
             </DialogTrigger>
             <DialogContent dir="ltr">
               <DialogHeader className="text-left">
-                <DialogTitle className="text-2xl font-bold">New Task</DialogTitle>
+                <DialogTitle className="text-2xl font-bold text-primary">New Task</DialogTitle>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="space-y-2 text-left">
@@ -258,5 +266,13 @@ export default function TasksPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>}>
+      <TasksContent />
+    </Suspense>
   );
 }
