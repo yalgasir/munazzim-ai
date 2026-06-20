@@ -40,3 +40,4 @@ jobs:
             git commit -m "docs: update last updated date to $(date +'%d/%m/%Y')"
             git push origin main
           fi
+ 

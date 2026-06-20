@@ -33,3 +33,4 @@ export async function askMunazzimAI(prompt: string) {
     return data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response at this time.";
   }
 
+ 

@@ -28,3 +28,4 @@ const db = getFirestore(app);
 export const isFirebaseConfigured = apiKey.startsWith("AIza");
 
 export { auth, db };
+ 
