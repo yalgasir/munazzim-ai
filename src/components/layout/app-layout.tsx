@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Sparkles, 
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -89,6 +90,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  tooltip="Hugging Face"
+                  className="flex flex-row items-center gap-3 py-6 px-4 opacity-80"
+                >
+                  <a href="https://huggingface.co/spaces/yalgasir/ai-time-manager" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-5 w-5" />
+                    <span className="text-base">Hugging Face</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4 border-t border-sidebar-border">
@@ -127,4 +140,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-

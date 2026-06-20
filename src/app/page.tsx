@@ -19,7 +19,8 @@ import {
   Key,
   CalendarPlus,
   Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -216,12 +217,20 @@ export default function Dashboard() {
                   <span className="text-muted-foreground">Last Updated</span>
                   <span className="font-bold">{formattedDate}</span>
                 </div>
-                <Button className="w-full h-9 text-xs gap-2" variant="outline" asChild>
-                  <Link href="/ai-assistant">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Open AI Assistant
-                  </Link>
-                </Button>
+                <div className="grid gap-2 mt-2">
+                  <Button className="w-full h-9 text-xs gap-2" variant="outline" asChild>
+                    <Link href="/ai-assistant">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Open AI Assistant
+                    </Link>
+                  </Button>
+                  <Button className="w-full h-9 text-xs gap-2" variant="secondary" asChild>
+                    <a href="https://huggingface.co/spaces/yalgasir/ai-time-manager" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      View on Hugging Face
+                    </a>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

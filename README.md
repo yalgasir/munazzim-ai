@@ -19,6 +19,12 @@ Munazzim (Arabic for "Organizer") is a high-reliability, AI-driven time manageme
 
 ---
 
+## 🔗 Live Deployment
+Access the latest build directly on Hugging Face Spaces:
+[**Open Munazzim on Hugging Face**](https://huggingface.co/spaces/yalgasir/ai-time-manager)
+
+---
+
 ## 📖 Project Overview
 
 ### Purpose
@@ -72,4 +78,3 @@ Munazzim is currently classified as **TRL 8** (Actual system completed and quali
 
 **Last Updated: Automatically synchronized with the latest project build.**
 **Munazzim Engineering Team | TRL-8 Certified**
-
