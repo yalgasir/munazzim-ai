@@ -1,13 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { isFirebaseConfigured } from "@/lib/firebase";
 
 /**
  * @fileOverview Authentication context for managing global user state.
- * Automatically synchronizes the user session with the Firestore 'users' collection.
- * Meets requirements for registration data persistence and duplicate prevention.
+ * Triggers a server-side sync to capture IP addresses and update user records.
  */
 
 interface AuthContextType {
@@ -33,39 +31,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         uid: "public-guest", 
         email: "guest@munazzim.app",
         displayName: "Guest User",
-        status: "Active",
-        lastSeen: new Date().toISOString()
       };
 
       if (isFirebaseConfigured) {
         try {
-          const userRef = doc(db, "users", userData.uid);
-          const userSnap = await getDoc(userRef);
-          
-          if (!userSnap.exists()) {
-            // New User Registration
-            // Saving all requested fields including Registration Date and Account Status
-            await setDoc(userRef, {
-              ...userData,
-              registrationDate: new Date().toISOString(),
-              createdAt: serverTimestamp(),
-            });
-            console.log("New user record created in database.");
+          // Call the server-side sync API to capture IP and update Firestore
+          const response = await fetch('/api/user/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to sync user data with server.");
           } else {
-            // Existing User Update
-            // Prevents duplicates by merging and only updating dynamic activity fields
-            await setDoc(userRef, { 
-              lastSeen: userData.lastSeen,
-              status: "Active" 
-            }, { merge: true });
-            console.log("Existing user session synchronized.");
+            const result = await response.json();
+            console.log("User session synchronized. Client IP:", result.ip);
           }
         } catch (error) {
           console.error("Error syncing user to Firestore:", error);
         }
       }
       
-      setUser(userData);
+      setUser({ ...userData, status: "Active" });
       setLoading(false);
     };
 
