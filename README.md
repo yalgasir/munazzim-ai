@@ -11,7 +11,7 @@ pinned: false
 # 🚀 Munazzim | Advanced AI Productivity Ecosystem
 
 ![Status](https://img.shields.io/badge/Status-Active-emerald)
-![Last Updated](https://img.shields.io/badge/Last%20Updated-20/06/2026-blue)
+![Last Updated](https://img.shields.io/badge/Last%20Updated-24/06/2026-blue)
 ![NASA TRL](https://img.shields.io/badge/NASA%20TRL-8-indigo)
 ![Engine](https://img.shields.io/badge/AI%20Engine-MythoMax--L2--13B-blue)
 
