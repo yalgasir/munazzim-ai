@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, CalendarPlus, Trash2, Loader2, Calendar as CalendarIcon, Clock, MapPin } from "lucide-react";
+import { Search, CalendarPlus, Trash2, Loader2, Calendar as CalendarIcon, Clock, MapPin, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { collection, addDoc, query, onSnapshot, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 
 export default function AppointmentsPage() {
@@ -25,7 +25,9 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [newAppointment, setNewAppointment] = useState({ title: "", date: "", time: "", location: "", type: "Work" });
+  const [editingApp, setEditingApp] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -33,13 +35,10 @@ export default function AppointmentsPage() {
     if (!user) return;
 
     if (isFirebaseConfigured) {
-      // Fetch all appointments for the guest demo to ensure visibility of existing items
       const q = collection(db, "appointments");
-
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const apps = snapshot.docs.map(doc => {
           const data = doc.data();
-          // Handle "Value: YYYY-MM-DD" format seen in user's database
           let cleanDate = data.date || "";
           if (typeof cleanDate === 'string' && cleanDate.startsWith("Value: ")) {
             cleanDate = cleanDate.replace("Value: ", "");
@@ -52,7 +51,6 @@ export default function AppointmentsPage() {
         console.error("Firestore error:", error);
         setLoading(false);
       });
-
       return () => unsubscribe();
     } else {
       const loadLocalData = () => {
@@ -62,7 +60,6 @@ export default function AppointmentsPage() {
         setAppointments(userApps);
         setLoading(false);
       };
-
       loadLocalData();
       window.addEventListener('storage', loadLocalData);
       return () => window.removeEventListener('storage', loadLocalData);
@@ -74,35 +71,46 @@ export default function AppointmentsPage() {
       toast({ variant: "destructive", title: "Warning", description: "Please complete the required fields." });
       return;
     }
-
     const userId = user?.uid || user?.id;
-
     try {
       if (isFirebaseConfigured) {
-        await addDoc(collection(db, "appointments"), {
-          ...newAppointment,
-          userId,
-          createdAt: new Date().toISOString()
-        });
+        await addDoc(collection(db, "appointments"), { ...newAppointment, userId, createdAt: new Date().toISOString() });
       } else {
         const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
-        const newApp = { 
-          ...newAppointment, 
-          id: `app_${Date.now()}`, 
-          userId, 
-          createdAt: new Date().toISOString() 
-        };
+        const newApp = { ...newAppointment, id: `app_${Date.now()}`, userId, createdAt: new Date().toISOString() };
         allApps.push(newApp);
         localStorage.setItem("mock_appointments", JSON.stringify(allApps));
         setAppointments(prev => [...prev, newApp]);
       }
-
       setNewAppointment({ title: "", date: "", time: "", location: "", type: "Work" });
       setIsAddOpen(false);
       toast({ title: "Success", description: "Appointment added to your schedule." });
     } catch (e) {
-      console.error(e);
       toast({ variant: "destructive", title: "Error", description: "Failed to save appointment." });
+    }
+  };
+
+  const handleEditAppointment = async () => {
+    if (!editingApp || !editingApp.title.trim() || !editingApp.date) {
+      toast({ variant: "destructive", title: "Warning", description: "Please complete the required fields." });
+      return;
+    }
+    try {
+      if (isFirebaseConfigured) {
+        const appRef = doc(db, "appointments", editingApp.id);
+        const { id, ...data } = editingApp;
+        await updateDoc(appRef, data);
+      } else {
+        const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
+        const updated = allApps.map((a: any) => a.id === editingApp.id ? editingApp : a);
+        localStorage.setItem("mock_appointments", JSON.stringify(updated));
+        setAppointments(prev => prev.map(a => a.id === editingApp.id ? editingApp : a));
+      }
+      setIsEditOpen(false);
+      setEditingApp(null);
+      toast({ title: "Updated", description: "Appointment information has been updated." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update appointment." });
     }
   };
 
@@ -122,9 +130,7 @@ export default function AppointmentsPage() {
     }
   };
 
-  const filtered = appointments.filter(app => 
-    (app.title || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = appointments.filter(app => (app.title || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <AppLayout>
@@ -134,7 +140,6 @@ export default function AppointmentsPage() {
             <h1 className="text-3xl font-bold font-headline mb-1">My Appointments</h1>
             <p className="text-muted-foreground">Manage your upcoming schedule.</p>
           </div>
-          
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 h-11 px-6 shadow-md">
@@ -149,41 +154,21 @@ export default function AppointmentsPage() {
               <div className="grid gap-6 py-4">
                 <div className="space-y-2 text-left">
                   <Label className="text-sm font-bold">Appointment Title</Label>
-                  <Input 
-                    placeholder="e.g., Project Meeting"
-                    value={newAppointment.title} 
-                    onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})} 
-                    className="h-11"
-                  />
+                  <Input placeholder="e.g., Project Meeting" value={newAppointment.title} onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})} className="h-11" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
                     <Label className="text-sm font-bold">Date</Label>
-                    <Input 
-                      type="date" 
-                      value={newAppointment.date} 
-                      onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})} 
-                      className="h-11"
-                    />
+                    <Input type="date" value={newAppointment.date} onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})} className="h-11" />
                   </div>
                   <div className="space-y-2 text-left">
                     <Label className="text-sm font-bold">Time</Label>
-                    <Input 
-                      placeholder="10:00" 
-                      value={newAppointment.time} 
-                      onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})} 
-                      className="h-11"
-                    />
+                    <Input placeholder="10:00" value={newAppointment.time} onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})} className="h-11" />
                   </div>
                 </div>
                 <div className="space-y-2 text-left">
                   <Label className="text-sm font-bold">Location (Optional)</Label>
-                  <Input 
-                    placeholder="Enter address or link"
-                    value={newAppointment.location} 
-                    onChange={(e) => setNewAppointment({...newAppointment, location: e.target.value})} 
-                    className="h-11"
-                  />
+                  <Input placeholder="Enter address or link" value={newAppointment.location} onChange={(e) => setNewAppointment({...newAppointment, location: e.target.value})} className="h-11" />
                 </div>
               </div>
               <DialogFooter>
@@ -193,14 +178,42 @@ export default function AppointmentsPage() {
           </Dialog>
         </div>
 
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent dir="ltr" className="sm:max-w-[500px]">
+            <DialogHeader className="text-left">
+              <DialogTitle className="text-2xl font-bold">Edit Appointment</DialogTitle>
+            </DialogHeader>
+            {editingApp && (
+              <div className="grid gap-6 py-4">
+                <div className="space-y-2 text-left">
+                  <Label className="text-sm font-bold">Appointment Title</Label>
+                  <Input value={editingApp.title} onChange={(e) => setEditingApp({...editingApp, title: e.target.value})} className="h-11" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 text-left">
+                    <Label className="text-sm font-bold">Date</Label>
+                    <Input type="date" value={editingApp.date} onChange={(e) => setEditingApp({...editingApp, date: e.target.value})} className="h-11" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label className="text-sm font-bold">Time</Label>
+                    <Input value={editingApp.time} onChange={(e) => setEditingApp({...editingApp, time: e.target.value})} className="h-11" />
+                  </div>
+                </div>
+                <div className="space-y-2 text-left">
+                  <Label className="text-sm font-bold">Location</Label>
+                  <Input value={editingApp.location} onChange={(e) => setEditingApp({...editingApp, location: e.target.value})} className="h-11" />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button onClick={handleEditAppointment} className="w-full h-12 text-lg font-bold">Update Appointment</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            placeholder="Search appointments..." 
-            className="pl-10 h-12 text-left text-lg border-primary/20 focus:ring-primary" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-          />
+          <Input placeholder="Search appointments..." className="pl-10 h-12 text-left text-lg border-primary/20 focus:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
 
         <div className="grid gap-4">
@@ -235,14 +248,12 @@ export default function AppointmentsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="p-4 bg-muted/30 group-hover:bg-destructive/10 transition-colors flex items-center border-l">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleDelete(app.id)} 
-                      className="text-muted-foreground hover:text-destructive hover:bg-transparent"
-                    >
-                      <Trash2 className="h-6 w-6" />
+                  <div className="p-4 bg-muted/30 group-hover:bg-primary/5 transition-colors flex items-center border-l gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingApp(app); setIsEditOpen(true); }} className="text-muted-foreground hover:text-primary hover:bg-transparent">
+                      <Pencil className="h-5 w-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(app.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>
                 </CardContent>
@@ -265,4 +276,3 @@ export default function AppointmentsPage() {
     </AppLayout>
   );
 }
- 
