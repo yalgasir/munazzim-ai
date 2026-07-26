@@ -17,7 +17,8 @@ import {
   Key,
   CalendarPlus,
   Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -41,7 +42,10 @@ export default function Dashboard() {
     const checkApiKey = async () => {
       try {
         const res = await fetch('/api/health');
-        if (res.ok) setApiKeyStatus("active");
+        if (res.ok) {
+          const data = await res.json();
+          setApiKeyStatus("active");
+        }
       } catch (e) {
         setApiKeyStatus("missing");
       }
@@ -70,7 +74,11 @@ export default function Dashboard() {
         }
       });
 
-      return () => { unsubApps(); unsubTasks(); unsubAI(); };
+      return () => { 
+        unsubApps(); 
+        unsubTasks(); 
+        unsubAI(); 
+      };
     } else {
       setLoading(false);
     }
@@ -78,8 +86,9 @@ export default function Dashboard() {
 
   if (authLoading || loading) return (
     <AppLayout>
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Initializing Workspace...</p>
       </div>
     </AppLayout>
   );
@@ -158,7 +167,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {tasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-muted/50">
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "h-5 w-5 rounded-full border-2 flex items-center justify-center",
@@ -170,7 +179,13 @@ export default function Dashboard() {
                       {task.description}
                     </span>
                   </div>
-                  <Badge variant="outline">{task.priority}</Badge>
+                  <Badge variant="outline" className={cn(
+                    task.priority === "High" ? "border-red-200 text-red-600 bg-red-50" : 
+                    task.priority === "Medium" ? "border-orange-200 text-orange-600 bg-orange-50" : 
+                    "border-emerald-200 text-emerald-600 bg-emerald-50"
+                  )}>
+                    {task.priority}
+                  </Badge>
                 </div>
               ))}
               {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No shared tasks found in the database.</p>}
@@ -178,8 +193,8 @@ export default function Dashboard() {
           </Card>
 
           <div className="flex flex-col gap-6">
-            <Card className="bg-primary/5 border-primary/20 shadow-inner">
-              <CardHeader>
+            <Card className="bg-primary/5 border-primary/20 shadow-inner overflow-hidden">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2 text-primary">
                   <Sparkles className="h-5 w-5" /> Latest AI Insight
                 </CardTitle>
@@ -187,8 +202,8 @@ export default function Dashboard() {
               <CardContent className="space-y-4 text-sm leading-relaxed">
                 {latestInsight ? (
                   <>
-                    <p className="italic font-medium">"{latestInsight.analysis.substring(0, 150)}..."</p>
-                    <div className="p-3 bg-white rounded-lg border border-primary/10">
+                    <p className="italic font-medium text-foreground">"{latestInsight.analysis.substring(0, 180)}..."</p>
+                    <div className="p-3 bg-white/50 rounded-lg border border-primary/10">
                       <p className="font-bold text-primary mb-1 text-[10px] uppercase tracking-wider">Persisted at:</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(latestInsight.createdAt).toLocaleString()}</p>
                     </div>
@@ -207,22 +222,24 @@ export default function Dashboard() {
                 <CardTitle className="text-base font-bold text-primary">System Overview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between text-xs p-2 bg-white rounded-lg border border-primary/5">
+                <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
                   <span className="text-muted-foreground">Engine Status</span>
-                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Active</Badge>
+                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-bold border-emerald-200">Active</Badge>
                 </div>
-                <div className="flex items-center justify-between text-xs p-2 bg-white rounded-lg border border-primary/5">
+                <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
+                  <span className="text-muted-foreground">Sync Frequency</span>
+                  <span className="font-bold">Real-time</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
                   <span className="text-muted-foreground">Last Updated</span>
                   <span className="font-bold">{formattedDate}</span>
                 </div>
-                <div className="grid gap-2 mt-2">
-                  <Button className="w-full h-9 text-xs gap-2" variant="outline" asChild>
-                    <Link href="/ai-assistant">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Open AI Assistant
-                    </Link>
-                  </Button>
-                </div>
+                <Button className="w-full h-10 text-xs gap-2 mt-2" variant="outline" asChild>
+                  <Link href="/ai-assistant">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Open AI Assistant
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -232,50 +249,34 @@ export default function Dashboard() {
   );
 }
 
-function Loader2({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={cn("animate-spin", className)}
-    >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  );
-}
-
 function StatCard({ title, value, icon, color, href }: any) {
   const colors: any = {
-    blue: "from-blue-600 to-blue-700 bg-blue-600",
-    emerald: "from-emerald-600 to-emerald-700 bg-emerald-600",
-    purple: "from-purple-600 to-purple-700 bg-purple-600",
-    orange: "from-orange-500 to-orange-600 bg-orange-500"
+    blue: "from-blue-600 to-blue-700 bg-blue-600 shadow-blue-200",
+    emerald: "from-emerald-600 to-emerald-700 bg-emerald-600 shadow-emerald-200",
+    purple: "from-purple-600 to-purple-700 bg-purple-600 shadow-purple-200",
+    orange: "from-orange-500 to-orange-600 bg-orange-500 shadow-orange-200"
   };
 
   const content = (
     <div className={cn(
-      "p-6 rounded-2xl bg-gradient-to-br text-white shadow-md transition-all h-full", 
+      "p-6 rounded-2xl bg-gradient-to-br text-white shadow-lg transition-all h-full relative overflow-hidden", 
       colors[color],
-      href ? "hover:shadow-lg cursor-pointer hover:scale-[1.02]" : "cursor-default"
+      href ? "hover:shadow-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : "cursor-default"
     )}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-white/20 rounded-lg">{icon}</div>
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm border border-white/10">{icon}</div>
       </div>
-      <p className="text-sm opacity-90 mb-1">{title}</p>
-      <h3 className="text-3xl font-bold">{value}</h3>
+      <p className="text-sm opacity-80 mb-1 font-medium relative z-10">{title}</p>
+      <h3 className="text-3xl font-bold relative z-10 tabular-nums">{value}</h3>
+      <div className="absolute -right-4 -bottom-4 opacity-10 transform scale-150 rotate-12 z-0">
+        {icon}
+      </div>
     </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block transition-transform active:scale-[0.98]">
+      <Link href={href} className="block h-full">
         {content}
       </Link>
     );
@@ -283,4 +284,3 @@ function StatCard({ title, value, icon, color, href }: any) {
 
   return content;
 }
- 
