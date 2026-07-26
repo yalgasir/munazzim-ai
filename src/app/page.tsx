@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -43,7 +44,6 @@ export default function Dashboard() {
       try {
         const res = await fetch('/api/health');
         if (res.ok) {
-          const data = await res.json();
           setApiKeyStatus("active");
         }
       } catch (e) {
@@ -94,7 +94,6 @@ export default function Dashboard() {
   );
 
   const pendingTasks = tasks.filter(t => !t.isCompleted);
-  const highPriorityTasks = pendingTasks.filter(t => t.priority === "High");
   const completionRate = tasks.length > 0 ? Math.round(((tasks.length - pendingTasks.length) / tasks.length) * 100) : 0;
 
   return (
@@ -105,7 +104,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">Munazzim Dashboard</h1>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
-                <Cpu className="h-3.5 w-3.5" /> Workspace: studio-5856019500
+                <Cpu className="h-3.5 w-3.5" /> Workspace Active
               </Badge>
               <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
                 <Key className="h-3.5 w-3.5" />
@@ -116,7 +115,7 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-3">
             <Button className="gap-2 shadow-lg h-11 px-6 bg-primary text-white hover:bg-primary/90" asChild>
               <Link href="/appointments">
-                <CalendarPlus className="h-5 w-5 text-white" /> Add New Appointment
+                <CalendarPlus className="h-5 w-5 text-white" /> Add Appointment
               </Link>
             </Button>
             <Button className="gap-2 shadow-lg h-11 px-6 bg-primary text-white hover:bg-primary/90" asChild>
@@ -129,20 +128,20 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Total Tasks & Appointments" 
+            title="Total Items" 
             value={tasks.length + appointments.length} 
             icon={<Activity />} 
             color="blue" 
           />
           <StatCard 
             title="Tasks" 
-            value={highPriorityTasks.length} 
+            value={pendingTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
             href="/tasks"
           />
           <StatCard 
-            title="Completion Rate" 
+            title="Completion" 
             value={`${completionRate}%`} 
             icon={<CheckCircle2 />} 
             color="emerald" 
@@ -160,7 +159,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2 shadow-sm border-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-bold">Workspace Tasks</CardTitle>
+              <CardTitle className="text-xl font-bold">Recent Tasks</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/tasks" className="gap-1">View All <ArrowRight className="h-4 w-4" /></Link>
               </Button>
@@ -188,7 +187,7 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               ))}
-              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No shared tasks found in the database.</p>}
+              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No tasks found.</p>}
             </CardContent>
           </Card>
 
@@ -196,7 +195,7 @@ export default function Dashboard() {
             <Card className="bg-primary/5 border-primary/20 shadow-inner overflow-hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2 text-primary">
-                  <Sparkles className="h-5 w-5" /> Latest AI Insight
+                  <Sparkles className="h-5 w-5" /> AI Insight
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm leading-relaxed">
@@ -204,42 +203,31 @@ export default function Dashboard() {
                   <>
                     <p className="italic font-medium text-foreground">"{latestInsight.analysis.substring(0, 180)}..."</p>
                     <div className="p-3 bg-white/50 rounded-lg border border-primary/10">
-                      <p className="font-bold text-primary mb-1 text-[10px] uppercase tracking-wider">Persisted at:</p>
-                      <p className="text-[10px] text-muted-foreground">{new Date(latestInsight.createdAt).toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground">Persisted: {new Date(latestInsight.createdAt).toLocaleString()}</p>
                     </div>
                   </>
                 ) : (
-                  <p className="text-muted-foreground italic">No AI interactions recorded in this workspace group yet.</p>
+                  <p className="text-muted-foreground italic">No insights available.</p>
                 )}
                 <Button className="w-full mt-2" size="sm" asChild>
-                  <Link href="/ai-assistant">Consult Assistant</Link>
+                  <Link href="/ai-assistant">Consult AI</Link>
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="border-muted bg-muted/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-bold text-primary">System Overview</CardTitle>
+                <CardTitle className="text-base font-bold text-primary">System Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
-                  <span className="text-muted-foreground">Engine Status</span>
-                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-bold border-emerald-200">Active</Badge>
+                  <span className="text-muted-foreground">Sync</span>
+                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 font-bold border-emerald-200">Real-time</Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
-                  <span className="text-muted-foreground">Sync Frequency</span>
-                  <span className="font-bold">Real-time</span>
-                </div>
-                <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
-                  <span className="text-muted-foreground">Last Updated</span>
+                  <span className="text-muted-foreground">Updated</span>
                   <span className="font-bold">{formattedDate}</span>
                 </div>
-                <Button className="w-full h-10 text-xs gap-2 mt-2" variant="outline" asChild>
-                  <Link href="/ai-assistant">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Open AI Assistant
-                  </Link>
-                </Button>
               </CardContent>
             </Card>
           </div>
