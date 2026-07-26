@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -114,7 +115,8 @@ export default function AppointmentsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     try {
       if (isFirebaseConfigured) {
         await deleteDoc(doc(db, "appointments", id));
@@ -128,6 +130,11 @@ export default function AppointmentsPage() {
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to delete." });
     }
+  };
+
+  const openEdit = (app: any) => {
+    setEditingApp(app);
+    setIsEditOpen(true);
   };
 
   const filtered = appointments.filter(app => (app.title || "").toLowerCase().includes(search.toLowerCase()));
@@ -224,7 +231,11 @@ export default function AppointmentsPage() {
             </div>
           ) : filtered.length > 0 ? (
             filtered.map(app => (
-              <Card key={app.id} className="group hover:shadow-lg transition-all border-primary/5 hover:border-primary/20 overflow-hidden">
+              <Card 
+                key={app.id} 
+                className="group hover:shadow-lg transition-all border-primary/5 hover:border-primary/20 overflow-hidden cursor-pointer"
+                onClick={() => openEdit(app)}
+              >
                 <CardContent className="p-0 flex items-center gap-0 flex-row">
                   <div className="flex-1 p-6 text-left">
                     <div className="flex items-center gap-3 mb-2">
@@ -249,10 +260,10 @@ export default function AppointmentsPage() {
                     </div>
                   </div>
                   <div className="p-4 bg-muted/30 group-hover:bg-primary/5 transition-colors flex items-center border-l gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditingApp(app); setIsEditOpen(true); }} className="text-muted-foreground hover:text-primary hover:bg-transparent">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-transparent">
                       <Pencil className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(app.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
+                    <Button variant="ghost" size="icon" onClick={(e) => handleDelete(e, app.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
                       <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>

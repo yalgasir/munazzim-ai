@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -111,7 +112,8 @@ function TasksContent() {
     }
   };
 
-  const toggleTask = async (id: string, currentStatus: boolean) => {
+  const toggleTask = async (e: React.MouseEvent, id: string, currentStatus: boolean) => {
+    e.stopPropagation();
     try {
       if (isFirebaseConfigured) {
         await updateDoc(doc(db, "tasks", id), { isCompleted: !currentStatus });
@@ -126,7 +128,8 @@ function TasksContent() {
     }
   };
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     try {
       if (isFirebaseConfigured) {
         await deleteDoc(doc(db, "tasks", id));
@@ -140,6 +143,11 @@ function TasksContent() {
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to delete task." });
     }
+  };
+
+  const openEdit = (task: any) => {
+    setEditingTask(task);
+    setIsEditOpen(true);
   };
 
   return (
@@ -223,11 +231,15 @@ function TasksContent() {
             </div>
           ) : tasks.length > 0 ? (
             tasks.sort((a, b) => (a.isCompleted === b.isCompleted) ? 0 : a.isCompleted ? 1 : -1).map((task) => (
-              <Card key={task.id} className={cn("group transition-all hover:shadow-lg border-primary/5 hover:border-primary/20 overflow-hidden", task.isCompleted && "opacity-75 grayscale-[0.2]")}>
+              <Card 
+                key={task.id} 
+                className={cn("group transition-all hover:shadow-lg border-primary/5 hover:border-primary/20 overflow-hidden cursor-pointer", task.isCompleted && "opacity-75 grayscale-[0.2]")}
+                onClick={() => openEdit(task)}
+              >
                 <CardContent className="p-0 flex items-center gap-0 flex-row">
                   <div className={cn("w-2 self-stretch", task.priority === "High" ? "bg-red-500" : task.priority === "Medium" ? "bg-orange-500" : "bg-emerald-500")} />
                   <div className="flex-1 p-6 flex items-center gap-4 text-left">
-                    <button onClick={() => toggleTask(task.id, task.isCompleted)} className="transition-transform active:scale-90">
+                    <button onClick={(e) => toggleTask(e, task.id, task.isCompleted)} className="transition-transform active:scale-90">
                       {task.isCompleted ? <CheckCircle className="h-8 w-8 text-emerald-500 fill-emerald-50" /> : <Circle className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />}
                     </button>
                     <div className="flex-1">
@@ -241,10 +253,10 @@ function TasksContent() {
                     </div>
                   </div>
                   <div className="p-4 bg-muted/30 group-hover:bg-primary/5 transition-colors flex items-center border-l gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditingTask(task); setIsEditOpen(true); }} className="text-muted-foreground hover:text-primary hover:bg-transparent">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-transparent">
                       <Pencil className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
+                    <Button variant="ghost" size="icon" onClick={(e) => deleteTask(e, task.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
                       <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>
