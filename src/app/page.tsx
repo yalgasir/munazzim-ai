@@ -54,18 +54,16 @@ export default function Dashboard() {
 
     if (!user) return;
 
-    if (isFirebaseConfigured) {
-      const qApps = query(collection(db, "appointments"));
-      const qTasks = query(collection(db, "tasks"));
+    if (isFirebaseConfigured && db) {
+      const qApps = collection(db, "appointments");
+      const qTasks = collection(db, "tasks");
       const qAI = query(collection(db, "ai_logs"), orderBy("createdAt", "desc"), limit(1));
 
       const unsubApps = onSnapshot(qApps, 
         (snapshot) => {
           setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         },
-        (err) => {
-          console.error("Firestore Apps Error:", err);
-        }
+        (err) => console.error("Firestore Apps Error:", err)
       );
 
       const unsubTasks = onSnapshot(qTasks, 
@@ -81,33 +79,36 @@ export default function Dashboard() {
 
       const unsubAI = onSnapshot(qAI, 
         (snapshot) => {
-          if (!snapshot.empty) {
-            setLatestInsight(snapshot.docs[0].data());
-          }
+          if (!snapshot.empty) setLatestInsight(snapshot.docs[0].data());
         },
-        (err) => {
-          console.error("Firestore AI Logs Error:", err);
-        }
+        (err) => console.error("Firestore AI Logs Error:", err)
       );
-
-      // Safety timeout to ensure loading stops even if Firestore hangs
-      const timeout = setTimeout(() => setLoading(false), 5000);
 
       return () => { 
         unsubApps(); 
         unsubTasks(); 
         unsubAI(); 
-        clearTimeout(timeout);
       };
     } else {
-      setLoading(false);
+      // Fallback to LocalStorage if Firebase is not connected
+      const loadLocalData = () => {
+        const userId = user.uid || user.id;
+        const localTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
+        const localApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
+        setTasks(localTasks.filter((t: any) => t.userId === userId));
+        setAppointments(localApps.filter((a: any) => a.userId === userId));
+        setLoading(false);
+      };
+      loadLocalData();
+      window.addEventListener('storage', loadLocalData);
+      return () => window.removeEventListener('storage', loadLocalData);
     }
   }, [user]);
 
   if (authLoading || loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse">Initializing Workspace...</p>
+      <p className="text-muted-foreground animate-pulse">Synchronizing Workspace...</p>
     </div>
   );
 
@@ -122,7 +123,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">Munazzim Dashboard</h1>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
-                <Cpu className="h-3.5 w-3.5" /> Workspace Active
+                <Cpu className="h-3.5 w-3.5" /> Workspace {isFirebaseConfigured ? "Online" : "Local Mode"}
               </Badge>
               <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
                 <Key className="h-3.5 w-3.5" />
@@ -205,7 +206,7 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               ))}
-              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No tasks found.</p>}
+              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No items found in current mode.</p>}
             </CardContent>
           </Card>
 
@@ -225,7 +226,7 @@ export default function Dashboard() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-muted-foreground italic">No insights available.</p>
+                  <p className="text-muted-foreground italic">Connect your API key for intelligent insights.</p>
                 )}
                 <Button className="w-full mt-2" size="sm" asChild>
                   <Link href="/ai-assistant">Consult AI</Link>
@@ -239,8 +240,10 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
-                  <span className="text-muted-foreground">Sync</span>
-                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 font-bold border-emerald-200">Real-time</Badge>
+                  <span className="text-muted-foreground">Mode</span>
+                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 font-bold border-emerald-200">
+                    {isFirebaseConfigured ? "Cloud Sync" : "Offline Local"}
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
                   <span className="text-muted-foreground">Updated</span>
