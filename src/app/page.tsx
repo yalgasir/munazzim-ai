@@ -121,8 +121,17 @@ export default function Dashboard() {
           <div className="text-left">
             <h1 className="text-3xl font-bold font-headline text-primary mb-1">Munazzim Dashboard</h1>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline" className="gap-1.5 py-1 px-3 border-primary/30 text-primary bg-primary/5">
-                <Cpu className="h-3.5 w-3.5" /> Workspace {isFirebaseConfigured ? "Online" : "Local Mode"}
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "gap-1.5 py-1 px-3 border transition-colors",
+                  isFirebaseConfigured 
+                    ? "bg-emerald-100 text-emerald-700 border-emerald-200" 
+                    : "bg-amber-100 text-amber-700 border-amber-200"
+                )}
+              >
+                <Cpu className="h-3.5 w-3.5" /> 
+                {isFirebaseConfigured ? "Workspace Cloud Online" : "Workspace Local Mode"}
               </Badge>
               <Badge variant={apiKeyStatus === "active" ? "secondary" : "destructive"} className="gap-1.5 py-1 px-3">
                 <Key className="h-3.5 w-3.5" />
@@ -146,27 +155,27 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Total Tasks & Appointments" 
+            title="Total Items" 
             value={totalItemsCount} 
             icon={<Activity />} 
             color="blue" 
           />
           <StatCard 
-            title="Tasks" 
+            title="Pending Tasks" 
             value={pendingTasks.length} 
             icon={<AlertTriangle />} 
             color="orange" 
             href="/tasks"
           />
           <StatCard 
-            title="Completion" 
+            title="Task Completion" 
             value={`${completionRate}%`} 
             icon={<CheckCircle2 />} 
             color="emerald" 
             href="/stats"
           />
           <StatCard 
-            title="Appointments" 
+            title="Total Appointments" 
             value={appointments.length} 
             icon={<CalendarIcon />} 
             color="purple" 
@@ -205,7 +214,7 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               ))}
-              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No items found in current mode.</p>}
+              {tasks.length === 0 && <p className="text-center text-muted-foreground py-8">No tasks found. Add your first task to begin.</p>}
             </CardContent>
           </Card>
 
@@ -249,7 +258,7 @@ export default function Dashboard() {
                         : "bg-amber-100 text-amber-700 border-amber-200"
                     )}
                   >
-                    {isFirebaseConfigured ? "Cloud Sync" : "Offline Local"}
+                    {isFirebaseConfigured ? "Cloud Active" : "Local Mock"}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">

@@ -8,7 +8,8 @@ import { getFirestore } from "firebase/firestore";
  */
 
 const MOCK_KEY = "AIzaSyMockKey_Please_Set_In_Env";
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || MOCK_KEY;
+// Trim whitespace to prevent errors from copy-pasting newlines or spaces
+const apiKey = (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").trim() || MOCK_KEY;
 
 const firebaseConfig = {
   apiKey: apiKey,
@@ -19,13 +20,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:5856019500:web:mockid"
 };
 
-// Enhanced check: If we have an API key that isn't the mock, or we're in a known deployment env, attempt sync.
-export const isFirebaseConfigured = apiKey !== MOCK_KEY && apiKey.length > 10;
+// A key is valid if it exists, isn't the mock, and follows the AIzaSy prefix standard
+export const isFirebaseConfigured = 
+  apiKey !== MOCK_KEY && 
+  apiKey.startsWith("AIzaSy") && 
+  apiKey.length > 20;
 
 let app;
 try {
-  // Always attempt to initialize if we are in a browser environment to pick up potential injected config
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  if (isFirebaseConfigured) {
+    console.log("Munazzim: Cloud Workspace detected and initializing...");
+  }
 } catch (e) {
   console.warn("Firebase initialization failed, falling back to local mode.", e);
 }
