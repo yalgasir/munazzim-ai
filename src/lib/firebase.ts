@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -7,9 +8,8 @@ import { getFirestore } from "firebase/firestore";
  * Synchronized with project: studio-5856019500-6395d
  */
 
-// We check if the API key is provided, otherwise we use a placeholder to allow initialization 
-// while alerting the user. Firestore usually requires a real key to sync.
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyMockKey_Please_Set_In_Env";
+const MOCK_KEY = "AIzaSyMockKey_Please_Set_In_Env";
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || MOCK_KEY;
 
 const firebaseConfig = {
   apiKey: apiKey,
@@ -20,12 +20,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:5856019500:web:mockid"
 };
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Check if Firebase is properly configured with a real key
+export const isFirebaseConfigured = apiKey.startsWith("AIza") && apiKey !== MOCK_KEY;
 
-// isFirebaseConfigured is true if the API key looks real
-export const isFirebaseConfigured = apiKey.startsWith("AIza");
+let app;
+try {
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+} catch (e) {
+  console.warn("Firebase initialization failed, falling back to local mode.", e);
+}
+
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 
 export { auth, db };
- 

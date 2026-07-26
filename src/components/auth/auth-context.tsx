@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -33,14 +34,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         displayName: "Guest User",
       };
 
-      if (isFirebaseConfigured) {
-        try {
+      try {
+        if (isFirebaseConfigured) {
           // Call the server-side sync API to capture IP and update Firestore
+          // We wrap this in a promise with a timeout to prevent hanging the whole app
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await fetch('/api/user/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
+            signal: controller.signal,
           });
+
+          clearTimeout(timeoutId);
 
           if (!response.ok) {
             console.error("Failed to sync user data with server.");
@@ -48,13 +56,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const result = await response.json();
             console.log("User session synchronized. Client IP:", result.ip);
           }
-        } catch (error) {
-          console.error("Error syncing user to Firestore:", error);
         }
+      } catch (error) {
+        console.error("Error syncing user session:", error);
+      } finally {
+        // Always set the user and stop loading, even if sync fails
+        setUser({ ...userData, status: "Active" });
+        setLoading(false);
       }
-      
-      setUser({ ...userData, status: "Active" });
-      setLoading(false);
     };
 
     syncUser();

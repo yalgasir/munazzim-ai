@@ -59,25 +59,45 @@ export default function Dashboard() {
       const qTasks = query(collection(db, "tasks"));
       const qAI = query(collection(db, "ai_logs"), orderBy("createdAt", "desc"), limit(1));
 
-      const unsubApps = onSnapshot(qApps, (snapshot) => {
-        setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      });
-
-      const unsubTasks = onSnapshot(qTasks, (snapshot) => {
-        setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setLoading(false);
-      });
-
-      const unsubAI = onSnapshot(qAI, (snapshot) => {
-        if (!snapshot.empty) {
-          setLatestInsight(snapshot.docs[0].data());
+      const unsubApps = onSnapshot(qApps, 
+        (snapshot) => {
+          setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        },
+        (err) => {
+          console.error("Firestore Apps Error:", err);
         }
-      });
+      );
+
+      const unsubTasks = onSnapshot(qTasks, 
+        (snapshot) => {
+          setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          setLoading(false);
+        },
+        (err) => {
+          console.error("Firestore Tasks Error:", err);
+          setLoading(false);
+        }
+      );
+
+      const unsubAI = onSnapshot(qAI, 
+        (snapshot) => {
+          if (!snapshot.empty) {
+            setLatestInsight(snapshot.docs[0].data());
+          }
+        },
+        (err) => {
+          console.error("Firestore AI Logs Error:", err);
+        }
+      );
+
+      // Safety timeout to ensure loading stops even if Firestore hangs
+      const timeout = setTimeout(() => setLoading(false), 5000);
 
       return () => { 
         unsubApps(); 
         unsubTasks(); 
         unsubAI(); 
+        clearTimeout(timeout);
       };
     } else {
       setLoading(false);
@@ -85,12 +105,10 @@ export default function Dashboard() {
   }, [user]);
 
   if (authLoading || loading) return (
-    <AppLayout>
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Initializing Workspace...</p>
-      </div>
-    </AppLayout>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <p className="text-muted-foreground animate-pulse">Initializing Workspace...</p>
+    </div>
   );
 
   const pendingTasks = tasks.filter(t => !t.isCompleted);
