@@ -38,14 +38,7 @@ export default function AppointmentsPage() {
     if (isFirebaseConfigured) {
       const q = collection(db, "appointments");
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const apps = snapshot.docs.map(doc => {
-          const data = doc.data();
-          let cleanDate = data.date || "";
-          if (typeof cleanDate === 'string' && cleanDate.startsWith("Value: ")) {
-            cleanDate = cleanDate.replace("Value: ", "");
-          }
-          return { id: doc.id, ...data, date: cleanDate };
-        });
+        const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAppointments(apps);
         setLoading(false);
       }, (error) => {
@@ -69,7 +62,7 @@ export default function AppointmentsPage() {
 
   const handleAddAppointment = async () => {
     if (!newAppointment.title.trim() || !newAppointment.date) {
-      toast({ variant: "destructive", title: "Warning", description: "Please complete the required fields." });
+      toast({ variant: "destructive", title: "Warning", description: "Title and Date are required." });
       return;
     }
     const userId = user?.uid || user?.id;
@@ -85,17 +78,14 @@ export default function AppointmentsPage() {
       }
       setNewAppointment({ title: "", date: "", time: "", location: "", type: "Work" });
       setIsAddOpen(false);
-      toast({ title: "Success", description: "Appointment added to your schedule." });
+      toast({ title: "Success", description: "Appointment added." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to save appointment." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to save." });
     }
   };
 
   const handleEditAppointment = async () => {
-    if (!editingApp || !editingApp.title.trim() || !editingApp.date) {
-      toast({ variant: "destructive", title: "Warning", description: "Please complete the required fields." });
-      return;
-    }
+    if (!editingApp || !editingApp.title.trim() || !editingApp.date) return;
     try {
       if (isFirebaseConfigured) {
         const appRef = doc(db, "appointments", editingApp.id);
@@ -109,9 +99,9 @@ export default function AppointmentsPage() {
       }
       setIsEditOpen(false);
       setEditingApp(null);
-      toast({ title: "Updated", description: "Appointment information has been updated." });
+      toast({ title: "Updated", description: "Appointment updated." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to update appointment." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to update." });
     }
   };
 
@@ -144,8 +134,8 @@ export default function AppointmentsPage() {
       <div className="max-w-5xl mx-auto flex flex-col gap-6" dir="ltr">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="text-left">
-            <h1 className="text-3xl font-bold font-headline mb-1">My Appointments</h1>
-            <p className="text-muted-foreground">Manage your upcoming schedule.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1 text-primary">Appointments</h1>
+            <p className="text-muted-foreground">Manage your schedule.</p>
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
@@ -156,26 +146,26 @@ export default function AppointmentsPage() {
             </DialogTrigger>
             <DialogContent dir="ltr" className="sm:max-w-[500px]">
               <DialogHeader className="text-left">
-                <DialogTitle className="text-2xl font-bold">New Appointment</DialogTitle>
+                <DialogTitle className="text-2xl font-bold text-primary">New Appointment</DialogTitle>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="space-y-2 text-left">
-                  <Label className="text-sm font-bold">Appointment Title</Label>
-                  <Input placeholder="e.g., Project Meeting" value={newAppointment.title} onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})} className="h-11" />
+                  <Label className="font-bold">Title</Label>
+                  <Input placeholder="Meeting name" value={newAppointment.title} onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})} className="h-11" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
-                    <Label className="text-sm font-bold">Date</Label>
+                    <Label className="font-bold">Date</Label>
                     <Input type="date" value={newAppointment.date} onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})} className="h-11" />
                   </div>
                   <div className="space-y-2 text-left">
-                    <Label className="text-sm font-bold">Time</Label>
+                    <Label className="font-bold">Time</Label>
                     <Input placeholder="10:00" value={newAppointment.time} onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})} className="h-11" />
                   </div>
                 </div>
                 <div className="space-y-2 text-left">
-                  <Label className="text-sm font-bold">Location (Optional)</Label>
-                  <Input placeholder="Enter address or link" value={newAppointment.location} onChange={(e) => setNewAppointment({...newAppointment, location: e.target.value})} className="h-11" />
+                  <Label className="font-bold">Location</Label>
+                  <Input placeholder="Optional" value={newAppointment.location} onChange={(e) => setNewAppointment({...newAppointment, location: e.target.value})} className="h-11" />
                 </div>
               </div>
               <DialogFooter>
@@ -188,26 +178,26 @@ export default function AppointmentsPage() {
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent dir="ltr" className="sm:max-w-[500px]">
             <DialogHeader className="text-left">
-              <DialogTitle className="text-2xl font-bold">Edit Appointment</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-primary">Edit Appointment</DialogTitle>
             </DialogHeader>
             {editingApp && (
               <div className="grid gap-6 py-4">
                 <div className="space-y-2 text-left">
-                  <Label className="text-sm font-bold">Appointment Title</Label>
+                  <Label className="font-bold">Title</Label>
                   <Input value={editingApp.title} onChange={(e) => setEditingApp({...editingApp, title: e.target.value})} className="h-11" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
-                    <Label className="text-sm font-bold">Date</Label>
+                    <Label className="font-bold">Date</Label>
                     <Input type="date" value={editingApp.date} onChange={(e) => setEditingApp({...editingApp, date: e.target.value})} className="h-11" />
                   </div>
                   <div className="space-y-2 text-left">
-                    <Label className="text-sm font-bold">Time</Label>
+                    <Label className="font-bold">Time</Label>
                     <Input value={editingApp.time} onChange={(e) => setEditingApp({...editingApp, time: e.target.value})} className="h-11" />
                   </div>
                 </div>
                 <div className="space-y-2 text-left">
-                  <Label className="text-sm font-bold">Location</Label>
+                  <Label className="font-bold">Location</Label>
                   <Input value={editingApp.location} onChange={(e) => setEditingApp({...editingApp, location: e.target.value})} className="h-11" />
                 </div>
               </div>
@@ -220,14 +210,14 @@ export default function AppointmentsPage() {
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input placeholder="Search appointments..." className="pl-10 h-12 text-left text-lg border-primary/20 focus:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Search..." className="pl-10 h-12 text-left" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
 
         <div className="grid gap-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground animate-pulse">Syncing with Cloud Database...</p>
+              <p className="text-muted-foreground">Syncing Appointments...</p>
             </div>
           ) : filtered.length > 0 ? (
             filtered.map(app => (
@@ -238,48 +228,24 @@ export default function AppointmentsPage() {
               >
                 <CardContent className="p-0 flex items-center gap-0 flex-row">
                   <div className="flex-1 p-6 text-left">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-primary">{app.title}</h3>
-                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    </div>
+                    <h3 className="text-xl font-bold text-primary mb-2">{app.title}</h3>
                     <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>{app.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4" />
-                        <span>{app.time || "Not set"}</span>
-                      </div>
-                      {app.location && (
-                        <div className="flex items-center gap-1.5 w-full md:w-auto">
-                          <MapPin className="h-4 w-4" />
-                          <span className="truncate max-w-[200px]">{app.location}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5"><CalendarIcon className="h-4 w-4" />{app.date}</div>
+                      <div className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{app.time || "Not set"}</div>
+                      {app.location && <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{app.location}</div>}
                     </div>
                   </div>
                   <div className="p-4 bg-muted/30 group-hover:bg-primary/5 transition-colors flex items-center border-l gap-2">
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-transparent">
-                      <Pencil className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={(e) => handleDelete(e, app.id)} className="text-muted-foreground hover:text-destructive hover:bg-transparent">
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><Pencil className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={(e) => handleDelete(e, app.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-5 w-5" /></Button>
                   </div>
                 </CardContent>
               </Card>
             ))
           ) : (
-            <Card className="border-dashed border-2 py-20 flex flex-col items-center justify-center text-center gap-4 bg-muted/10">
-              <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center">
-                <CalendarIcon className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">No appointments found</h3>
-                <p className="text-muted-foreground max-w-[300px]">Connected to Firebase but no appointments found. Add one to see it sync!</p>
-              </div>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>Add Now</Button>
+            <Card className="border-dashed border-2 py-20 text-center bg-muted/10">
+              <p className="text-muted-foreground">No appointments found.</p>
+              <Button variant="outline" className="mt-4" onClick={() => setIsAddOpen(true)}>Add Now</Button>
             </Card>
           )}
         </div>
