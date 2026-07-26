@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -90,7 +89,6 @@ export default function Dashboard() {
         unsubAI(); 
       };
     } else {
-      // Fallback to LocalStorage if Firebase is not connected
       const loadLocalData = () => {
         const userId = user.uid || user.id;
         const localTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
@@ -113,6 +111,7 @@ export default function Dashboard() {
   );
 
   const pendingTasks = tasks.filter(t => !t.isCompleted);
+  const totalItemsCount = tasks.length + appointments.length;
   const completionRate = tasks.length > 0 ? Math.round(((tasks.length - pendingTasks.length) / tasks.length) * 100) : 0;
 
   return (
@@ -147,8 +146,8 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Total Items" 
-            value={tasks.length + appointments.length} 
+            title="Total Tasks & Appointments" 
+            value={totalItemsCount} 
             icon={<Activity />} 
             color="blue" 
           />
@@ -241,7 +240,15 @@ export default function Dashboard() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-xs p-2.5 bg-white rounded-lg border border-primary/5 shadow-sm">
                   <span className="text-muted-foreground">Mode</span>
-                  <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 font-bold border-emerald-200">
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "h-5 text-[10px] font-bold border",
+                      isFirebaseConfigured 
+                        ? "bg-emerald-100 text-emerald-700 border-emerald-200" 
+                        : "bg-amber-100 text-amber-700 border-amber-200"
+                    )}
+                  >
                     {isFirebaseConfigured ? "Cloud Sync" : "Offline Local"}
                   </Badge>
                 </div>
@@ -266,11 +273,13 @@ function StatCard({ title, value, icon, color, href }: any) {
     orange: "from-orange-500 to-orange-600 bg-orange-500 shadow-orange-200"
   };
 
+  const isClickable = !!href;
+
   const content = (
     <div className={cn(
       "p-6 rounded-2xl bg-gradient-to-br text-white shadow-lg transition-all h-full relative overflow-hidden", 
       colors[color],
-      href ? "hover:shadow-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : "cursor-default"
+      isClickable ? "hover:shadow-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : "cursor-default"
     )}>
       <div className="flex justify-between items-start mb-4 relative z-10">
         <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm border border-white/10">{icon}</div>
@@ -283,7 +292,7 @@ function StatCard({ title, value, icon, color, href }: any) {
     </div>
   );
 
-  if (href) {
+  if (isClickable) {
     return (
       <Link href={href} className="block h-full">
         {content}

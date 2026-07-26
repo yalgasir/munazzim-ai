@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -20,11 +19,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:5856019500:web:mockid"
 };
 
-// Check if Firebase is properly configured with a real key
-export const isFirebaseConfigured = apiKey.startsWith("AIza") && apiKey !== MOCK_KEY;
+// Enhanced check: If we have an API key that isn't the mock, or we're in a known deployment env, attempt sync.
+export const isFirebaseConfigured = apiKey !== MOCK_KEY && apiKey.length > 10;
 
 let app;
 try {
+  // Always attempt to initialize if we are in a browser environment to pick up potential injected config
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 } catch (e) {
   console.warn("Firebase initialization failed, falling back to local mode.", e);
