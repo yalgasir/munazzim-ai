@@ -24,16 +24,17 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
   const runAnalysis = async () => {
     setLoading(true);
     try {
-      // Sanitize data before sending to Server Action to avoid serialization errors
+      // Ensure only plain serializable data is sent to the Server Action
       const safeApps = appointments.map(a => ({
-        title: a.title,
-        date: a.date,
-        time: a.time
+        title: String(a.title || "Untitled"),
+        date: String(a.date || ""),
+        time: String(a.time || "")
       }));
+
       const safeTasks = tasks.map(t => ({
-        description: t.description,
-        priority: t.priority,
-        isCompleted: t.isCompleted
+        description: String(t.description || "Untitled"),
+        priority: String(t.priority || "Medium"),
+        isCompleted: Boolean(t.isCompleted)
       }));
 
       const result = await analyzeFullSchedule(safeApps, safeTasks);
@@ -182,11 +183,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
               <p className="text-sm font-medium leading-relaxed">{analysis.generalRecommendation}</p>
             </section>
           </div>
-        ) : (
-          <div className="py-20 text-center text-muted-foreground">
-             Please ensure you have tasks and appointments populated for a meaningful analysis.
-          </div>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );

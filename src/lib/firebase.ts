@@ -4,14 +4,14 @@ import { getFirestore } from "firebase/firestore";
 
 /**
  * Firebase Initialization Module.
- * Synchronized with project: studio-5856019500-6395d
+ * Includes sanitization for environment variables to prevent crashes.
  */
 
 const MOCK_KEY = "AIzaSyMockKey_Please_Set_In_Env";
-// Get the API key from environment and trim any accidental whitespace
-const apiKey = (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").trim();
+// Clean the API key of quotes and whitespace
+const rawApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "";
+const apiKey = rawApiKey.replace(/^["']|["']$/g, "").trim();
 
-// Check if a valid API key is present (starts with AIzaSy and is not the placeholder)
 export const isFirebaseConfigured = !!(
   apiKey && 
   apiKey.startsWith("AIzaSy") && 
@@ -29,20 +29,21 @@ const firebaseConfig = {
 };
 
 let app;
+let auth = null;
+let db = null;
+
 try {
-  // Initialize Firebase
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
   
   if (isFirebaseConfigured) {
     console.log("Munazzim: Cloud Workspace successfully activated.");
   } else {
-    console.log("Munazzim: Running in Local Mock Mode. Add NEXT_PUBLIC_FIREBASE_API_KEY to enable Cloud Sync.");
+    console.log("Munazzim: Running in Local Mock Mode.");
   }
 } catch (e) {
   console.error("Firebase initialization failed:", e);
 }
-
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
 
 export { auth, db };

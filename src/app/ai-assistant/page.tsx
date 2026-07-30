@@ -25,7 +25,7 @@ export default function AIAssistantPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (!user) return;
+    if (!user || !db) return;
 
     if (isFirebaseConfigured) {
       const q = query(
@@ -59,22 +59,28 @@ export default function AIAssistantPage() {
       let currentAppointments: any[] = [];
       let currentTasks: any[] = [];
 
-      if (isFirebaseConfigured) {
+      if (isFirebaseConfigured && db) {
         const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
         const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
         const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
 
-        currentAppointments = appSnap.docs.map(doc => ({
-          title: doc.data().title || "Untitled",
-          date: doc.data().date,
-          time: doc.data().time,
-        }));
+        currentAppointments = appSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            title: String(data.title || "Untitled"),
+            date: String(data.date || ""),
+            time: String(data.time || ""),
+          };
+        });
 
-        currentTasks = taskSnap.docs.map(doc => ({
-          description: doc.data().description || "Untitled",
-          priority: doc.data().priority || "Medium",
-          isCompleted: !!doc.data().isCompleted,
-        }));
+        currentTasks = taskSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            description: String(data.description || "Untitled"),
+            priority: String(data.priority || "Medium"),
+            isCompleted: Boolean(data.isCompleted),
+          };
+        });
       }
 
       const result = await analyzeFullSchedule(currentAppointments, currentTasks, context);
@@ -82,7 +88,7 @@ export default function AIAssistantPage() {
       if (result) {
         setSuggestion(result);
         
-        if (isFirebaseConfigured) {
+        if (isFirebaseConfigured && db) {
           await addDoc(collection(db, "ai_logs"), {
             userId,
             prompt: context,

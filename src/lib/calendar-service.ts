@@ -6,9 +6,11 @@ import { collection, query, where, getDocs, addDoc, updateDoc, doc } from "fireb
  */
 
 export async function syncGoogleCalendar(userId: string) {
+  if (!db) {
+    throw new Error("Database not initialized");
+  }
+
   try {
-    // In a real app, this would fetch from Google Calendar API using an OAuth token
-    // For this prototype, we simulate fetching external events
     const mockExternalEvents = [
       {
         externalId: "gcal_123",
@@ -23,10 +25,9 @@ export async function syncGoogleCalendar(userId: string) {
     ];
 
     let newCount = 0;
-    const appointmentsRef = collection(db!, "appointments");
+    const appointmentsRef = collection(db, "appointments");
 
     for (const event of mockExternalEvents) {
-      // Prevent duplicates by checking externalId
       const q = query(appointmentsRef, 
         where("userId", "==", userId), 
         where("externalId", "==", event.externalId)
@@ -42,9 +43,8 @@ export async function syncGoogleCalendar(userId: string) {
         });
         newCount++;
       } else {
-        // Update existing if needed
         const docId = existing.docs[0].id;
-        await updateDoc(doc(db!, "appointments", docId), {
+        await updateDoc(doc(db, "appointments", docId), {
           ...event,
           updatedAt: new Date().toISOString()
         });
