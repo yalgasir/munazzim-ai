@@ -13,19 +13,39 @@ import { BrainCircuit, Loader2, AlertTriangle, CheckCircle2, Zap, LayoutList, Hi
 import { analyzeFullSchedule, AnalysisOutput } from "@/ai/flows/ai-schedule-optimizer-flow";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: any[], tasks: any[] }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisOutput | null>(null);
+  const { toast } = useToast();
 
   const runAnalysis = async () => {
     setLoading(true);
     try {
-      const result = await analyzeFullSchedule(appointments, tasks);
+      // Sanitize data before sending to Server Action to avoid serialization errors
+      const safeApps = appointments.map(a => ({
+        title: a.title,
+        date: a.date,
+        time: a.time
+      }));
+      const safeTasks = tasks.map(t => ({
+        description: t.description,
+        priority: t.priority,
+        isCompleted: t.isCompleted
+      }));
+
+      const result = await analyzeFullSchedule(safeApps, safeTasks);
       setAnalysis(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: error.message || "An unexpected error occurred."
+      });
+      setOpen(false);
     } finally {
       setLoading(false);
     }
@@ -78,7 +98,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
                     <CheckCircle2 className="h-4 w-4" /> Priority Recommendations
                   </h4>
                   <ul className="space-y-2">
-                    {analysis.priorityRecommendations.map((rec, i) => (
+                    {analysis.priorityRecommendations?.map((rec, i) => (
                       <li key={i} className="text-sm flex gap-3 items-start">
                         <span className="h-5 w-5 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center text-[10px] shrink-0 mt-0.5">{i+1}</span>
                         <span>{rec}</span>
@@ -94,13 +114,13 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
                     <AlertTriangle className="h-4 w-4" /> Conflict Alerts
                   </h4>
                   <ul className="space-y-2">
-                    {analysis.conflictAlerts.map((alert, i) => (
+                    {analysis.conflictAlerts?.map((alert, i) => (
                       <li key={i} className="text-sm flex gap-3 items-start text-red-900/80">
                         <div className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
                         <span>{alert}</span>
                       </li>
                     ))}
-                    {analysis.conflictAlerts.length === 0 && <li className="text-sm text-muted-foreground italic">System optimal. No conflicts.</li>}
+                    {(!analysis.conflictAlerts || analysis.conflictAlerts.length === 0) && <li className="text-sm text-muted-foreground italic">System optimal. No conflicts.</li>}
                   </ul>
                 </CardContent>
               </Card>
@@ -111,7 +131,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
                 <LayoutList className="h-4 w-4" /> Optimized Execution Plan
               </h4>
               <div className="space-y-3 border-l-2 border-primary/20 ml-4 pl-6 relative">
-                {analysis.dailyPlan.map((step, i) => (
+                {analysis.dailyPlan?.map((step, i) => (
                   <div key={i} className="relative group">
                     <div className="absolute -left-[31px] top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-primary border-4 border-white shadow-sm" />
                     <div className={cn(
@@ -136,7 +156,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
                     <History className="h-3 w-3" /> Upcoming Deadlines
                   </h5>
                   <ul className="text-xs space-y-1">
-                    {analysis.upcomingDeadlines.map((d, i) => <li key={i}>- {d}</li>)}
+                    {analysis.upcomingDeadlines?.map((d, i) => <li key={i}>- {d}</li>)}
                   </ul>
                 </CardContent>
               </Card>
@@ -146,7 +166,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
                     <Calendar className="h-3 w-3" /> Focus Windows
                   </h5>
                   <ul className="text-xs space-y-1">
-                    {analysis.availableSlots.map((s, i) => <li key={i}>- {s}</li>)}
+                    {analysis.availableSlots?.map((s, i) => <li key={i}>- {s}</li>)}
                   </ul>
                 </CardContent>
               </Card>

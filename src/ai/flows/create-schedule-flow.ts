@@ -5,7 +5,7 @@
  * Uses MythoMax-L2-13b via OpenRouter.
  */
 
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const GeneratedTaskSchema = z.object({
   description: z.string(),
@@ -37,7 +37,8 @@ export type CreateScheduleOutput = {
 };
 
 export async function createSchedule(input: CreateScheduleInput): Promise<CreateScheduleOutput> {
-  if (!process.env.OPENROUTER_API_KEY) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY is missing');
   }
 
@@ -68,27 +69,49 @@ export async function createSchedule(input: CreateScheduleInput): Promise<Create
     }
   `;
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-      'X-Title': 'Munazzim App',
-    },
-    body: JSON.stringify({
-      model: 'gryphe/mythomax-l2-13b',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
-    })
-  });
-
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-  
   try {
-    return JSON.parse(content);
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'X-Title': 'Munazzim App',
+      },
+      body: JSON.stringify({
+        model: 'gryphe/mythomax-l2-13b',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: "json_object" }
+      })
+    });
+
+    if (!response.ok) throw new Error("OpenRouter error");
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    
+    if (!content) throw new Error("Empty AI response");
+
+    const parsed = JSON.parse(content);
+
+    // Ensure structure is safe for frontend
+    return {
+      appointment: {
+        title: parsed.appointment?.title || "New Appointment",
+        description: parsed.appointment?.description || "",
+        date: parsed.appointment?.date || input.currentDate.split('T')[0],
+        startTime: parsed.appointment?.startTime || "09:00",
+        endTime: parsed.appointment?.endTime || "10:00",
+        location: parsed.appointment?.location || "",
+        participants: parsed.appointment?.participants || [],
+        objectives: parsed.appointment?.objectives || [],
+        agenda: parsed.appointment?.agenda || []
+      },
+      tasks: parsed.tasks || [],
+      missingInformation: parsed.missingInformation || [],
+      conflictWarning: parsed.conflictWarning || ""
+    };
   } catch (e) {
-    console.error("Failed to parse AI response:", content);
-    throw new Error("Invalid response from AI model");
+    console.error("AI Create Error:", e);
+    throw new Error("Failed to process your request. Please check your prompt and try again.");
   }
 }
