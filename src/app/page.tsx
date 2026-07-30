@@ -16,8 +16,9 @@ import {
   CalendarPlus,
   AlertTriangle,
   Loader2,
-  RefreshCw,
-  Sparkles
+  Sparkles,
+  CheckSquare,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -26,7 +27,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScheduleAnalysisDialog } from "@/components/schedule-analysis-dialog";
 import { CalendarSyncButton } from "@/components/CalendarSyncButton";
-import { AddActions } from "@/components/add-actions";
+import { AIAppointmentCreator } from "@/components/ai-appointment-creator";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -81,16 +83,45 @@ export default function Dashboard() {
               <CalendarSyncButton />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <AddActions />
-          </div>
         </div>
 
+        {/* Renamed and Clickable Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Items" value={(tasks?.length || 0) + (appointments?.length || 0)} icon={<Activity />} color="blue" />
+          <StatCard title="Personal Add-ons" value={(tasks?.length || 0) + (appointments?.length || 0)} icon={<Activity />} color="blue" />
           <StatCard title="Pending Tasks" value={pendingTasks.length} icon={<AlertTriangle />} color="orange" href="/tasks" />
-          <StatCard title="Completion" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" href="/stats" />
-          <StatCard title="Events" value={appointments?.length || 0} icon={<CalendarIcon />} color="purple" href="/appointments" />
+          <StatCard title="Task Completion" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" href="/stats" />
+          <StatCard title="Appointments" value={appointments?.length || 0} icon={<CalendarIcon />} color="purple" href="/appointments" />
+        </div>
+
+        {/* New Quick Actions Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Plus className="h-5 w-5" />
+            <h2 className="text-xl font-bold uppercase tracking-tight">Quick Actions</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <ActionCard 
+              icon={CalendarPlus} 
+              title="Appointment" 
+              description="Schedule a meeting or event manually." 
+              href="/appointments?add=true"
+              colorClass="bg-blue-600"
+            />
+            <ActionCard 
+              icon={CheckSquare} 
+              title="Task" 
+              description="Create a new personal task." 
+              href="/tasks?add=true"
+              colorClass="bg-emerald-600"
+            />
+            <ActionCard 
+              icon={Sparkles} 
+              title="AI Assistant" 
+              description="Describe your request in natural language and let AI create it automatically." 
+              onClick={() => setShowAIDialog(true)}
+              colorClass="bg-purple-600"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20 md:mb-0">
@@ -152,6 +183,11 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <AIAppointmentCreator 
+        isOpen={showAIDialog} 
+        onClose={() => setShowAIDialog(false)} 
+      />
     </AppLayout>
   );
 }
@@ -168,7 +204,7 @@ function StatCard({ title, value, icon, color, href }: any) {
     <div className={cn(
       "p-6 rounded-2xl text-white shadow-lg transition-all h-full relative overflow-hidden group", 
       colors[color],
-      href && "hover:scale-[1.02] hover:shadow-2xl cursor-pointer"
+      href && "hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
     )}>
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-500">
         {icon}
@@ -182,4 +218,24 @@ function StatCard({ title, value, icon, color, href }: any) {
   );
 
   return href ? <Link href={href}>{card}</Link> : card;
+}
+
+function ActionCard({ icon: Icon, title, description, href, onClick, colorClass }: any) {
+  const content = (
+    <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-primary/10 shadow-sm hover:border-primary/30 hover:shadow-lg transition-all group cursor-pointer w-full text-left h-full">
+      <div className={cn("p-4 rounded-xl text-white shadow-md transition-transform group-hover:scale-110", colorClass)}>
+        <Icon className="h-6 w-6" />
+      </div>
+      <div className="flex-1">
+        <h4 className="font-bold text-xl mb-1 text-primary">{title}</h4>
+        <p className="text-sm text-muted-foreground leading-snug">{description}</p>
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return <Link href={href} className="block">{content}</Link>;
+  }
+
+  return <button onClick={onClick} className="block w-full">{content}</button>;
 }

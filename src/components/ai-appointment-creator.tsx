@@ -1,18 +1,17 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
+  DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Loader2, Check, Calendar, ListTodo, MapPin, Users, AlertTriangle, Clock, Target, X } from "lucide-react";
+import { Sparkles, Loader2, Check, Calendar, ListTodo, MapPin, Users, AlertTriangle, Clock } from "lucide-react";
 import { createSchedule, CreateScheduleOutput } from "@/ai/flows/create-schedule-flow";
 import { db } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
@@ -21,18 +20,27 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "./ui/badge";
 
 interface AIAppointmentCreatorProps {
-  customTrigger?: boolean;
+  isOpen?: boolean;
   onClose?: () => void;
 }
 
-export function AIAppointmentCreator({ customTrigger = true, onClose }: AIAppointmentCreatorProps) {
+export function AIAppointmentCreator({ isOpen = false, onClose }: AIAppointmentCreatorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [open, setOpen] = useState(!customTrigger);
+  const [open, setOpen] = useState(isOpen);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CreateScheduleOutput | null>(null);
+
+  useEffect(() => {
+    setOpen(isOpen);
+  }, [isOpen]);
+
+  const handleOpenChange = (val: boolean) => {
+    setOpen(val);
+    if (!val && onClose) onClose();
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -44,7 +52,7 @@ export function AIAppointmentCreator({ customTrigger = true, onClose }: AIAppoin
       });
       setResult(output);
       setPreviewOpen(true);
-      if (customTrigger) setOpen(false);
+      handleOpenChange(false);
     } catch (error) {
       toast({ variant: "destructive", title: "AI Error", description: "Failed to parse input. Please try again." });
     } finally {
@@ -58,7 +66,6 @@ export function AIAppointmentCreator({ customTrigger = true, onClose }: AIAppoin
     try {
       const userId = user.uid || user.id;
       
-      // Save Appointment
       await addDoc(collection(db, "appointments"), {
         ...result.appointment,
         userId,
@@ -66,7 +73,6 @@ export function AIAppointmentCreator({ customTrigger = true, onClose }: AIAppoin
         createdAt: new Date().toISOString()
       });
 
-      // Save Tasks
       for (const task of result.tasks) {
         await addDoc(collection(db, "tasks"), {
           ...task,
@@ -88,57 +94,35 @@ export function AIAppointmentCreator({ customTrigger = true, onClose }: AIAppoin
     }
   };
 
-  const CreatorContent = (
-    <div className="space-y-4 py-4">
-      <p className="text-sm text-muted-foreground text-left">
-        Describe your meeting, call, or project. AI will create the event and all necessary preparation tasks.
-      </p>
-      <Textarea 
-        placeholder="e.g., 'Project kickoff with the design team next Tuesday at 2pm for one hour. I need to prepare the slides and invite the engineers.'"
-        className="min-h-[120px] text-lg p-4"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-      />
-      <div className="flex gap-2">
-        {onClose && (
-          <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-        )}
-        <Button onClick={handleGenerate} disabled={loading || !prompt.trim()} className="flex-[2] h-12 font-bold text-lg gap-2">
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-          Generate Plan
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      {customTrigger ? (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-lg bg-primary">
-              <Sparkles className="h-5 w-5" /> Create with AI
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" /> AI Assistant
-              </DialogTitle>
-            </DialogHeader>
-            {CreatorContent}
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <div className="p-6">
-          <DialogHeader className="mb-4">
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
               <Sparkles className="h-6 w-6 text-primary" /> Describe Your Plans
             </DialogTitle>
           </DialogHeader>
-          {CreatorContent}
-        </div>
-      )}
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground text-left">
+              Describe your meeting, call, or project. AI will create the event and all necessary preparation tasks.
+            </p>
+            <Textarea 
+              placeholder="e.g., 'Project kickoff with the design team next Tuesday at 2pm for one hour. I need to prepare the slides and invite the engineers.'"
+              className="min-h-[120px] text-lg p-4"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handleOpenChange(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleGenerate} disabled={loading || !prompt.trim()} className="flex-[2] h-12 font-bold text-lg gap-2">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                Generate Plan
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto p-0 border-none shadow-2xl">
