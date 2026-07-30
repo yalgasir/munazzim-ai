@@ -89,13 +89,13 @@ export default function AIAssistantPage() {
             analysis: result.todayOverview,
             recommendation: result.generalRecommendation,
             createdAt: new Date().toISOString(),
-            model: "Gemini 1.5 Flash"
+            model: "MythoMax-L2"
           });
         }
 
         toast({
           title: "Analysis Complete",
-          description: "Your schedule has been analyzed by Gemini.",
+          description: "Your schedule has been analyzed by MythoMax-L2.",
         });
       }
     } catch (error: any) {
@@ -103,7 +103,7 @@ export default function AIAssistantPage() {
       toast({
         variant: "destructive",
         title: "Connection Error",
-        description: "Could not sync with AI engine or Database. Check your API key.",
+        description: "Could not connect to the AI engine. Please check your OpenRouter API key.",
       });
     } finally {
       setLoading(false);
@@ -121,10 +121,10 @@ export default function AIAssistantPage() {
           </div>
           <h1 className="text-3xl font-bold font-headline text-primary">AI Productivity Assistant</h1>
           <p className="text-muted-foreground max-w-xl">
-            Powered by Google Gemini. Get deep insights into your workload and schedule.
+            Powered by MythoMax-L2. Get deep insights into your workload and schedule.
           </p>
           <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-            <Cpu className="h-3.5 w-3.5" /> Engine: Gemini 1.5 Flash
+            <Cpu className="h-3.5 w-3.5" /> Engine: MythoMax-L2 (Cloud)
           </Badge>
         </div>
 
@@ -152,7 +152,7 @@ export default function AIAssistantPage() {
             <Card className="border-primary/20 shadow-xl overflow-hidden">
                <div className="bg-primary p-4 text-white">
                   <h3 className="font-bold flex items-center gap-2 text-lg">
-                    <Sparkles className="h-5 w-5" /> Gemini Intelligence Report
+                    <Sparkles className="h-5 w-5" /> AI Intelligence Report
                   </h3>
                </div>
               <CardContent className="p-6 space-y-8">
