@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,11 @@ import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { collection, addDoc, query, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
+import { useSearchParams } from "next/navigation";
 
-export default function AppointmentsPage() {
+function AppointmentsContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -31,6 +33,12 @@ export default function AppointmentsPage() {
   const [editingApp, setEditingApp] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (searchParams.get("add") === "true") {
+      setIsAddOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -68,10 +76,10 @@ export default function AppointmentsPage() {
     const userId = user?.uid || user?.id;
     try {
       if (isFirebaseConfigured) {
-        await addDoc(collection(db, "appointments"), { ...newAppointment, userId, createdAt: new Date().toISOString() });
+        await addDoc(collection(db, "appointments"), { ...newAppointment, userId, createdAt: new Date().toISOString(), source: 'manual' });
       } else {
         const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
-        const newApp = { ...newAppointment, id: `app_${Date.now()}`, userId, createdAt: new Date().toISOString() };
+        const newApp = { ...newAppointment, id: `app_${Date.now()}`, userId, createdAt: new Date().toISOString(), source: 'manual' };
         allApps.push(newApp);
         localStorage.setItem("mock_appointments", JSON.stringify(allApps));
         setAppointments(prev => [...prev, newApp]);
@@ -252,4 +260,12 @@ export default function AppointmentsPage() {
       </div>
     </AppLayout>
   );
+}
+
+export default function AppointmentsPage() {
+  return (
+    <Suspense fallback={<Loader2 className="animate-spin h-10 w-10 text-primary mx-auto mt-20" />}>
+      <AppointmentsContent />
+    </Suspense>
+  )
 }
