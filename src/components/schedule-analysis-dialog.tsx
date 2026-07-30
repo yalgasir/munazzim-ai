@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { BrainCircuit, Loader2, AlertTriangle, CheckCircle2, Zap, LayoutList, History, Calendar, TrendingUp } from "lucide-react";
 import { analyzeFullSchedule, AnalysisOutput } from "@/ai/flows/ai-schedule-optimizer-flow";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +25,6 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
   const runAnalysis = async () => {
     setLoading(true);
     try {
-      // Ensure only plain serializable data is sent to the Server Action
       const safeApps = appointments.map(a => ({
         title: String(a.title || "Untitled"),
         date: String(a.date || ""),
