@@ -36,6 +36,7 @@ export type AnalysisOutput = z.infer<typeof AnalysisOutputSchema>;
 
 const analyzeSchedulePrompt = ai.definePrompt({
   name: 'analyzeSchedulePrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: AnalysisInputSchema },
   output: { schema: AnalysisOutputSchema },
   prompt: `

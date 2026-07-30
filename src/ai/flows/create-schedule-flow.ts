@@ -45,6 +45,7 @@ export type CreateScheduleOutput = z.infer<typeof CreateScheduleOutputSchema>;
 
 const createSchedulePrompt = ai.definePrompt({
   name: 'createSchedulePrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: CreateScheduleInputSchema },
   output: { schema: CreateScheduleOutputSchema },
   prompt: `

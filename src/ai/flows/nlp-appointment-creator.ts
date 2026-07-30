@@ -1,5 +1,6 @@
 'use server';
 
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const NLPAppointmentCreatorInputSchema = z.string();
@@ -16,47 +17,27 @@ const NLPAppointmentCreatorOutputSchema = z.object({
 });
 export type NLPAppointmentCreatorOutput = z.infer<typeof NLPAppointmentCreatorOutputSchema>;
 
+const nlpPrompt = ai.definePrompt({
+  name: 'nlpAppointmentCreatorPrompt',
+  model: 'googleai/gemini-1.5-flash',
+  input: { schema: NLPAppointmentCreatorInputSchema },
+  output: { schema: NLPAppointmentCreatorOutputSchema },
+  prompt: `
+    You are an AI assistant specializing in parsing appointment requests. 
+    Extract information from the following input: "{{{this}}}"
+    Today's date: ${new Date().toISOString().split('T')[0]}
+  `,
+});
+
 export async function nlpAppointmentCreator(input: NLPAppointmentCreatorInput): Promise<NLPAppointmentCreatorOutput> {
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY is missing');
+  const { output } = await nlpPrompt(input);
+  if (!output) {
+    return {
+        title: "New Appointment",
+        date: new Date().toISOString().split('T')[0],
+        durationMinutes: 60,
+        allDay: false
+    };
   }
-
-  const currentDate = new Date().toISOString().split('T')[0];
-  
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gryphe/mythomax-l2-13b",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant specializing in parsing appointment requests. Extract information and return only valid JSON. Today's date: ${currentDate}. Response MUST be JSON with fields: title, description, date, time, durationMinutes, allDay.`
-        },
-        {
-          role: "user",
-          content: input
-        }
-      ],
-      response_format: { type: "json_object" }
-    })
-  });
-
-  if (!response.ok) throw new Error('OpenRouter connection failed');
-  const data = await response.json();
-  const result = JSON.parse(data.choices?.[0]?.message?.content || "{}");
-  
-  return {
-    title: result.title || "New Appointment",
-    description: result.description,
-    date: result.date || currentDate,
-    time: result.time,
-    durationMinutes: result.durationMinutes || 60,
-    allDay: !!result.allDay
-  };
+  return output;
 }
-
- 
