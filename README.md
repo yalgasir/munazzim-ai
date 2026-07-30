@@ -11,16 +11,16 @@ pinned: false
 # 🚀 Munazzim | Advanced AI Productivity Ecosystem
 
 ![Status](https://img.shields.io/badge/Status-Active-emerald)
-![Last Updated](https://img.shields.io/badge/Last%20Updated-26/07/2026-blue)
+![Last Updated](https://img.shields.io/badge/Last%20Updated-24/05/2024-blue)
 ![NASA TRL](https://img.shields.io/badge/NASA%20TRL-8-indigo)
-![Engine](https://img.shields.io/badge/AI%20Engine-MythoMax--L2--13B-blue)
+![Engine](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Flash-blue)
 
 Munazzim (Arabic for "Organizer") is a high-reliability, AI-driven time management and productivity ecosystem designed to bridge the gap between simple scheduling and intelligent life-planning. Built to meet rigorous **NASA TRL 8** standards, Munazzim provides a stable, qualified environment for managing complex daily workflows.
 
 ---
 
 ## 🔗 Live Deployment
-Access the latest build directly on Hugging Face Spaces:
+Access the latest build directly on Hugging Face :
 [**Open Munazzim on Hugging Face**](https://huggingface.co/spaces/yalgasir/ai-time-manager)
 
 ---
@@ -28,7 +28,7 @@ Access the latest build directly on Hugging Face Spaces:
 ## 📖 Project Overview
 
 ### Purpose
-Munazzim was conceived to solve the "productivity paradox"—where users spend more time managing tools than doing actual work. It leverages Large Language Models (LLMs) to provide a cognitive layer over traditional calendars and task lists.
+Munazzim was conceived to solve the "productivity paradox"—where users spend more time managing tools than doing actual work. It leverages Google Gemini via Genkit to provide a cognitive layer over traditional calendars and task lists.
 
 ### Objectives
 *   **Cognitive Offloading:** Automate the mental effort of detecting schedule conflicts and prioritizing tasks.
@@ -39,17 +39,17 @@ Munazzim was conceived to solve the "productivity paradox"—where users spend m
 
 ## ✨ Key Features
 
-### 🧠 AI-Powered Schedule Analysis
-Uses the MythoMax-L2-13B model to ingest current appointments and tasks, providing a human-like summary of the day's feasibility.
+### 🧠 AI Schedule Analysis
+Uses Google Gemini to ingest current appointments and tasks, providing a human-like summary of the day's feasibility, conflict alerts, and a suggested daily execution plan.
 
-### 📅 Advanced Appointment Management
-A full-featured scheduling interface that supports complex metadata, location tracking, and real-time Firestore synchronization.
+### 🪄 AI-Assisted Creation
+Describe your plans in natural language. The AI extracts meeting details, generates preparation/follow-up tasks, assigns priorities, and checks for potential scheduling conflicts before you confirm.
+
+### 📅 Calendar Integration
+Synchronize external calendar events (e.g., Google Calendar) directly into your Munazzim workspace. Track the source of every event—whether manual, AI-generated, or imported.
 
 ### ✅ Dynamic Task Management
-Prioritized task lists with "High," "Medium," and "Low" urgency levels, integrated directly into the AI's reasoning engine.
-
-### 💡 Productivity Recommendations
-Generates actionable daily steps to improve time allocation.
+Prioritized task lists with "High," "Medium," and "Low" urgency levels, integrated directly into the AI's reasoning engine for smart prioritization.
 
 ---
 
@@ -61,7 +61,8 @@ Generates actionable daily steps to improve time allocation.
 | **Language** | TypeScript |
 | **UI Components** | Shadcn/UI & Radix UI |
 | **Database** | Firebase Firestore |
-| **AI Engine** | MythoMax-L2-13B (OpenRouter) |
+| **AI Framework** | Google Genkit |
+| **AI Model** | Gemini 1.5 Flash |
 | **Deployment** | Docker on Hugging Face Spaces |
 
 ---
@@ -70,7 +71,7 @@ Generates actionable daily steps to improve time allocation.
 
 Munazzim is currently classified as **TRL 8** (Actual system completed and qualified through test and demonstration).
 
-*   **Evidence:** The system is integrated with real-time cloud services (Firebase), successfully handles live LLM inference, and maintains a stable operational state in the production environment.
+*   **Evidence:** The system is integrated with real-time cloud services (Firebase), successfully handles complex structured AI output via Genkit, and maintains a stable operational state.
 *   **Maintenance:** System status and logs are monitored for performance consistency.
 *   **Path to TRL 9:** Achieving TRL 9 requires "Mission Operations," meaning the system must sustain high-volume user traffic for a sustained period without critical architectural failure.
 
@@ -78,4 +79,3 @@ Munazzim is currently classified as **TRL 8** (Actual system completed and quali
 
 **Last Updated: Automatically synchronized with the latest project build.**
 **Munazzim Engineering Team | TRL-8 Certified**
- 
