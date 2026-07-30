@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Loader2, Check, X, Calendar, ListTodo, MapPin, Users, Target } from "lucide-react";
+import { Sparkles, Loader2, Check, Calendar, ListTodo, MapPin, Users, AlertTriangle, Clock, Target } from "lucide-react";
 import { createSchedule, CreateScheduleOutput } from "@/ai/flows/create-schedule-flow";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +47,7 @@ export function AIAppointmentCreator() {
   };
 
   const handleConfirm = async () => {
-    if (!result || !user) return;
+    if (!result || !user || !db) return;
     setLoading(true);
     try {
       const userId = user.uid || user.id;
@@ -134,20 +134,33 @@ export function AIAppointmentCreator() {
                     <div className="flex items-center gap-1"><Clock className="h-4 w-4" /> {result.appointment.startTime} - {result.appointment.endTime}</div>
                     <div className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {result.appointment.date}</div>
                     {result.appointment.location && <div className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {result.appointment.location}</div>}
-                    {result.appointment.participants && <div className="flex items-center gap-1"><Users className="h-4 w-4" /> {result.appointment.participants.length} people</div>}
+                    {result.appointment.participants && <div className="flex items-center gap-1"><Users className="h-4 w-4" /> {result.appointment.participants.length} participants</div>}
                   </div>
+                  {result.appointment.objectives && result.appointment.objectives.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Objectives</p>
+                      <ul className="text-xs list-disc pl-4 space-y-1">
+                        {result.appointment.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </section>
 
               <section className="space-y-3">
                 <h3 className="font-bold text-lg flex items-center gap-2 border-b pb-2">
-                  <ListTodo className="h-5 w-5 text-primary" /> Generated Tasks
+                  <ListTodo className="h-5 w-5 text-primary" /> Action Plan & Tasks
                 </h3>
                 <div className="space-y-2">
                   {result.tasks.map((task, i) => (
-                    <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm border border-primary/5">
-                      <span>{task.description}</span>
-                      <Badge variant="outline" className="text-[10px]">{task.category}</Badge>
+                    <div key={i} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg text-sm border border-primary/5">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{task.description}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase">{task.category} • Due: {task.dueDate || 'ASAP'}</span>
+                      </div>
+                      <Badge variant={task.priority === 'High' ? 'destructive' : 'secondary'} className="text-[10px]">
+                        {task.priority}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -159,6 +172,15 @@ export function AIAppointmentCreator() {
                   <p className="text-xs text-amber-700">{result.conflictWarning}</p>
                 </div>
               )}
+
+              {result.missingInformation && result.missingInformation.length > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs font-bold text-blue-700 mb-1">Clarifications needed:</p>
+                  <ul className="text-xs text-blue-600 list-disc pl-4">
+                    {result.missingInformation.map((info, i) => <li key={i}>{info}</li>)}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -166,7 +188,7 @@ export function AIAppointmentCreator() {
             <Button variant="outline" onClick={() => setPreviewOpen(false)} disabled={loading}>Cancel</Button>
             <Button onClick={handleConfirm} disabled={loading} className="bg-primary">
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-              Save All to Schedule
+              Confirm & Save
             </Button>
           </DialogFooter>
         </DialogContent>

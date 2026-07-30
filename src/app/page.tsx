@@ -10,25 +10,21 @@ import {
   CheckCircle2, 
   Clock,
   Activity,
-  Plus,
   ArrowRight,
-  Check,
   Cpu,
-  Key,
   CalendarPlus,
-  Sparkles,
   AlertTriangle,
   Loader2,
-  BrainCircuit,
   RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
-import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { AIAppointmentCreator } from "@/components/ai-appointment-creator";
 import { ScheduleAnalysisDialog } from "@/components/schedule-analysis-dialog";
+import { CalendarSyncButton } from "@/components/CalendarSyncButton";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -36,19 +32,8 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [apiKeyStatus, setApiKeyStatus] = useState<"active" | "missing">("missing");
 
   useEffect(() => {
-    const checkApiKey = async () => {
-      try {
-        const res = await fetch('/api/health');
-        if (res.ok) setApiKeyStatus("active");
-      } catch (e) {
-        setApiKeyStatus("missing");
-      }
-    };
-    checkApiKey();
-
     if (!user) return;
 
     if (isFirebaseConfigured && db) {
@@ -67,13 +52,6 @@ export default function Dashboard() {
       return () => { unsubApps(); unsubTasks(); };
     }
   }, [user]);
-
-  const handleSync = () => {
-    setSyncing(true);
-    setTimeout(() => {
-      setSyncing(false);
-    }, 2000);
-  };
 
   if (authLoading || loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -95,16 +73,7 @@ export default function Dashboard() {
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
                 <Cpu className="h-3.5 w-3.5 mr-1" /> {isFirebaseConfigured ? "Cloud Active" : "Local Mode"}
               </Badge>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 text-[10px] gap-1"
-                onClick={handleSync}
-                disabled={syncing}
-              >
-                <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
-                {syncing ? "Syncing..." : "Sync Calendar"}
-              </Button>
+              <CalendarSyncButton />
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -139,7 +108,7 @@ export default function Dashboard() {
                     <div className="bg-primary/10 p-2 rounded-lg"><Clock className="h-5 w-5 text-primary" /></div>
                     <div>
                       <h4 className="font-bold text-primary">{app.title}</h4>
-                      <p className="text-xs text-muted-foreground">{app.time} • {app.source || 'manual'}</p>
+                      <p className="text-xs text-muted-foreground">{app.time} • Source: {app.source || 'manual'}</p>
                     </div>
                   </div>
                   <Badge variant="outline">{app.type || 'Meeting'}</Badge>

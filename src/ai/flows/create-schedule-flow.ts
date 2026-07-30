@@ -1,61 +1,61 @@
 'use server';
 
+/**
+ * @fileOverview AI Flow for parsing natural language into highly structured appointments and tasks.
+ */
+
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-/**
- * @fileOverview AI Flow for parsing natural language into structured appointments and tasks.
- */
+const GeneratedTaskSchema = z.object({
+  description: z.string().describe('Detailed description of the task'),
+  priority: z.enum(['High', 'Medium', 'Low']).describe('Urgency level'),
+  category: z.enum(['Preparation', 'Follow-up', 'General']),
+  dueDate: z.string().optional().describe('Suggested deadline in YYYY-MM-DD format'),
+});
 
 const CreateScheduleInputSchema = z.object({
   userInput: z.string().describe('The user description of a meeting or activity'),
   currentDate: z.string().describe('Current date for context'),
 });
 
-export type CreateScheduleInput = z.infer<typeof CreateScheduleInputSchema>;
-
-const GeneratedTaskSchema = z.object({
-  description: z.string(),
-  priority: z.enum(['High', 'Medium', 'Low']),
-  category: z.enum(['Preparation', 'Follow-up', 'General']),
-  dueDate: z.string().optional().describe('ISO string date'),
-});
-
 const CreateScheduleOutputSchema = z.object({
   appointment: z.object({
-    title: z.string(),
-    description: z.string(),
-    date: z.string().describe('YYYY-MM-DD'),
-    startTime: z.string().describe('HH:mm'),
-    endTime: z.string().describe('HH:mm'),
-    location: z.string().optional(),
-    meetingLink: z.string().optional(),
-    participants: z.array(z.string()).optional(),
-    objectives: z.array(z.string()).optional(),
-    agenda: z.array(z.string()).optional(),
+    title: z.string().describe('Concise title for the event'),
+    description: z.string().describe('Detailed description or purpose'),
+    date: z.string().describe('Date in YYYY-MM-DD format'),
+    startTime: z.string().describe('Start time in HH:mm format'),
+    endTime: z.string().describe('End time in HH:mm format'),
+    location: z.string().optional().describe('Physical location or URL link'),
+    participants: z.array(z.string()).optional().describe('List of people involved'),
+    objectives: z.array(z.string()).optional().describe('Primary goals of the meeting'),
+    agenda: z.array(z.string()).optional().describe('Step by step agenda items'),
   }),
   tasks: z.array(GeneratedTaskSchema).describe('Suggested preparation and follow-up tasks'),
-  missingInformation: z.array(z.string()).optional().describe('Questions to ask if details are unclear'),
-  conflictWarning: z.string().optional().describe('Warning if the AI detects a potential overlap'),
+  missingInformation: z.array(z.string()).optional().describe('Questions to ask the user for missing vital details'),
+  conflictWarning: z.string().optional().describe('A warning if the requested time seems inappropriate or conflicts with common sense'),
 });
 
+export type CreateScheduleInput = z.infer<typeof CreateScheduleInputSchema>;
 export type CreateScheduleOutput = z.infer<typeof CreateScheduleOutputSchema>;
 
 export async function createSchedule(input: CreateScheduleInput): Promise<CreateScheduleOutput> {
   const result = await ai.generate({
+    model: 'googleai/gemini-1.5-flash',
+    input: input,
+    output: { schema: CreateScheduleOutputSchema },
     prompt: `
-      You are an expert executive assistant. 
-      Current Date: ${input.currentDate}
-      User Input: "${input.userInput}"
+      You are an elite executive assistant. 
+      Current Date: {{currentDate}}
+      User Input: "{{userInput}}"
       
-      Extract and structure the meeting details. 
-      - Generate logical 'Preparation' tasks to be done before the meeting.
-      - Generate logical 'Follow-up' tasks for after the meeting.
-      - If times are not specified, suggest reasonable defaults based on the context.
-      - Ensure the output is strictly valid JSON matching the schema.
+      Instructions:
+      1. Extract all meeting details. If a time isn't specified, suggest a logical one.
+      2. Generate specific 'Preparation' tasks (e.g., "Prepare slides", "Research attendee profiles").
+      3. Generate specific 'Follow-up' tasks (e.g., "Send meeting minutes", "Update CRM").
+      4. Assign realistic deadlines and priorities.
+      5. Identify if the user forgot crucial info (like location or specific time).
     `,
-    model: 'googleai/gemini-1.5-flash', // Standard reliable model
-    output: { schema: CreateScheduleOutputSchema }
   });
 
   return result.output!;

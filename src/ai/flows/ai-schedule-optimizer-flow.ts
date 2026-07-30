@@ -1,11 +1,11 @@
 'use server';
 
+/**
+ * @fileOverview Deep schedule analysis flow providing insights and recommendations.
+ */
+
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-/**
- * @fileOverview Deep schedule analysis flow.
- */
 
 const AnalysisInputSchema = z.object({
   appointments: z.array(z.any()),
@@ -14,17 +14,17 @@ const AnalysisInputSchema = z.object({
 });
 
 const AnalysisOutputSchema = z.object({
-  todayOverview: z.string(),
-  priorityRecommendations: z.array(z.string()),
-  conflictAlerts: z.array(z.string()),
-  upcomingDeadlines: z.array(z.string()),
-  availableSlots: z.array(z.string()),
+  todayOverview: z.string().describe('Summary of the day and week ahead'),
+  priorityRecommendations: z.array(z.string()).describe('Top 3-5 tasks to focus on'),
+  conflictAlerts: z.array(z.string()).describe('List of overlapping events or missed deadlines'),
+  upcomingDeadlines: z.array(z.string()).describe('Key deadlines approaching'),
+  availableSlots: z.array(z.string()).describe('Suggested times for deep work or breaks'),
   dailyPlan: z.array(z.object({
     time: z.string(),
     activity: z.string(),
     isTask: z.boolean()
-  })),
-  generalRecommendation: z.string()
+  })).describe('An hourly breakdown of the suggested day'),
+  generalRecommendation: z.string().describe('Overall advice for productivity and balance')
 });
 
 export type AnalysisOutput = z.infer<typeof AnalysisOutputSchema>;
@@ -33,19 +33,23 @@ export async function analyzeFullSchedule(appointments: any[], tasks: any[]): Pr
   const currentDate = new Date().toISOString();
   
   const result = await ai.generate({
-    prompt: `
-      You are an expert productivity coach. Analyze the following user schedule:
-      
-      Appointments: ${JSON.stringify(appointments)}
-      Tasks: ${JSON.stringify(tasks)}
-      Current Date: ${currentDate}
-      
-      Provide a deep analysis. Identify conflicts, prioritize tasks based on deadlines and importance, 
-      and create a suggested hourly plan for today.
-      BE CONCISE but thorough.
-    `,
     model: 'googleai/gemini-1.5-flash',
-    output: { schema: AnalysisOutputSchema }
+    input: { appointments, tasks, currentDate },
+    output: { schema: AnalysisOutputSchema },
+    prompt: `
+      You are a world-class productivity consultant. Analyze the user's current workload:
+      
+      Appointments: {{json appointments}}
+      Tasks: {{json tasks}}
+      Current Date: {{currentDate}}
+      
+      Deliver a comprehensive analysis including:
+      1. How realistic their day looks (Workload balance).
+      2. Specific conflicts or tight transitions.
+      3. Which tasks are dependencies for upcoming meetings.
+      4. Recommendations on what to postpone if they are overbooked.
+      5. A clear, actionable daily execution plan.
+    `,
   });
 
   return result.output!;
