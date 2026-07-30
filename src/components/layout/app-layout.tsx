@@ -58,7 +58,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl;
+  const userAvatar = (PlaceHolderImages || []).find(img => img.id === 'user-avatar')?.imageUrl;
 
   return (
     <SidebarProvider>
@@ -125,4 +125,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
- 

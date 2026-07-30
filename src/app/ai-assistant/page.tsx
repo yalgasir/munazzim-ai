@@ -25,20 +25,18 @@ export default function AIAssistantPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (!user || !db) return;
+    if (!user || !db || !isFirebaseConfigured) return;
 
-    if (isFirebaseConfigured) {
-      const q = query(
-        collection(db, "ai_logs"),
-        where("userId", "==", user.uid || user.id),
-        orderBy("createdAt", "desc"),
-        limit(5)
-      );
-      const unsub = onSnapshot(q, (snap) => {
-        setHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      });
-      return () => unsub();
-    }
+    const q = query(
+      collection(db, "ai_logs"),
+      where("userId", "==", user.uid || user.id),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
   }, [user]);
 
   const handleOptimize = async () => {
@@ -116,6 +114,15 @@ export default function AIAssistantPage() {
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!mounted) return "";
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   if (!mounted) return null;
 
   return (
@@ -175,7 +182,7 @@ export default function AIAssistantPage() {
                       <Check className="h-4 w-4" /> Recommended Priorities
                     </h4>
                     <ul className="space-y-2">
-                      {suggestion.priorityRecommendations.map((item, i) => (
+                      {(suggestion.priorityRecommendations || []).map((item, i) => (
                         <li key={i} className="text-sm bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex gap-2">
                           <span className="font-bold text-emerald-600">{i+1}.</span>
                           {item}
@@ -189,12 +196,12 @@ export default function AIAssistantPage() {
                       <AlertTriangle className="h-4 w-4" /> Potential Conflicts
                     </h4>
                     <ul className="space-y-2">
-                      {suggestion.conflictAlerts.map((item, i) => (
+                      {(suggestion.conflictAlerts || []).map((item, i) => (
                         <li key={i} className="text-sm bg-red-50 p-2 rounded-lg border border-red-100">
                           {item}
                         </li>
                       ))}
-                      {suggestion.conflictAlerts.length === 0 && <li className="text-sm text-muted-foreground italic">No conflicts detected.</li>}
+                      {(!suggestion.conflictAlerts || suggestion.conflictAlerts.length === 0) && <li className="text-sm text-muted-foreground italic">No conflicts detected.</li>}
                     </ul>
                   </div>
                 </div>
@@ -204,7 +211,7 @@ export default function AIAssistantPage() {
                     <LayoutList className="h-4 w-4" /> Suggested Daily Plan
                   </h4>
                   <div className="space-y-3 relative before:absolute before:inset-0 before:left-2.5 before:border-l-2 before:border-muted before:h-full">
-                    {suggestion.dailyPlan.map((item, i) => (
+                    {(suggestion.dailyPlan || []).map((item, i) => (
                       <div key={i} className="relative pl-8 flex items-center gap-4">
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-background border-2 border-primary flex items-center justify-center z-10">
                           <div className="h-2 w-2 rounded-full bg-primary" />
@@ -243,7 +250,7 @@ export default function AIAssistantPage() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-bold text-primary text-sm">Query: {log.prompt}</span>
-                      <span className="text-[10px] opacity-60">{new Date(log.createdAt).toLocaleString()}</span>
+                      <span className="text-[10px] opacity-60">{formatDate(log.createdAt)}</span>
                     </div>
                     <p className="line-clamp-2 text-xs text-muted-foreground">{log.analysis}</p>
                   </CardContent>

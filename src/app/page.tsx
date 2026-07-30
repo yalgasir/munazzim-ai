@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { AIAppointmentCreator } from "@/components/ai-appointment-creator";
 import { ScheduleAnalysisDialog } from "@/components/schedule-analysis-dialog";
@@ -31,36 +31,39 @@ export default function Dashboard() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-
-    if (isFirebaseConfigured && db) {
-      const qApps = collection(db, "appointments");
-      const qTasks = collection(db, "tasks");
-
-      const unsubApps = onSnapshot(qApps, (snap) => {
-        setAppointments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      });
-
-      const unsubTasks = onSnapshot(qTasks, (snap) => {
-        setTasks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setLoading(false);
-      });
-
-      return () => { unsubApps(); unsubTasks(); };
+    setMounted(true);
+    if (!user || !db || !isFirebaseConfigured) {
+      if (!authLoading) setLoading(false);
+      return;
     }
-  }, [user]);
 
-  if (authLoading || loading) return (
+    const userId = user.uid || user.id;
+    const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
+    const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
+
+    const unsubApps = onSnapshot(qApps, (snap) => {
+      setAppointments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const unsubTasks = onSnapshot(qTasks, (snap) => {
+      setTasks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    });
+
+    return () => { unsubApps(); unsubTasks(); };
+  }, [user, authLoading]);
+
+  if (!mounted || authLoading || loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
       <p className="text-muted-foreground animate-pulse">Synchronizing Workspace...</p>
     </div>
   );
 
-  const pendingTasks = tasks.filter(t => !t.isCompleted);
+  const pendingTasks = (tasks || []).filter(t => !t.isCompleted);
   const completionRate = tasks.length > 0 ? Math.round(((tasks.length - pendingTasks.length) / tasks.length) * 100) : 0;
 
   return (
@@ -87,10 +90,10 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Items" value={tasks.length + appointments.length} icon={<Activity />} color="blue" />
+          <StatCard title="Total Items" value={(tasks?.length || 0) + (appointments?.length || 0)} icon={<Activity />} color="blue" />
           <StatCard title="Pending Tasks" value={pendingTasks.length} icon={<AlertTriangle />} color="orange" href="/tasks" />
           <StatCard title="Completion" value={`${completionRate}%`} icon={<CheckCircle2 />} color="emerald" href="/stats" />
-          <StatCard title="Events" value={appointments.length} icon={<CalendarIcon />} color="purple" href="/appointments" />
+          <StatCard title="Events" value={appointments?.length || 0} icon={<CalendarIcon />} color="purple" href="/appointments" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -102,7 +105,7 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {appointments.slice(0, 3).map(app => (
+              {(appointments || []).slice(0, 3).map(app => (
                 <div key={app.id} className="flex items-center justify-between p-4 rounded-xl border border-primary/10 bg-white shadow-sm">
                   <div className="flex items-center gap-4">
                     <div className="bg-primary/10 p-2 rounded-lg"><Clock className="h-5 w-5 text-primary" /></div>
@@ -114,7 +117,7 @@ export default function Dashboard() {
                   <Badge variant="outline">{app.type || 'Meeting'}</Badge>
                 </div>
               ))}
-              {appointments.length === 0 && <p className="text-center text-muted-foreground py-10">No upcoming events.</p>}
+              {(!appointments || appointments.length === 0) && <p className="text-center text-muted-foreground py-10">No upcoming events.</p>}
             </CardContent>
           </Card>
 

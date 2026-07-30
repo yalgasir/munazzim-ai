@@ -8,9 +8,14 @@ import { getFirestore } from "firebase/firestore";
  */
 
 const MOCK_KEY = "AIzaSyMockKey_Please_Set_In_Env";
-// Clean the API key of quotes and whitespace
-const rawApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "";
-const apiKey = rawApiKey.replace(/^["']|["']$/g, "").trim();
+
+// Safely handle potential undefined or malformed API key
+const getSafeApiKey = () => {
+  const raw = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "";
+  return raw.replace(/^["']|["']$/g, "").trim();
+};
+
+const apiKey = getSafeApiKey();
 
 export const isFirebaseConfigured = !!(
   apiKey && 
@@ -29,19 +34,13 @@ const firebaseConfig = {
 };
 
 let app;
-let auth = null;
-let db = null;
+let auth: any = null;
+let db: any = null;
 
 try {
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  
-  if (isFirebaseConfigured) {
-    console.log("Munazzim: Cloud Workspace successfully activated.");
-  } else {
-    console.log("Munazzim: Running in Local Mock Mode.");
-  }
 } catch (e) {
   console.error("Firebase initialization failed:", e);
 }
