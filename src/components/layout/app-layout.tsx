@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import Link from "next/navigation";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
@@ -11,7 +11,9 @@ import {
   BarChart3, 
   Sparkles, 
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  LogOut,
+  UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +31,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/" },
@@ -42,9 +52,16 @@ const menuItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
-  
+  const [currentDate, setCurrentDate] = React.useState("");
+
   React.useEffect(() => {
     setMounted(true);
+    setCurrentDate(new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }));
   }, []);
 
   if (!mounted) {
@@ -63,29 +80,32 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background" dir="ltr">
-        <Sidebar side="left" collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
-          <SidebarHeader className="p-4 flex flex-row items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-primary">
-              <span className="text-xl font-bold">M</span>
+        <Sidebar side="left" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground w-64">
+          <SidebarHeader className="p-6 flex flex-row items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+              <span className="text-xl font-black">M</span>
             </div>
-            <span className="text-xl font-bold font-headline group-data-[collapsible=icon]:hidden">
+            <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden">
               Munazzim
             </span>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu className="px-2">
+          <SidebarContent className="px-3">
+            <SidebarMenu className="gap-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton 
                     asChild 
                     isActive={pathname === item.href}
                     tooltip={item.title}
-                    className="flex flex-row items-center gap-3 py-6 px-4"
+                    className={cn(
+                      "flex flex-row items-center gap-3 py-6 px-4 transition-all duration-200",
+                      pathname === item.href ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-sidebar-accent/50"
+                    )}
                   >
-                    <Link href={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="text-base">{item.title}</span>
-                    </Link>
+                    <a href={item.href}>
+                      <item.icon className={cn("h-5 w-5", pathname === item.href ? "text-white" : "text-sidebar-foreground/70")} />
+                      <span className="text-sm font-medium">{item.title}</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -94,30 +114,54 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter className="p-4 border-t border-sidebar-border">
             <SidebarMenu>
               <SidebarMenuItem>
-                <div className="flex items-center gap-3 px-2 py-3 group-data-[collapsible=icon]:justify-center">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={userAvatar} />
-                    <AvatarFallback><UserIcon /></AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
-                    <span className="text-sm font-medium">Guest User</span>
-                    <span className="text-xs text-sidebar-foreground/70">Direct Access</span>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton className="h-14 w-full justify-start gap-3 px-2 hover:bg-sidebar-accent/50 transition-colors">
+                      <Avatar className="h-9 w-9 border-2 border-primary/20">
+                        <AvatarImage src={userAvatar} />
+                        <AvatarFallback className="bg-primary/10 text-primary"><UserIcon className="h-5 w-5" /></AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
+                        <span className="text-sm font-semibold truncate max-w-[120px]">Guest User</span>
+                        <span className="text-[10px] font-medium text-sidebar-foreground/60 uppercase tracking-wider">Local Workspace</span>
+                      </div>
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 mb-2">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2 cursor-pointer">
+                      <UserCircle className="h-4 w-4" /> Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" /> Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                      <LogOut className="h-4 w-4" /> Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
 
         <SidebarInset className="flex-1 flex flex-col min-w-0 bg-background overflow-auto">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <SidebarTrigger />
-            <div className="flex-1" />
-            <Button variant="ghost" size="icon" className="cursor-default pointer-events-none hover:bg-transparent">
-              <Settings className="h-5 w-5" />
-            </Button>
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarTrigger className="hover:bg-muted" />
+            <div className="flex-1">
+              <span className="text-xs font-medium text-muted-foreground hidden md:inline-block">
+                {currentDate}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </div>
           </header>
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
             {children}
           </main>
         </SidebarInset>
