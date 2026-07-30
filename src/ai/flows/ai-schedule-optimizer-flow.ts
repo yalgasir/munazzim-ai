@@ -15,6 +15,7 @@ const AnalysisInputSchema = z.object({
   appointments: z.array(z.any()),
   tasks: z.array(z.any()),
   currentDate: z.string(),
+  userContext: z.string().optional().describe('Additional context or specific questions from the user'),
 });
 
 const AnalysisOutputSchema = z.object({
@@ -43,6 +44,7 @@ const analyzeSchedulePrompt = ai.definePrompt({
     Appointments: {{{json appointments}}}
     Tasks: {{{json tasks}}}
     Current Date: {{{currentDate}}}
+    User Context/Request: {{{userContext}}}
     
     Deliver a comprehensive analysis including:
     1. How realistic their day looks (Workload balance).
@@ -66,7 +68,7 @@ const analyzeScheduleFlow = ai.defineFlow(
   }
 );
 
-export async function analyzeFullSchedule(appointments: any[], tasks: any[]): Promise<AnalysisOutput> {
+export async function analyzeFullSchedule(appointments: any[], tasks: any[], userContext?: string): Promise<AnalysisOutput> {
   const currentDate = new Date().toISOString();
-  return await analyzeScheduleFlow({ appointments, tasks, currentDate });
+  return await analyzeScheduleFlow({ appointments, tasks, currentDate, userContext });
 }
