@@ -2,6 +2,10 @@
 
 /**
  * @fileOverview Deep schedule analysis flow providing insights and recommendations.
+ * 
+ * - analyzeFullSchedule - Analyzes user workload and provides optimization.
+ * - AnalysisInput - The input type.
+ * - AnalysisOutput - The return type.
  */
 
 import { ai } from '@/ai/genkit';
@@ -29,28 +33,40 @@ const AnalysisOutputSchema = z.object({
 
 export type AnalysisOutput = z.infer<typeof AnalysisOutputSchema>;
 
+const analyzeSchedulePrompt = ai.definePrompt({
+  name: 'analyzeSchedulePrompt',
+  input: { schema: AnalysisInputSchema },
+  output: { schema: AnalysisOutputSchema },
+  prompt: `
+    You are a world-class productivity consultant. Analyze the user's current workload:
+    
+    Appointments: {{{json appointments}}}
+    Tasks: {{{json tasks}}}
+    Current Date: {{{currentDate}}}
+    
+    Deliver a comprehensive analysis including:
+    1. How realistic their day looks (Workload balance).
+    2. Specific conflicts or tight transitions.
+    3. Which tasks are dependencies for upcoming meetings.
+    4. Recommendations on what to postpone if they are overbooked.
+    5. A clear, actionable daily execution plan.
+  `,
+});
+
+const analyzeScheduleFlow = ai.defineFlow(
+  {
+    name: 'analyzeScheduleFlow',
+    inputSchema: AnalysisInputSchema,
+    outputSchema: AnalysisOutputSchema,
+  },
+  async (input) => {
+    const { output } = await analyzeSchedulePrompt(input);
+    if (!output) throw new Error('Failed to generate analysis output');
+    return output;
+  }
+);
+
 export async function analyzeFullSchedule(appointments: any[], tasks: any[]): Promise<AnalysisOutput> {
   const currentDate = new Date().toISOString();
-  
-  const result = await ai.generate({
-    model: 'googleai/gemini-1.5-flash',
-    input: { appointments, tasks, currentDate },
-    output: { schema: AnalysisOutputSchema },
-    prompt: `
-      You are a world-class productivity consultant. Analyze the user's current workload:
-      
-      Appointments: {{json appointments}}
-      Tasks: {{json tasks}}
-      Current Date: {{currentDate}}
-      
-      Deliver a comprehensive analysis including:
-      1. How realistic their day looks (Workload balance).
-      2. Specific conflicts or tight transitions.
-      3. Which tasks are dependencies for upcoming meetings.
-      4. Recommendations on what to postpone if they are overbooked.
-      5. A clear, actionable daily execution plan.
-    `,
-  });
-
-  return result.output!;
+  return await analyzeScheduleFlow({ appointments, tasks, currentDate });
 }

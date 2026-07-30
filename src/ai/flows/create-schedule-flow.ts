@@ -2,6 +2,10 @@
 
 /**
  * @fileOverview AI Flow for parsing natural language into highly structured appointments and tasks.
+ * 
+ * - createSchedule - A function that handles the schedule extraction process.
+ * - CreateScheduleInput - The input type for the function.
+ * - CreateScheduleOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -39,24 +43,37 @@ const CreateScheduleOutputSchema = z.object({
 export type CreateScheduleInput = z.infer<typeof CreateScheduleInputSchema>;
 export type CreateScheduleOutput = z.infer<typeof CreateScheduleOutputSchema>;
 
-export async function createSchedule(input: CreateScheduleInput): Promise<CreateScheduleOutput> {
-  const result = await ai.generate({
-    model: 'googleai/gemini-1.5-flash',
-    input: input,
-    output: { schema: CreateScheduleOutputSchema },
-    prompt: `
-      You are an elite executive assistant. 
-      Current Date: {{currentDate}}
-      User Input: "{{userInput}}"
-      
-      Instructions:
-      1. Extract all meeting details. If a time isn't specified, suggest a logical one.
-      2. Generate specific 'Preparation' tasks (e.g., "Prepare slides", "Research attendee profiles").
-      3. Generate specific 'Follow-up' tasks (e.g., "Send meeting minutes", "Update CRM").
-      4. Assign realistic deadlines and priorities.
-      5. Identify if the user forgot crucial info (like location or specific time).
-    `,
-  });
+const createSchedulePrompt = ai.definePrompt({
+  name: 'createSchedulePrompt',
+  input: { schema: CreateScheduleInputSchema },
+  output: { schema: CreateScheduleOutputSchema },
+  prompt: `
+    You are an elite executive assistant. 
+    Current Date: {{{currentDate}}}
+    User Input: "{{{userInput}}}"
+    
+    Instructions:
+    1. Extract all meeting details. If a time isn't specified, suggest a logical one.
+    2. Generate specific 'Preparation' tasks (e.g., "Prepare slides", "Research attendee profiles").
+    3. Generate specific 'Follow-up' tasks (e.g., "Send meeting minutes", "Update CRM").
+    4. Assign realistic deadlines and priorities.
+    5. Identify if the user forgot crucial info (like location or specific time).
+  `,
+});
 
-  return result.output!;
+const createScheduleFlow = ai.defineFlow(
+  {
+    name: 'createScheduleFlow',
+    inputSchema: CreateScheduleInputSchema,
+    outputSchema: CreateScheduleOutputSchema,
+  },
+  async (input) => {
+    const { output } = await createSchedulePrompt(input);
+    if (!output) throw new Error('Failed to generate schedule output');
+    return output;
+  }
+);
+
+export async function createSchedule(input: CreateScheduleInput): Promise<CreateScheduleOutput> {
+  return await createScheduleFlow(input);
 }
