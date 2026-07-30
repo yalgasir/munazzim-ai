@@ -14,13 +14,14 @@ import Link from "next/link";
 
 export default function CalendarPage() {
   const { user } = useAuth();
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    setDate(new Date());
   }, []);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function CalendarPage() {
     }
   }, [user]);
 
-  const selectedDateString = date ? date.toISOString().split('T')[0] : "";
+  const selectedDateString = (mounted && date) ? date.toISOString().split('T')[0] : "";
   const dailyAppointments = appointments.filter(app => app.date === selectedDateString);
 
   const formattedDate = mounted && date 
@@ -85,7 +86,7 @@ export default function CalendarPage() {
           <Card className="lg:col-span-2 shadow-sm overflow-hidden border-primary/10">
             <CardContent className="p-0">
               <div className="flex flex-col items-center justify-center p-4 md:p-8">
-                {loading ? (
+                {!mounted || loading ? (
                   <div className="flex flex-col items-center py-20 gap-4">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Syncing calendar...</p>
@@ -165,4 +166,3 @@ export default function CalendarPage() {
     </AppLayout>
   );
 }
- 

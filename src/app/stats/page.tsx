@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +15,7 @@ import {
   PieChart,
   Pie
 } from "recharts";
-import { Target, Award, Clock, Activity, Loader2, ShieldCheck, Cpu } from "lucide-react";
+import { Target, Award, Activity, Loader2, ShieldCheck, Cpu } from "lucide-react";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -34,7 +33,6 @@ export default function StatsPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Generate dynamic date in DD/MM/YYYY format
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -48,17 +46,27 @@ export default function StatsPage() {
       const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
       const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
       
-      onSnapshot(qTasks, (s) => setTasks(s.docs.map(d => d.data())));
-      onSnapshot(qApps, (s) => {
+      const unsubTasks = onSnapshot(qTasks, (s) => setTasks(s.docs.map(d => d.data())));
+      const unsubApps = onSnapshot(qApps, (s) => {
         setAppointments(s.docs.map(d => d.data()));
         setLoading(false);
       });
+      
+      return () => {
+        unsubTasks();
+        unsubApps();
+      };
     } else {
-      const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
-      const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
-      setTasks(allTasks.filter((t: any) => t.userId === userId));
-      setAppointments(allApps.filter((a: any) => a.userId === userId));
-      setLoading(false);
+      const loadLocalData = () => {
+        const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
+        const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
+        setTasks(allTasks.filter((t: any) => t.userId === userId));
+        setAppointments(allApps.filter((a: any) => a.userId === userId));
+        setLoading(false);
+      };
+      loadLocalData();
+      window.addEventListener('storage', loadLocalData);
+      return () => window.removeEventListener('storage', loadLocalData);
     }
   }, [user]);
 
@@ -68,24 +76,27 @@ export default function StatsPage() {
     </AppLayout>
   );
 
-  const completedCount = tasks.filter(t => t.isCompleted).length;
-  const pendingCount = tasks.filter(t => !t.isCompleted).length;
+  const completedCount = (tasks || []).filter(t => t.isCompleted).length;
+  const totalTasks = (tasks || []).length;
+  const pendingCount = totalTasks - completedCount;
   
-  const pieData = [
+  const pieData = totalTasks > 0 ? [
     { name: "Completed", value: completedCount },
     { name: "Pending", value: pendingCount }
-  ];
+  ] : [{ name: "No Tasks", value: 1 }];
 
-  const categoryCounts = appointments.reduce((acc: any, app: any) => {
+  const categoryCounts = (appointments || []).reduce((acc: any, app: any) => {
     const type = app.type || "General";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
-  const barData = Object.keys(categoryCounts).map(key => ({
-    name: key,
-    count: categoryCounts[key]
-  }));
+  const barData = Object.keys(categoryCounts).length > 0 
+    ? Object.keys(categoryCounts).map(key => ({
+        name: key,
+        count: categoryCounts[key]
+      }))
+    : [{ name: 'None', count: 0 }];
 
   return (
     <AppLayout>
@@ -102,16 +113,16 @@ export default function StatsPage() {
                 MythoMax-L2-13B
               </Badge>
             </div>
-            <h1 className="text-3xl font-bold font-headline mb-1">Performance Analytics & Technical Readiness</h1>
+            <h1 className="text-3xl font-bold font-headline mb-1">Performance Analytics</h1>
             <p className="text-muted-foreground">Precise monitoring of Key Performance Indicators (KPIs) and system health.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard icon={<Target />} label="Task Completion" value={`${completedCount}/${tasks.length}`} color="primary" />
-          <StatCard icon={<Activity />} label="Appointment Efficiency" value={appointments.length} color="accent" />
+          <StatCard icon={<Target />} label="Task Completion" value={`${completedCount}/${totalTasks}`} color="primary" />
+          <StatCard icon={<Activity />} label="Appointments" value={appointments.length} color="accent" />
           <StatCard icon={<Cpu />} label="Active Engine" value="MythoMax" color="purple" />
-          <StatCard icon={<Award />} label="Commitment Level" value={tasks.length > 0 ? `${Math.round((completedCount/tasks.length)*100)}%` : "0%"} color="emerald" />
+          <StatCard icon={<Award />} label="Commitment" value={totalTasks > 0 ? `${Math.round((completedCount/totalTasks)*100)}%` : "0%"} color="emerald" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -122,7 +133,7 @@ export default function StatsPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData.length > 0 ? barData : [{name: 'No Data', count: 0}]}>
+                <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                   <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
                   <YAxis fontSize={12} axisLine={false} tickLine={false} />
@@ -135,14 +146,14 @@ export default function StatsPage() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">NASA TRL 8 Readiness Status</CardTitle>
+              <CardTitle className="text-lg">Readiness Status</CardTitle>
               <CardDescription>Final completion efficiency</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] flex justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={tasks.length > 0 ? pieData : [{name: 'No Data', value: 1}]}
+                    data={pieData}
                     innerRadius={60}
                     outerRadius={100}
                     paddingAngle={5}
@@ -183,5 +194,3 @@ function StatCard({ icon, label, value, color }: any) {
     </Card>
   );
 }
-
- 

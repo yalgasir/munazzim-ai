@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarSync, RefreshCw, Check, AlertCircle } from "lucide-react";
+import { RefreshCw, Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { syncGoogleCalendar } from "@/lib/calendar-service";
 import { useAuth } from "@/components/auth/auth-context";
@@ -62,7 +62,7 @@ export function CalendarSyncButton() {
       ) : status === "error" ? (
         <AlertCircle className="h-4 w-4" />
       ) : (
-        <CalendarSync className="h-4 w-4" />
+        <RefreshCw className="h-4 w-4" />
       )}
       {syncing ? "Syncing..." : status === "success" ? "Synced" : "Sync Calendar"}
     </Button>
