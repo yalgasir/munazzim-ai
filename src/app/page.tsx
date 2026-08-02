@@ -13,14 +13,14 @@ import {
   ArrowRight,
   Sparkles,
   CheckSquare,
-  Plus,
   MoreVertical,
   CalendarDays,
   Target,
   AlertCircle,
   Loader2,
   CalendarPlus,
-  Zap
+  Zap,
+  TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -123,123 +123,144 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-10 max-w-7xl mx-auto" dir="ltr">
+      <div className="flex flex-col gap-10 max-w-full mx-auto" dir="ltr">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">Workspace Overview</h1>
-            <p className="text-sm text-muted-foreground font-medium">
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-xs text-muted-foreground font-medium">
               Organize your tasks, appointments, and daily priorities in one place.
             </p>
           </div>
           <div className="text-right hidden md:block">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mission Date</p>
-            <p className="text-sm font-bold text-primary">{headerDate}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{headerDate}</p>
           </div>
         </div>
 
-        {/* Statistics Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Row 1: Unified Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard 
             title="Total Items" 
             value={totalItemsCount} 
             subtitle="Tasks + Appointments"
             description={`${personalItemsCount} manually created`}
-            icon={<Activity className="h-5 w-5" />} 
+            icon={<Activity className="h-4 w-4" />} 
             color="blue"
+            href="/stats"
           />
           <StatCard 
             title="Tasks" 
             value={totalTasks} 
             subtitle={`Completed ${taskCompletionRate}%`}
             description={`${doneTasks} finished items`}
-            icon={<CheckSquare className="h-5 w-5" />} 
+            icon={<CheckSquare className="h-4 w-4" />} 
             color="emerald"
             href="/tasks"
           />
           <StatCard 
             title="Appointments" 
             value={totalApps} 
-            subtitle={`Attendance ${attendanceRate}%`}
+            subtitle={`Attended ${attendanceRate}%`}
             description={`${attendedApps} confirmed events`}
-            icon={<CalendarIcon className="h-5 w-5" />} 
+            icon={<CalendarIcon className="h-4 w-4" />} 
             color="purple"
             href="/appointments"
           />
-        </div>
-
-        {/* Statistics Row 2 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <CircularStatCard 
             title="Task Completion" 
             percentage={taskCompletionRate} 
-            subtitle={`${doneTasks} of ${totalTasks} Completed`}
+            subtitle={`${doneTasks} of ${totalTasks}`}
             color="emerald"
+            href="/tasks"
           />
           <CircularStatCard 
-            title="Overall Performance" 
+            title="Performance" 
             percentage={productivityScore} 
-            subtitle={productivityScore > 80 ? "Excellent Performance" : "Steady Mission Progress"}
+            subtitle={productivityScore > 80 ? "Excellent" : "Steady"}
             color="primary"
+            href="/stats"
           />
         </div>
 
-        {/* AI Performance Analyzer */}
-        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
-        </section>
+        {/* Row 2: Main Grid 70/30 */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 items-start">
+          
+          {/* Left Column: Schedule (70%) */}
+          <div className="space-y-10">
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-black flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-primary" /> Today's Schedule
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {todayActivities.length > 0 ? (
+                  todayActivities.map((item) => (
+                    <ActivityRow 
+                      key={item.id} 
+                      item={item} 
+                      onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                    />
+                  ))
+                ) : (
+                  <EmptyState message="No activities scheduled for today." />
+                )}
+              </div>
+            </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black flex items-center gap-3">
-                <Clock className="h-5 w-5 text-primary" /> Today's Schedule
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {todayActivities.length > 0 ? (
-                todayActivities.map((item) => (
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-black flex items-center gap-3">
+                  <CalendarDays className="h-5 w-5 text-primary" /> Upcoming Activities
+                </h2>
+                <Button variant="ghost" size="sm" asChild className="text-xs font-bold text-primary hover:bg-transparent">
+                  <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {upcomingActivities.slice(0, 8).map((item) => (
                   <ActivityRow 
                     key={item.id} 
                     item={item} 
+                    showDate 
                     onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
                   />
-                ))
-              ) : (
-                <EmptyState message="No activities scheduled for today." />
-              )}
-            </div>
-          </section>
+                ))}
+                {upcomingActivities.length === 0 && (
+                  <EmptyState message="No upcoming activities found." />
+                )}
+              </div>
+            </section>
+          </div>
 
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black flex items-center gap-3">
-                <CalendarDays className="h-5 w-5 text-primary" /> Upcoming Activities
-              </h2>
-              <Button variant="ghost" size="sm" asChild className="text-xs font-bold text-primary hover:bg-transparent">
-                <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
-              </Button>
+          {/* Right Column: Intelligence & Progress (30%) */}
+          <div className="space-y-8 sticky top-24">
+            <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
+            
+            <div className="space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-2">Mission Progress</h3>
+              <CircularStatCard 
+                title="Task Completion" 
+                percentage={taskCompletionRate} 
+                subtitle={`${doneTasks} of ${totalTasks} Done`}
+                color="emerald"
+                size="lg"
+              />
+              <CircularStatCard 
+                title="Overall Score" 
+                percentage={productivityScore} 
+                subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
+                color="primary"
+                size="lg"
+              />
             </div>
-            <div className="space-y-3">
-              {upcomingActivities.slice(0, 5).map((item) => (
-                <ActivityRow 
-                  key={item.id} 
-                  item={item} 
-                  showDate 
-                  onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                />
-              ))}
-              {upcomingActivities.length === 0 && (
-                <EmptyState message="No upcoming activities found." />
-              )}
-            </div>
-          </section>
+          </div>
         </div>
 
-        {/* Quick Creation Section */}
+        {/* Quick Creation Row */}
         <section className="space-y-6 pt-10 border-t">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Quick Creation Terminal</h2>
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Quick Creation</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <QuickActionCard 
               icon={CalendarPlus} 
@@ -281,22 +302,19 @@ function StatCard({ title, value, subtitle, description, icon, color, href }: an
 
   const content = (
     <Card className={cn(
-      "p-6 border-2 transition-all duration-300 group shadow-sm",
+      "p-4 border-2 transition-all duration-300 group shadow-sm flex flex-col justify-between h-32",
       colors[color] || "bg-card",
-      isClickable ? "hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-md cursor-pointer" : "cursor-default"
+      isClickable ? "hover:scale-[1.02] hover:shadow-md cursor-pointer" : "cursor-default"
     )}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="p-2 rounded-lg bg-white shadow-sm border border-inherit">
+      <div className="flex justify-between items-start">
+        <div className="p-1.5 rounded-lg bg-white shadow-sm border border-inherit">
           {icon}
         </div>
       </div>
-      <div className="space-y-1">
-        <h3 className="text-2xl font-black text-foreground transition-all duration-300 group-hover:scale-105 origin-left inline-block">
-          {value}
-        </h3>
-        <p className="text-xs font-bold text-foreground/80">{title}</p>
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{subtitle}</p>
-        {description && <p className="text-[10px] italic text-muted-foreground/60 mt-2">{description}</p>}
+      <div className="space-y-0.5">
+        <h3 className="text-xl font-black text-foreground">{value}</h3>
+        <p className="text-[10px] font-black text-foreground/80 uppercase tracking-tight">{title}</p>
+        <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-widest">{subtitle}</p>
       </div>
     </Card>
   );
@@ -304,41 +322,48 @@ function StatCard({ title, value, subtitle, description, icon, color, href }: an
   return isClickable ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
-function CircularStatCard({ title, percentage, subtitle, color }: any) {
+function CircularStatCard({ title, percentage, subtitle, color, size = "md", href }: any) {
   const colors: any = {
     emerald: "text-emerald-600 stroke-emerald-500",
     primary: "text-primary stroke-primary",
   };
 
   const safePercentage = Math.min(100, Math.max(0, percentage || 0));
+  const circleSize = size === "lg" ? "h-20 w-20" : "h-12 w-12";
+  const strokeWidth = size === "lg" ? "3" : "4";
 
-  return (
-    <Card className="p-8 border-2 flex flex-col items-center justify-center text-center gap-4 shadow-sm group hover:border-primary/20 transition-all">
-      <div className="relative h-24 w-24">
+  const content = (
+    <Card className={cn(
+      "p-4 border-2 flex flex-col items-center justify-center text-center gap-3 shadow-sm group transition-all h-32",
+      href ? "hover:border-primary/40 hover:scale-[1.02] cursor-pointer" : ""
+    )}>
+      <div className={cn("relative", circleSize)}>
         <svg className="h-full w-full" viewBox="0 0 36 36">
           <path
             className="stroke-muted fill-none"
-            strokeWidth="2.5"
+            strokeWidth={strokeWidth}
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
           <path
             className={cn("fill-none transition-all duration-1000 ease-out", colors[color])}
-            strokeWidth="2.5"
+            strokeWidth={strokeWidth}
             strokeDasharray={`${safePercentage}, 100`}
             strokeLinecap="round"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-black group-hover:scale-110 transition-transform">{safePercentage}%</span>
+          <span className={cn("font-black", size === "lg" ? "text-sm" : "text-[10px]")}>{safePercentage}%</span>
         </div>
       </div>
-      <div className="space-y-1">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
-        <p className="text-[10px] font-bold text-foreground/70">{subtitle}</p>
+      <div className="space-y-0.5">
+        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{title}</p>
+        <p className="text-[8px] font-bold text-foreground/70">{subtitle}</p>
       </div>
     </Card>
   );
+
+  return href ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
 function ActivityRow({ item, showDate, onStatusUpdate }: any) {
@@ -355,8 +380,8 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
   };
 
   return (
-    <div className="group flex items-center justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-all">
-      <div className="flex items-center gap-4">
+    <div className="group flex items-center justify-between p-3 rounded-xl border bg-card hover:shadow-md transition-all">
+      <div className="flex items-center gap-3">
         <div className={cn(
           "p-2 rounded-lg",
           isTask ? "bg-emerald-50 text-emerald-600" : "bg-primary/5 text-primary"
@@ -364,8 +389,8 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
           {isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
         </div>
         <div>
-          <h4 className={cn("font-bold text-sm", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
-          <div className="flex items-center gap-3 text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+          <h4 className={cn("font-bold text-xs", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
+          <div className="flex items-center gap-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
             {showDate && <span>{item.date}</span>}
             {showDate && <span>•</span>}
             <span>{item.time || 'No Time'}</span>
@@ -378,7 +403,7 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-6 text-[8px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
+            <Button variant="outline" size="sm" className={cn("h-5 text-[7px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
               {status}
             </Button>
           </DropdownMenuTrigger>
@@ -398,8 +423,8 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          <MoreVertical className="h-3 w-3" />
         </Button>
       </div>
     </div>
@@ -417,23 +442,23 @@ function QuickActionCard({ icon: Icon, title, onClick, color }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all active:scale-95 text-center gap-2 bg-white shadow-sm",
+        "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all active:scale-95 text-center gap-2 bg-white shadow-sm",
         colors[color]
       )}
     >
-      <div className="p-2 rounded-full bg-white shadow-sm border border-inherit">
-        <Icon className="h-4 w-4" />
+      <div className="p-1.5 rounded-full bg-white shadow-sm border border-inherit">
+        <Icon className="h-3.5 w-3.5" />
       </div>
-      <span className="text-[10px] font-black uppercase tracking-widest">{title}</span>
+      <span className="text-[8px] font-black uppercase tracking-widest">{title}</span>
     </button>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="py-10 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-2 bg-muted/10 opacity-60">
-      <AlertCircle className="h-6 w-6 text-muted-foreground" />
-      <p className="text-xs font-medium text-muted-foreground">{message}</p>
+    <div className="py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center gap-2 bg-muted/10 opacity-60">
+      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+      <p className="text-[10px] font-medium text-muted-foreground">{message}</p>
     </div>
   );
 }

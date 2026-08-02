@@ -1,7 +1,8 @@
 'use server';
 
 /**
- * @fileOverview AI Flow for parsing natural language into highly structured appointments and tasks.
+ * @fileOverview AI Flow for intent-based schedule creation.
+ * Automatically classifies natural language into appointments, tasks, or both.
  * Uses MythoMax-L2-13b via OpenRouter.
  */
 
@@ -20,7 +21,8 @@ export type CreateScheduleInput = {
 };
 
 export type CreateScheduleOutput = {
-  appointment: {
+  intent: 'appointment' | 'task' | 'both';
+  appointment?: {
     title: string;
     description: string;
     date: string;
@@ -28,11 +30,8 @@ export type CreateScheduleOutput = {
     endTime: string;
     location?: string;
     participants?: string[];
-    objectives?: string[];
-    agenda?: string[];
   };
-  tasks: z.infer<typeof GeneratedTaskSchema>[];
-  missingInformation?: string[];
+  tasks?: z.infer<typeof GeneratedTaskSchema>[];
   conflictWarning?: string;
 };
 
@@ -47,25 +46,30 @@ export async function createSchedule(input: CreateScheduleInput): Promise<Create
     Current Date: ${input.currentDate}
     User Input: "${input.userInput}"
     
-    Task: Extract meeting details and generate sub-tasks.
-    Return ONLY a valid JSON object with the following structure:
+    TASK: 
+    1. Identify if the user wants to create an Appointment (meeting, visit, event), a Task (to-do, report, reminder), or BOTH.
+    2. Extract all details.
+    
+    Rules:
+    - If the input is about a specific time/place/meeting, it's an Appointment.
+    - If it's an action item or deadline without a fixed start/end time, it's a Task.
+    - If it contains multiple distinct actions (e.g. "Meet X then write Y"), it's both.
+    
+    Return ONLY a valid JSON object:
     {
+      "intent": "appointment" | "task" | "both",
       "appointment": {
         "title": "string",
         "description": "string",
         "date": "YYYY-MM-DD",
         "startTime": "HH:mm",
         "endTime": "HH:mm",
-        "location": "string (optional)",
-        "participants": ["string"],
-        "objectives": ["string"],
-        "agenda": ["string"]
+        "location": "string"
       },
       "tasks": [
-        { "description": "string", "priority": "High/Medium/Low", "category": "Preparation/Follow-up/General", "dueDate": "YYYY-MM-DD" }
+        { "description": "string", "priority": "High/Medium/Low", "category": "General", "dueDate": "YYYY-MM-DD" }
       ],
-      "missingInformation": ["string"],
-      "conflictWarning": "string (optional)"
+      "conflictWarning": "string (optional if schedule conflict detected)"
     }
   `;
 
@@ -88,30 +92,25 @@ export async function createSchedule(input: CreateScheduleInput): Promise<Create
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
-    
     if (!content) throw new Error("Empty AI response");
 
     const parsed = JSON.parse(content);
 
-    // Ensure structure is safe for frontend
     return {
-      appointment: {
+      intent: parsed.intent || 'task',
+      appointment: (parsed.intent === 'appointment' || parsed.intent === 'both') ? {
         title: parsed.appointment?.title || "New Appointment",
         description: parsed.appointment?.description || "",
         date: parsed.appointment?.date || input.currentDate.split('T')[0],
         startTime: parsed.appointment?.startTime || "09:00",
         endTime: parsed.appointment?.endTime || "10:00",
-        location: parsed.appointment?.location || "",
-        participants: parsed.appointment?.participants || [],
-        objectives: parsed.appointment?.objectives || [],
-        agenda: parsed.appointment?.agenda || []
-      },
-      tasks: parsed.tasks || [],
-      missingInformation: parsed.missingInformation || [],
+        location: parsed.appointment?.location || ""
+      } : undefined,
+      tasks: (parsed.intent === 'task' || parsed.intent === 'both') ? (parsed.tasks || []) : undefined,
       conflictWarning: parsed.conflictWarning || ""
     };
   } catch (e) {
     console.error("AI Create Error:", e);
-    throw new Error("Failed to process your request. Please check your prompt and try again.");
+    throw new Error("Failed to process request.");
   }
 }
