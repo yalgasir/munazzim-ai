@@ -102,10 +102,12 @@ export default function Dashboard() {
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.status === 'Done' || t.isCompleted).length;
+  const pendingTasks = totalTasks - doneTasks;
   const taskCompletionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   const totalApps = appointments.length;
   const attendedApps = appointments.filter(a => a.attendanceStatus === 'Attended').length;
+  const upcomingApps = totalApps - attendedApps;
   const attendanceRate = totalApps > 0 ? Math.round((attendedApps / totalApps) * 100) : 0;
 
   const productivityScore = Math.round((taskCompletionRate + attendanceRate) / 2);
@@ -151,7 +153,8 @@ export default function Dashboard() {
           <StatCard 
             title="Tasks" 
             value={totalTasks} 
-            subtitle={`Completed ${taskCompletionRate}%`}
+            subtitle={`${taskCompletionRate}% Completed`}
+            details={`${doneTasks} Done • ${pendingTasks} Pending`}
             icon={<CheckSquare className="h-4 w-4" />} 
             color="emerald"
             href="/tasks"
@@ -159,7 +162,8 @@ export default function Dashboard() {
           <StatCard 
             title="Appointments" 
             value={totalApps} 
-            subtitle={`Attended ${attendanceRate}%`}
+            subtitle={`${attendanceRate}% Attended`}
+            details={`${attendedApps} Attended • ${upcomingApps} Upcoming`}
             icon={<CalendarIcon className="h-4 w-4" />} 
             color="purple"
             href="/appointments"
@@ -167,7 +171,6 @@ export default function Dashboard() {
           <CircularStatCard 
             title="Task Completion" 
             percentage={taskCompletionRate} 
-            subtitle={`${doneTasks} of ${totalTasks} Done`}
             color="emerald"
             href="/tasks"
           />
@@ -275,7 +278,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, subtitle, icon, color, href }: any) {
+function StatCard({ title, value, subtitle, details, icon, color, href }: any) {
   const isClickable = !!href;
   const colors: any = {
     blue: "text-blue-600 border-blue-100 hover:bg-blue-50/50",
@@ -298,6 +301,7 @@ function StatCard({ title, value, subtitle, icon, color, href }: any) {
         <h3 className="text-xl font-black text-foreground">{value}</h3>
         <p className="text-[10px] font-black text-foreground/80 uppercase tracking-tight">{title}</p>
         <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-widest">{subtitle}</p>
+        {details && <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-widest">{details}</p>}
       </div>
     </Card>
   );
@@ -341,7 +345,7 @@ function CircularStatCard({ title, percentage, subtitle, color, size = "md", hre
       </div>
       <div className="space-y-0.5">
         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{title}</p>
-        <p className="text-[8px] font-bold text-foreground/70">{subtitle}</p>
+        {subtitle && <p className="text-[8px] font-bold text-foreground/70">{subtitle}</p>}
       </div>
     </Card>
   );
