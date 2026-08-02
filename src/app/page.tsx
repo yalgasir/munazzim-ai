@@ -233,16 +233,20 @@ export default function Dashboard() {
                   <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
                 </Button>
               </div>
-              <div className="space-y-3">
-                {upcomingActivities.slice(0, 8).map((item) => (
-                  <ActivityRow 
-                    key={item.id} 
-                    item={item} 
-                    showDate 
-                    onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                  />
-                ))}
-                {upcomingActivities.length === 0 && (
+              <div className="space-y-0">
+                {upcomingActivities.length > 0 ? (
+                  <div className="relative">
+                    {upcomingActivities.slice(0, 5).map((item, index) => (
+                      <TimelineActivityRow 
+                        key={item.id} 
+                        item={item} 
+                        showDate
+                        onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                        isLast={index === upcomingActivities.slice(0, 5).length - 1}
+                      />
+                    ))}
+                  </div>
+                ) : (
                   <EmptyState message="No upcoming activities found." />
                 )}
               </div>
@@ -349,7 +353,7 @@ function CircularStatCard({ title, percentage, subtitle, color, size = "md", hre
   return href ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
-function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
+function TimelineActivityRow({ item, onStatusUpdate, isLast, showDate = false }: any) {
   const isTask = item.type === 'task';
   const isAI = item.source === 'ai_generated';
   const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
@@ -373,6 +377,7 @@ function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
       const start = new Date(`1970-01-01T${item.startTime}Z`);
       const end = new Date(`1970-01-01T${item.endTime}Z`);
       const diff = (end.getTime() - start.getTime()) / (1000 * 60); // in minutes
+      if (diff < 0) return null;
       if (diff >= 60) {
         const hours = Math.floor(diff / 60);
         const minutes = diff % 60;
@@ -387,8 +392,10 @@ function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
 
   return (
     <div className="flex items-start gap-4 group">
-      <div className="w-20 text-right font-bold text-xs text-muted-foreground pt-1.5">
-        {item.time || 'No Time'}
+      <div className="w-20 text-right font-bold text-xs text-muted-foreground pt-1.5 shrink-0">
+        {showDate 
+          ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+          : (item.time || 'No Time')}
       </div>
       <div className="relative flex flex-col items-center">
         <div className={cn("w-3 h-3 rounded-full mt-1.5 z-10 border-2 border-white", dotColor)}></div>
@@ -401,12 +408,11 @@ function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
             <h4 className={cn("font-bold text-sm text-foreground", status === 'Done' && "line-through")}>
               {item.title || item.description}
             </h4>
-            {(duration || item.location) && (
-              <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground">
-                {duration && <span>{duration}</span>}
-                {item.location && <span>{item.location}</span>}
-              </div>
-            )}
+            <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground">
+              {showDate && <span>{item.time || 'No Time'}</span>}
+              {!showDate && duration && <span>{duration}</span>}
+              {!showDate && item.location && <span>{item.location}</span>}
+            </div>
           </div>
           
           <div className="flex items-center gap-2 pt-3 pr-2">
@@ -437,71 +443,6 @@ function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
             </Button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function ActivityRow({ item, showDate, onStatusUpdate }: any) {
-  const isTask = item.type === 'task';
-  const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
-
-  const statusColors: any = {
-    'Pending': 'bg-orange-100 text-orange-700 border-orange-200',
-    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Done': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Upcoming': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Attended': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Missed': 'bg-red-100 text-red-700 border-red-200',
-  };
-
-  return (
-    <div className="group flex items-center justify-between p-3 rounded-xl border bg-card hover:shadow-md transition-all">
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          "p-2 rounded-lg",
-          isTask ? "bg-emerald-50 text-emerald-600" : "bg-primary/5 text-primary"
-        )}>
-          {isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
-        </div>
-        <div>
-          <h4 className={cn("font-bold text-xs", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
-          <div className="flex items-center gap-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-            {showDate && <span>{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-            {showDate && <span>•</span>}
-            <span>{item.time || 'No Time'}</span>
-            <span>•</span>
-            <span className="text-primary/70">{item.source || 'Manual'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-5 text-[7px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
-              {status}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isTask ? (
-              <>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="h-3 w-3" />
-        </Button>
       </div>
     </div>
   );
