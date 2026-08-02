@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -54,9 +53,11 @@ const menuItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
+  const [headerDate, setHeaderDate] = React.useState("");
 
   React.useEffect(() => {
     setMounted(true);
+    setHeaderDate(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
   }, []);
 
   if (!mounted) {
@@ -158,7 +159,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarTrigger className="hover:bg-slate-100 rounded-xl" />
               <div className="h-6 w-px bg-slate-200 hidden md:block" />
               <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 hidden md:block">
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                {headerDate}
               </span>
             </div>
             

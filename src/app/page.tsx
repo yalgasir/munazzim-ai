@@ -43,9 +43,15 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [showAIDialog, setShowAIDialog] = useState(false);
+  const [todayStr, setTodayStr] = useState("");
+  const [headerDate, setHeaderDate] = useState("");
 
   useEffect(() => {
     setMounted(true);
+    const now = new Date();
+    setTodayStr(now.toISOString().split('T')[0]);
+    setHeaderDate(now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
+
     if (!user || !db || !isFirebaseConfigured) {
       if (!authLoading) setLoading(false);
       return;
@@ -93,7 +99,6 @@ export default function Dashboard() {
     </div>
   );
 
-  // Stats Calculations
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.status === 'Done' || t.isCompleted).length;
   const taskCompletionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
@@ -106,17 +111,15 @@ export default function Dashboard() {
   const totalItemsCount = totalTasks + totalApps;
   const personalItemsCount = [...appointments, ...tasks].filter(item => item.source === 'manual' || !item.source).length;
 
-  // Schedule Filtering
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayActivities = [
-    ...appointments.filter(a => a.date === todayStr).map(a => ({ ...a, type: 'appointment' })),
-    ...tasks.filter(t => t.date === todayStr).map(t => ({ ...t, type: 'task' }))
-  ].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+  const todayActivities = todayStr ? [
+    ...appointments.filter(a => String(a.date) === todayStr).map(a => ({ ...a, type: 'appointment' })),
+    ...tasks.filter(t => String(t.date) === todayStr).map(t => ({ ...t, type: 'task' }))
+  ].sort((a, b) => String(a.time || '00:00').localeCompare(String(b.time || '00:00'))) : [];
 
-  const upcomingActivities = [
-    ...appointments.filter(a => a.date > todayStr).map(a => ({ ...a, type: 'appointment' })),
-    ...tasks.filter(t => t.date > todayStr).map(t => ({ ...t, type: 'task' }))
-  ].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00'));
+  const upcomingActivities = todayStr ? [
+    ...appointments.filter(a => String(a.date) > todayStr).map(a => ({ ...a, type: 'appointment' })),
+    ...tasks.filter(t => String(t.date) > todayStr).map(t => ({ ...t, type: 'task' }))
+  ].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.time || '00:00').localeCompare(String(b.time || '00:00'))) : [];
 
   return (
     <AppLayout>
@@ -132,11 +135,11 @@ export default function Dashboard() {
           </div>
           <div className="text-right hidden md:block">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mission Date</p>
-            <p className="text-sm font-bold text-primary">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+            <p className="text-sm font-bold text-primary">{headerDate}</p>
           </div>
         </div>
 
-        {/* Statistics Row 1: Primary Metrics */}
+        {/* Statistics Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
             title="Total Items" 
@@ -166,7 +169,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Statistics Row 2: Performance Indicators */}
+        {/* Statistics Row 2 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <CircularStatCard 
             title="Task Completion" 
@@ -182,13 +185,12 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* AI Performance Analyzer (Centerpiece) */}
+        {/* AI Performance Analyzer */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Today's Schedule */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black flex items-center gap-3">
@@ -210,7 +212,6 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* Upcoming Activities */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black flex items-center gap-3">
@@ -236,7 +237,7 @@ export default function Dashboard() {
           </section>
         </div>
 
-        {/* Quick Creation Section (Bottom) */}
+        {/* Quick Creation Section */}
         <section className="space-y-6 pt-10 border-t">
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Quick Creation Terminal</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -309,6 +310,8 @@ function CircularStatCard({ title, percentage, subtitle, color }: any) {
     primary: "text-primary stroke-primary",
   };
 
+  const safePercentage = Math.min(100, Math.max(0, percentage || 0));
+
   return (
     <Card className="p-8 border-2 flex flex-col items-center justify-center text-center gap-4 shadow-sm group hover:border-primary/20 transition-all">
       <div className="relative h-24 w-24">
@@ -321,13 +324,13 @@ function CircularStatCard({ title, percentage, subtitle, color }: any) {
           <path
             className={cn("fill-none transition-all duration-1000 ease-out", colors[color])}
             strokeWidth="2.5"
-            strokeDasharray={`${percentage}, 100`}
+            strokeDasharray={`${safePercentage}, 100`}
             strokeLinecap="round"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-black group-hover:scale-110 transition-transform">{percentage}%</span>
+          <span className="text-xl font-black group-hover:scale-110 transition-transform">{safePercentage}%</span>
         </div>
       </div>
       <div className="space-y-1">
@@ -375,7 +378,7 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-6 text-[8px] font-black uppercase px-2 rounded-lg", statusColors[status])}>
+            <Button variant="outline" size="sm" className={cn("h-6 text-[8px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
               {status}
             </Button>
           </DropdownMenuTrigger>
