@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   BrainCircuit, 
@@ -12,10 +12,11 @@ import {
   TrendingUp, 
   Clock, 
   RefreshCw,
-  Focus,
+  Target,
   Activity,
   BarChart3,
-  CalendarCheck
+  CalendarCheck,
+  Sparkles
 } from "lucide-react";
 import { analyzeFullSchedule, AnalysisOutput } from "@/ai/flows/ai-schedule-optimizer-flow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export function ScheduleAnalysisWidget({ appointments, tasks }: { appointments: any[], tasks: any[] }) {
+export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appointments: any[], tasks: any[] }) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisOutput | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -102,10 +103,10 @@ export function ScheduleAnalysisWidget({ appointments, tasks }: { appointments: 
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
                {/* Insight Grid */}
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                 <InsightCard icon={Focus} label="Focus Score" value={`${analysis.focusScore}%`} color="blue" />
+                 <InsightCard icon={Target} label="Focus Score" value={`${analysis.focusScore}%`} color="blue" />
                  <InsightCard icon={Activity} label="Workload" value={analysis.workloadStatus} color="purple" />
                  <InsightCard icon={BarChart3} label="Balance" value={analysis.scheduleBalance} color="emerald" />
-                 <InsightCard icon={Zap} label="Free Time" value={analysis.availableSlots[0] || "None"} color="orange" />
+                 <InsightCard icon={Zap} label="Free Time" value={analysis?.availableSlots?.[0] || "None"} color="orange" />
                </div>
 
                <div className="bg-white/70 border-2 border-primary/10 rounded-2xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group-hover:border-primary/30 transition-all">
@@ -122,7 +123,7 @@ export function ScheduleAnalysisWidget({ appointments, tasks }: { appointments: 
                     "{analysis.todayOverview}"
                   </p>
                   
-                  {analysis.smartAlerts.length > 0 && (
+                  {analysis.smartAlerts && analysis.smartAlerts.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
                       {analysis.smartAlerts.map((alert, i) => (
                         <Badge key={i} variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[9px] gap-1.5 py-1">
@@ -199,7 +200,7 @@ export function ScheduleAnalysisWidget({ appointments, tasks }: { appointments: 
                         <span className="text-sm font-bold">{alert}</span>
                       </div>
                     ))}
-                    {analysis.smartAlerts.length === 0 && <p className="text-sm text-muted-foreground italic font-medium">All systems operational. No critical alerts detected.</p>}
+                    {(!analysis.smartAlerts || analysis.smartAlerts.length === 0) && <p className="text-sm text-muted-foreground italic font-medium">All systems operational. No critical alerts detected.</p>}
                   </CardContent>
                 </Card>
               </div>
@@ -244,10 +245,10 @@ export function ScheduleAnalysisWidget({ appointments, tasks }: { appointments: 
                  </div>
                  <div className="p-6 bg-purple-50/50 rounded-3xl border-2 border-purple-100 flex flex-col gap-3">
                     <span className="text-[10px] font-black uppercase text-purple-600 tracking-widest flex items-center gap-2">
-                      <Focus className="h-3 w-3" /> Strategic Slot
+                      <Target className="h-3 w-3" /> Strategic Slot
                     </span>
                     <p className="text-sm font-bold text-purple-900/80 leading-relaxed">
-                      Deep focus window detected at {analysis.availableSlots[0] || "flexible period"}. Use this for high-priority mission objectives.
+                      Deep focus window detected at {analysis?.availableSlots?.[0] || "flexible period"}. Use this for high-priority mission objectives.
                     </p>
                  </div>
               </div>
