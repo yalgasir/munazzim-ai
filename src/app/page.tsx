@@ -170,7 +170,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Quick Creation Row - Now integrated below stats */}
+        {/* Quick Creation Row */}
         <section className="space-y-4">
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Quick Creation</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -195,10 +195,10 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Row 2: Main Grid 70/30 */}
+        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 items-start">
           
-          {/* Left Column: Schedule (70%) */}
+          {/* Left Column */}
           <div className="space-y-10">
             <section className="space-y-6">
               <div className="flex items-center justify-between">
@@ -206,15 +206,18 @@ export default function Dashboard() {
                   <Clock className="h-5 w-5 text-primary" /> Today's Schedule
                 </h2>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-0">
                 {todayActivities.length > 0 ? (
-                  todayActivities.map((item) => (
-                    <ActivityRow 
-                      key={item.id} 
-                      item={item} 
-                      onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                    />
-                  ))
+                  <div className="relative">
+                    {todayActivities.map((item, index) => (
+                      <TimelineActivityRow 
+                        key={item.id} 
+                        item={item} 
+                        onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                        isLast={index === todayActivities.length - 1}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <EmptyState message="No activities scheduled for today." />
                 )}
@@ -246,10 +249,9 @@ export default function Dashboard() {
             </section>
           </div>
 
-          {/* Right Column: Intelligence Sidebar (30%) */}
+          {/* Right Column */}
           <div className="space-y-8 sticky top-24">
             <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
-            
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Workspace Intelligence</h3>
               <CircularStatCard 
@@ -347,6 +349,99 @@ function CircularStatCard({ title, percentage, subtitle, color, size = "md", hre
   return href ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
+function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
+  const isTask = item.type === 'task';
+  const isAI = item.source === 'ai_generated';
+  const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
+
+  const dotColor = isAI ? 'bg-purple-500' : (isTask ? 'bg-emerald-500' : 'bg-blue-500');
+  const typeLabel = isTask ? 'TASK' : 'APPOINTMENT';
+  const typeLabelColor = isAI ? 'text-purple-500' : (isTask ? 'text-emerald-500' : 'text-blue-500');
+
+  const statusColors: any = {
+    'Pending': 'bg-orange-100 text-orange-700 border-orange-200',
+    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Done': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Upcoming': 'bg-purple-100 text-purple-700 border-purple-200',
+    'Attended': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Missed': 'bg-red-100 text-red-700 border-red-200',
+  };
+  
+  const getDuration = () => {
+    if (!item.startTime || !item.endTime) return null;
+    try {
+      const start = new Date(`1970-01-01T${item.startTime}Z`);
+      const end = new Date(`1970-01-01T${item.endTime}Z`);
+      const diff = (end.getTime() - start.getTime()) / (1000 * 60); // in minutes
+      if (diff >= 60) {
+        const hours = Math.floor(diff / 60);
+        const minutes = diff % 60;
+        return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
+      }
+      return `${diff}m`;
+    } catch(e) {
+      return null;
+    }
+  };
+  const duration = getDuration();
+
+  return (
+    <div className="flex items-start gap-4 group">
+      <div className="w-20 text-right font-bold text-xs text-muted-foreground pt-1.5">
+        {item.time || 'No Time'}
+      </div>
+      <div className="relative flex flex-col items-center">
+        <div className={cn("w-3 h-3 rounded-full mt-1.5 z-10 border-2 border-white", dotColor)}></div>
+        {!isLast && <div className="absolute top-5 -bottom-2 w-0.5 bg-muted/50"></div>}
+      </div>
+      <div className="flex-1 pb-6">
+        <div className="flex items-start justify-between">
+          <div className={cn("space-y-1 group-hover:bg-muted/30 p-3 rounded-lg transition-colors w-full", status === 'Done' && "opacity-60")}>
+            <p className={cn("text-[9px] font-bold uppercase tracking-wider", typeLabelColor)}>{typeLabel}</p>
+            <h4 className={cn("font-bold text-sm text-foreground", status === 'Done' && "line-through")}>
+              {item.title || item.description}
+            </h4>
+            {(duration || item.location) && (
+              <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground">
+                {duration && <span>{duration}</span>}
+                {item.location && <span>{item.location}</span>}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2 pt-3 pr-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-5 text-[7px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
+                  {status}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                 {isTask ? (
+                  <>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+              <MoreVertical className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ActivityRow({ item, showDate, onStatusUpdate }: any) {
   const isTask = item.type === 'task';
   const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
@@ -372,7 +467,7 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
         <div>
           <h4 className={cn("font-bold text-xs", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
           <div className="flex items-center gap-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-            {showDate && <span>{item.date}</span>}
+            {showDate && <span>{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
             {showDate && <span>•</span>}
             <span>{item.time || 'No Time'}</span>
             <span>•</span>
