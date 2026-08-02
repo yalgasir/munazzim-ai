@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -109,7 +110,6 @@ export default function Dashboard() {
 
   const productivityScore = Math.round((taskCompletionRate + attendanceRate) / 2);
   const totalItemsCount = totalTasks + totalApps;
-  const personalItemsCount = [...appointments, ...tasks].filter(item => item.source === 'manual' || !item.source).length;
 
   const todayActivities = todayStr ? [
     ...appointments.filter(a => String(a.date) === todayStr).map(a => ({ ...a, type: 'appointment' })),
@@ -123,7 +123,7 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-10 max-w-full mx-auto" dir="ltr">
+      <div className="flex flex-col gap-8 max-w-full mx-auto" dir="ltr">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
@@ -144,7 +144,6 @@ export default function Dashboard() {
             title="Total Items" 
             value={totalItemsCount} 
             subtitle="Tasks + Appointments"
-            description={`${personalItemsCount} manually created`}
             icon={<Activity className="h-4 w-4" />} 
             color="blue"
             href="/stats"
@@ -153,7 +152,6 @@ export default function Dashboard() {
             title="Tasks" 
             value={totalTasks} 
             subtitle={`Completed ${taskCompletionRate}%`}
-            description={`${doneTasks} finished items`}
             icon={<CheckSquare className="h-4 w-4" />} 
             color="emerald"
             href="/tasks"
@@ -162,7 +160,6 @@ export default function Dashboard() {
             title="Appointments" 
             value={totalApps} 
             subtitle={`Attended ${attendanceRate}%`}
-            description={`${attendedApps} confirmed events`}
             icon={<CalendarIcon className="h-4 w-4" />} 
             color="purple"
             href="/appointments"
@@ -170,18 +167,43 @@ export default function Dashboard() {
           <CircularStatCard 
             title="Task Completion" 
             percentage={taskCompletionRate} 
-            subtitle={`${doneTasks} of ${totalTasks}`}
+            subtitle={`${doneTasks} of ${totalTasks} Done`}
             color="emerald"
             href="/tasks"
           />
           <CircularStatCard 
-            title="Performance" 
+            title="Overall Score" 
             percentage={productivityScore} 
-            subtitle={productivityScore > 80 ? "Excellent" : "Steady"}
+            subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
             color="primary"
             href="/stats"
           />
         </div>
+
+        {/* Quick Creation Row - Now integrated below stats */}
+        <section className="space-y-4">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Quick Creation</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <QuickActionCard 
+              icon={CalendarPlus} 
+              title="Add Appointment" 
+              onClick={() => window.location.href = '/appointments?add=true'}
+              color="blue"
+            />
+            <QuickActionCard 
+              icon={CheckSquare} 
+              title="Add Task" 
+              onClick={() => window.location.href = '/tasks?add=true'}
+              color="emerald"
+            />
+            <QuickActionCard 
+              icon={Sparkles} 
+              title="AI Assistant" 
+              onClick={() => setShowAIDialog(true)}
+              color="purple"
+            />
+          </div>
+        </section>
 
         {/* Row 2: Main Grid 70/30 */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 items-start">
@@ -234,12 +256,19 @@ export default function Dashboard() {
             </section>
           </div>
 
-          {/* Right Column: Intelligence & Progress (30%) */}
+          {/* Right Column: Intelligence Sidebar (30%) */}
           <div className="space-y-8 sticky top-24">
             <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
             
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-2">Mission Progress</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Workspace Intelligence</h3>
+              <CircularStatCard 
+                title="Overall Performance" 
+                percentage={productivityScore} 
+                subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
+                color="primary"
+                size="lg"
+              />
               <CircularStatCard 
                 title="Task Completion" 
                 percentage={taskCompletionRate} 
@@ -247,41 +276,9 @@ export default function Dashboard() {
                 color="emerald"
                 size="lg"
               />
-              <CircularStatCard 
-                title="Overall Score" 
-                percentage={productivityScore} 
-                subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
-                color="primary"
-                size="lg"
-              />
             </div>
           </div>
         </div>
-
-        {/* Quick Creation Row */}
-        <section className="space-y-6 pt-10 border-t">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Quick Creation</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <QuickActionCard 
-              icon={CalendarPlus} 
-              title="Add Appointment" 
-              onClick={() => window.location.href = '/appointments?add=true'}
-              color="blue"
-            />
-            <QuickActionCard 
-              icon={CheckSquare} 
-              title="Add Task" 
-              onClick={() => window.location.href = '/tasks?add=true'}
-              color="emerald"
-            />
-            <QuickActionCard 
-              icon={Sparkles} 
-              title="AI Assistant" 
-              onClick={() => setShowAIDialog(true)}
-              color="purple"
-            />
-          </div>
-        </section>
       </div>
 
       <AIAppointmentCreator 
@@ -292,7 +289,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, subtitle, description, icon, color, href }: any) {
+function StatCard({ title, value, subtitle, icon, color, href }: any) {
   const isClickable = !!href;
   const colors: any = {
     blue: "text-blue-600 border-blue-100 hover:bg-blue-50/50",
