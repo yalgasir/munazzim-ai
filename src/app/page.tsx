@@ -141,7 +141,7 @@ export default function Dashboard() {
         </div>
 
         {/* Row 1: Unified Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard 
             title="Total Items" 
             value={totalItemsCount} 
@@ -167,12 +167,6 @@ export default function Dashboard() {
             icon={<CalendarIcon className="h-4 w-4" />} 
             color="purple"
             href="/appointments"
-          />
-          <CircularStatCard 
-            title="Task Completion" 
-            percentage={taskCompletionRate} 
-            color="emerald"
-            href="/tasks"
           />
         </div>
 

@@ -110,11 +110,11 @@ export function AIAppointmentCreator({ isOpen = false, onClose }: AIAppointmentC
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-xs text-muted-foreground text-left">
-              Describe your plans naturally. AI will automatically classify and create appointments or tasks for you.
+            Describe your meeting, task, or daily plan in natural language. The AI will automatically understand your intent, classify your request, and create the appropriate task or appointment for you.
             </p>
             <Textarea 
-              placeholder="e.g., 'Meet Dr. Hatem tomorrow at 10 AM then finish the quarterly report.'"
-              className="min-h-[100px] text-sm p-4 rounded-xl"
+              placeholder="Examples:&#10;• Schedule a project review with Dr. Hatem tomorrow at 10:00 AM.&#10;• Prepare the TRL-5 documentation before Thursday.&#10;• Meet the development team at 2:00 PM and submit the weekly progress report afterward.&#10;• Call the supplier next Monday and review the laboratory equipment checklist.&#10;• Reserve two hours tomorrow morning to complete the AI integration."
+              className="min-h-[140px] text-sm p-4 rounded-xl"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
