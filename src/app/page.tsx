@@ -139,7 +139,7 @@ export default function Dashboard() {
         </div>
 
         {/* Row 1: Unified Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           <StatCard 
             title="Total Items" 
             value={totalItemsCount} 
@@ -170,13 +170,6 @@ export default function Dashboard() {
             subtitle={`${doneTasks} of ${totalTasks} Done`}
             color="emerald"
             href="/tasks"
-          />
-          <CircularStatCard 
-            title="Overall Score" 
-            percentage={productivityScore} 
-            subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
-            color="primary"
-            href="/stats"
           />
         </div>
 
@@ -267,13 +260,6 @@ export default function Dashboard() {
                 percentage={productivityScore} 
                 subtitle={productivityScore > 80 ? "Excellent" : "Operational"}
                 color="primary"
-                size="lg"
-              />
-              <CircularStatCard 
-                title="Task Completion" 
-                percentage={taskCompletionRate} 
-                subtitle={`${doneTasks} of ${totalTasks} Done`}
-                color="emerald"
                 size="lg"
               />
             </div>
