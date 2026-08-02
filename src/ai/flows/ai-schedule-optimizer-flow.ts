@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview Deep schedule analysis flow using MythoMax-L2-13b via OpenRouter.
+ * Enhanced to provide Focus Scores, Workload Status, and Smart Alerts.
  */
 
 export type AnalysisOutput = {
@@ -16,6 +17,12 @@ export type AnalysisOutput = {
     isTask: boolean;
   }[];
   generalRecommendation: string;
+  // Enhanced performance metrics
+  focusScore: number;
+  scheduleBalance: string;
+  workloadStatus: 'Light' | 'Moderate' | 'Heavy';
+  productivityInsight: string;
+  smartAlerts: string[];
 };
 
 export async function analyzeFullSchedule(appointments: any[], tasks: any[], userContext?: string): Promise<AnalysisOutput> {
@@ -24,36 +31,42 @@ export async function analyzeFullSchedule(appointments: any[], tasks: any[], use
     throw new Error('OPENROUTER_API_KEY is not configured in environment variables.');
   }
 
-  // Ensure data is clean for the prompt
   const sanitizedApps = appointments.map(a => ({
     title: a.title || 'Untitled',
     date: a.date || '',
-    time: a.time || ''
+    time: a.time || '',
+    status: a.attendanceStatus || 'Upcoming'
   }));
 
   const sanitizedTasks = tasks.map(t => ({
     description: t.description || 'Untitled',
     priority: t.priority || 'Medium',
-    status: t.isCompleted ? 'Completed' : 'Pending'
+    status: t.status || (t.isCompleted ? 'Done' : 'Pending')
   }));
 
   const prompt = `
-    You are a world-class productivity consultant. Analyze the user's current workload:
+    You are a world-class executive productivity consultant. Analyze the user's workload for today and the upcoming period.
     
+    Data:
     Appointments: ${JSON.stringify(sanitizedApps)}
     Tasks: ${JSON.stringify(sanitizedTasks)}
     Current Date: ${new Date().toISOString().split('T')[0]}
-    User Context: ${userContext || 'General analysis'}
+    User Query: ${userContext || 'Standard daily analysis'}
     
-    Return ONLY a valid JSON object with this exact structure:
+    Return ONLY a valid JSON object with this structure:
     {
-      "todayOverview": "summary string",
-      "priorityRecommendations": ["item1", "item2"],
-      "conflictAlerts": ["alert1"],
-      "upcomingDeadlines": ["deadline1"],
-      "availableSlots": ["slot1"],
+      "todayOverview": "Executive summary of the day",
+      "priorityRecommendations": ["Actionable step 1", "Actionable step 2"],
+      "conflictAlerts": ["Conflict alert 1"],
+      "upcomingDeadlines": ["Deadline 1"],
+      "availableSlots": ["Free window 1"],
       "dailyPlan": [{"time": "HH:mm", "activity": "string", "isTask": boolean}],
-      "generalRecommendation": "final tip string"
+      "generalRecommendation": "One key tip for the day",
+      "focusScore": number (0-100),
+      "scheduleBalance": "string describing balance",
+      "workloadStatus": "Light" | "Moderate" | "Heavy",
+      "productivityInsight": "Detailed insight about current trend",
+      "smartAlerts": ["Detect conflicts, overloading, or missing priorities"]
     }
   `;
 
@@ -63,7 +76,7 @@ export async function analyzeFullSchedule(appointments: any[], tasks: any[], use
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'X-Title': 'Munazzim Productivity Suite',
+        'X-Title': 'Munazzim AI Suite',
       },
       body: JSON.stringify({
         model: 'gryphe/mythomax-l2-13b',
@@ -72,29 +85,30 @@ export async function analyzeFullSchedule(appointments: any[], tasks: any[], use
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`AI Gateway error: ${response.statusText}`);
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
-
-    if (!content) throw new Error("Empty response from AI");
+    if (!content) throw new Error("Empty response from AI engine");
 
     const parsed = JSON.parse(content);
     
-    // Ensure all required fields exist to prevent UI crashes
     return {
-      todayOverview: parsed.todayOverview || "No overview available.",
+      todayOverview: parsed.todayOverview || "Standard operational status.",
       priorityRecommendations: parsed.priorityRecommendations || [],
       conflictAlerts: parsed.conflictAlerts || [],
       upcomingDeadlines: parsed.upcomingDeadlines || [],
       availableSlots: parsed.availableSlots || [],
       dailyPlan: parsed.dailyPlan || [],
-      generalRecommendation: parsed.generalRecommendation || "Keep up the good work!"
+      generalRecommendation: parsed.generalRecommendation || "Maintain steady progress.",
+      focusScore: parsed.focusScore || 70,
+      scheduleBalance: parsed.scheduleBalance || "Stable",
+      workloadStatus: parsed.workloadStatus || "Moderate",
+      productivityInsight: parsed.productivityInsight || "Tracking standard mission goals.",
+      smartAlerts: parsed.smartAlerts || []
     };
   } catch (e) {
     console.error("AI Analysis Error:", e);
-    throw new Error("Failed to generate schedule analysis. Please check your API key.");
+    throw new Error("Failed to generate performance analysis.");
   }
 }

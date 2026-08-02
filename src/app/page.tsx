@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,12 +17,10 @@ import {
   MoreVertical,
   CalendarDays,
   Target,
-  Circle,
-  PlayCircle,
+  AlertCircle,
   Loader2,
   CalendarPlus,
-  UserCheck,
-  AlertCircle
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -31,6 +28,7 @@ import { useAuth } from "@/components/auth/auth-context";
 import { collection, onSnapshot, query, where, updateDoc, doc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { AIAppointmentCreator } from "@/components/ai-appointment-creator";
+import { ScheduleAnalysisWidget } from "@/components/schedule-analysis-widget";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,24 +120,24 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-12 max-w-7xl mx-auto" dir="ltr">
+      <div className="flex flex-col gap-10 max-w-7xl mx-auto" dir="ltr">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight text-foreground">Overview</h1>
+            <h1 className="text-3xl font-black tracking-tight text-foreground">Workspace Overview</h1>
             <p className="text-sm text-muted-foreground font-medium">
-              Manage your daily performance and upcoming mission milestones.
+              Organize your tasks, appointments, and daily priorities in one place.
             </p>
           </div>
           <div className="text-right hidden md:block">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Current Date</p>
-            <p className="text-lg font-bold text-primary">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mission Date</p>
+            <p className="text-sm font-bold text-primary">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
 
-        {/* Executive Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        {/* Statistics Row 1: Primary Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
             title="Total Items" 
             value={totalItemsCount} 
@@ -157,12 +155,6 @@ export default function Dashboard() {
             color="emerald"
             href="/tasks"
           />
-          <CircularStatCard 
-            title="Task Completion" 
-            percentage={taskCompletionRate} 
-            subtitle={`${doneTasks} of ${totalTasks} Done`}
-            color="emerald"
-          />
           <StatCard 
             title="Appointments" 
             value={totalApps} 
@@ -172,20 +164,35 @@ export default function Dashboard() {
             color="purple"
             href="/appointments"
           />
+        </div>
+
+        {/* Statistics Row 2: Performance Indicators */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <CircularStatCard 
+            title="Task Completion" 
+            percentage={taskCompletionRate} 
+            subtitle={`${doneTasks} of ${totalTasks} Completed`}
+            color="emerald"
+          />
           <CircularStatCard 
             title="Overall Performance" 
             percentage={productivityScore} 
-            subtitle={productivityScore > 80 ? "Excellent Productivity" : "Steady Progress"}
+            subtitle={productivityScore > 80 ? "Excellent Performance" : "Steady Mission Progress"}
             color="primary"
           />
         </div>
+
+        {/* AI Performance Analyzer (Centerpiece) */}
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Today's Schedule */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black flex items-center gap-3">
-                <Clock className="h-6 w-6 text-primary" /> Today's Schedule
+              <h2 className="text-xl font-black flex items-center gap-3">
+                <Clock className="h-5 w-5 text-primary" /> Today's Schedule
               </h2>
             </div>
             <div className="space-y-3">
@@ -206,15 +213,15 @@ export default function Dashboard() {
           {/* Upcoming Activities */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black flex items-center gap-3">
-                <CalendarDays className="h-6 w-6 text-primary" /> Upcoming Activities
+              <h2 className="text-xl font-black flex items-center gap-3">
+                <CalendarDays className="h-5 w-5 text-primary" /> Upcoming Activities
               </h2>
-              <Button variant="ghost" size="sm" asChild className="text-xs font-bold text-primary">
+              <Button variant="ghost" size="sm" asChild className="text-xs font-bold text-primary hover:bg-transparent">
                 <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
               </Button>
             </div>
             <div className="space-y-3">
-              {upcomingActivities.slice(0, 6).map((item) => (
+              {upcomingActivities.slice(0, 5).map((item) => (
                 <ActivityRow 
                   key={item.id} 
                   item={item} 
@@ -229,9 +236,9 @@ export default function Dashboard() {
           </section>
         </div>
 
-        {/* Quick Creation - Now at bottom */}
+        {/* Quick Creation Section (Bottom) */}
         <section className="space-y-6 pt-10 border-t">
-          <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Quick Creation</h2>
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Quick Creation Terminal</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <QuickActionCard 
               icon={CalendarPlus} 
@@ -266,29 +273,29 @@ export default function Dashboard() {
 function StatCard({ title, value, subtitle, description, icon, color, href }: any) {
   const isClickable = !!href;
   const colors: any = {
-    blue: "text-blue-600 bg-blue-50/50 border-blue-100",
-    emerald: "text-emerald-600 bg-emerald-50/50 border-emerald-100",
-    purple: "text-purple-600 bg-purple-50/50 border-purple-100",
+    blue: "text-blue-600 border-blue-100 hover:bg-blue-50/50",
+    emerald: "text-emerald-600 border-emerald-100 hover:bg-emerald-50/50",
+    purple: "text-purple-600 border-purple-100 hover:bg-purple-50/50",
   };
 
   const content = (
     <Card className={cn(
-      "p-6 border-2 transition-all duration-300 group",
+      "p-6 border-2 transition-all duration-300 group shadow-sm",
       colors[color] || "bg-card",
-      isClickable ? "hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl cursor-pointer" : "cursor-default"
+      isClickable ? "hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-md cursor-pointer" : "cursor-default"
     )}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 rounded-lg bg-white shadow-sm border">
+      <div className="flex justify-between items-start mb-3">
+        <div className="p-2 rounded-lg bg-white shadow-sm border border-inherit">
           {icon}
         </div>
       </div>
       <div className="space-y-1">
-        <h3 className="text-3xl font-black text-foreground transition-all group-hover:scale-110 origin-left inline-block animate-in fade-in zoom-in duration-500">
+        <h3 className="text-2xl font-black text-foreground transition-all duration-300 group-hover:scale-105 origin-left inline-block">
           {value}
         </h3>
-        <p className="text-sm font-bold text-foreground/80">{title}</p>
+        <p className="text-xs font-bold text-foreground/80">{title}</p>
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{subtitle}</p>
-        {description && <p className="text-[10px] italic text-muted-foreground mt-2">{description}</p>}
+        {description && <p className="text-[10px] italic text-muted-foreground/60 mt-2">{description}</p>}
       </div>
     </Card>
   );
@@ -303,29 +310,29 @@ function CircularStatCard({ title, percentage, subtitle, color }: any) {
   };
 
   return (
-    <Card className="p-6 border-2 flex flex-col items-center justify-center text-center gap-3">
-      <div className="relative h-20 w-20">
+    <Card className="p-8 border-2 flex flex-col items-center justify-center text-center gap-4 shadow-sm group hover:border-primary/20 transition-all">
+      <div className="relative h-24 w-24">
         <svg className="h-full w-full" viewBox="0 0 36 36">
           <path
             className="stroke-muted fill-none"
-            strokeWidth="3"
+            strokeWidth="2.5"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
           <path
             className={cn("fill-none transition-all duration-1000 ease-out", colors[color])}
-            strokeWidth="3"
+            strokeWidth="2.5"
             strokeDasharray={`${percentage}, 100`}
             strokeLinecap="round"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-black">{percentage}%</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-xl font-black group-hover:scale-110 transition-transform">{percentage}%</span>
         </div>
       </div>
       <div className="space-y-1">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</p>
-        <p className="text-[10px] font-bold text-foreground/60">{subtitle}</p>
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
+        <p className="text-[10px] font-bold text-foreground/70">{subtitle}</p>
       </div>
     </Card>
   );
@@ -351,24 +358,24 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
           "p-2 rounded-lg",
           isTask ? "bg-emerald-50 text-emerald-600" : "bg-primary/5 text-primary"
         )}>
-          {isTask ? <CheckSquare className="h-5 w-5" /> : <CalendarIcon className="h-5 w-5" />}
+          {isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
         </div>
         <div>
-          <h4 className={cn("font-bold text-base", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
-          <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <h4 className={cn("font-bold text-sm", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
+          <div className="flex items-center gap-3 text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
             {showDate && <span>{item.date}</span>}
             {showDate && <span>•</span>}
             <span>{item.time || 'No Time'}</span>
             <span>•</span>
-            <span className="text-primary">{item.source || 'Manual'}</span>
+            <span className="text-primary/70">{item.source || 'Manual'}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-7 text-[9px] font-black uppercase px-2", statusColors[status])}>
+            <Button variant="outline" size="sm" className={cn("h-6 text-[8px] font-black uppercase px-2 rounded-lg", statusColors[status])}>
               {status}
             </Button>
           </DropdownMenuTrigger>
@@ -388,8 +395,8 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          <MoreVertical className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
@@ -398,32 +405,32 @@ function ActivityRow({ item, showDate, onStatusUpdate }: any) {
 
 function QuickActionCard({ icon: Icon, title, onClick, color }: any) {
   const colors: any = {
-    blue: "text-blue-600 border-blue-100 hover:bg-blue-50",
-    emerald: "text-emerald-600 border-emerald-100 hover:bg-emerald-50",
-    purple: "text-purple-600 border-purple-100 hover:bg-purple-50",
+    blue: "text-blue-600 border-blue-100 hover:bg-blue-50/50",
+    emerald: "text-emerald-600 border-emerald-100 hover:bg-emerald-50/50",
+    purple: "text-purple-600 border-purple-100 hover:bg-purple-50/50",
   };
 
   return (
     <button 
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all active:scale-95 text-center gap-3 bg-white",
+        "flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all active:scale-95 text-center gap-2 bg-white shadow-sm",
         colors[color]
       )}
     >
-      <div className="p-3 rounded-full bg-white shadow-sm border">
-        <Icon className="h-5 w-5" />
+      <div className="p-2 rounded-full bg-white shadow-sm border border-inherit">
+        <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-black uppercase tracking-widest">{title}</span>
+      <span className="text-[10px] font-black uppercase tracking-widest">{title}</span>
     </button>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-3 bg-muted/10 opacity-60">
-      <AlertCircle className="h-8 w-8 text-muted-foreground" />
-      <p className="text-sm font-medium text-muted-foreground">{message}</p>
+    <div className="py-10 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-2 bg-muted/10 opacity-60">
+      <AlertCircle className="h-6 w-6 text-muted-foreground" />
+      <p className="text-xs font-medium text-muted-foreground">{message}</p>
     </div>
   );
 }
