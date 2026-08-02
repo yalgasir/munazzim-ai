@@ -1,7 +1,7 @@
+
 "use client";
 
 import * as React from "react";
-import Link from "next/navigation";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
@@ -13,7 +13,9 @@ import {
   Settings,
   User as UserIcon,
   LogOut,
-  UserCircle
+  UserCircle,
+  Menu,
+  ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -52,16 +54,9 @@ const menuItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
-  const [currentDate, setCurrentDate] = React.useState("");
 
   React.useEffect(() => {
     setMounted(true);
-    setCurrentDate(new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }));
   }, []);
 
   if (!mounted) {
@@ -79,18 +74,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background" dir="ltr">
-        <Sidebar side="left" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground w-64">
-          <SidebarHeader className="p-6 flex flex-row items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <span className="text-xl font-black">M</span>
+      <div className="flex min-h-screen w-full bg-background font-body" dir="ltr">
+        <Sidebar 
+          side="left" 
+          collapsible="icon" 
+          className="border-r border-sidebar-border bg-slate-950 text-slate-100 w-64 shadow-2xl transition-all duration-300"
+        >
+          <SidebarHeader className="p-8 mb-4">
+            <div className="flex items-center gap-4 group-data-[collapsible=icon]:justify-center">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-2xl ring-4 ring-primary/20">
+                <span className="text-xl font-black">M</span>
+              </div>
+              <span className="text-xl font-black tracking-tight group-data-[collapsible=icon]:hidden">
+                Munazzim
+              </span>
             </div>
-            <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden">
-              Munazzim
-            </span>
           </SidebarHeader>
-          <SidebarContent className="px-3">
-            <SidebarMenu className="gap-1">
+
+          <SidebarContent className="px-4">
+            <SidebarMenu className="gap-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton 
@@ -98,47 +100,50 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     isActive={pathname === item.href}
                     tooltip={item.title}
                     className={cn(
-                      "flex flex-row items-center gap-3 py-6 px-4 transition-all duration-200",
-                      pathname === item.href ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-sidebar-accent/50"
+                      "flex items-center gap-4 py-6 px-4 rounded-xl transition-all duration-300",
+                      pathname === item.href 
+                        ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20" 
+                        : "hover:bg-slate-800 text-slate-400 hover:text-slate-100"
                     )}
                   >
                     <a href={item.href}>
-                      <item.icon className={cn("h-5 w-5", pathname === item.href ? "text-white" : "text-sidebar-foreground/70")} />
-                      <span className="text-sm font-medium">{item.title}</span>
+                      <item.icon className={cn("h-5 w-5 shrink-0")} />
+                      <span className="text-sm font-black tracking-wide">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="p-4 border-t border-sidebar-border">
+
+          <SidebarFooter className="p-6 border-t border-slate-800/50">
             <SidebarMenu>
               <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton className="h-14 w-full justify-start gap-3 px-2 hover:bg-sidebar-accent/50 transition-colors">
-                      <Avatar className="h-9 w-9 border-2 border-primary/20">
+                    <SidebarMenuButton className="h-16 w-full justify-start gap-4 px-2 hover:bg-slate-800 rounded-2xl transition-all">
+                      <Avatar className="h-10 w-10 border-2 border-primary/40 shadow-lg">
                         <AvatarImage src={userAvatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary"><UserIcon className="h-5 w-5" /></AvatarFallback>
+                        <AvatarFallback className="bg-primary text-white"><UserIcon className="h-5 w-5" /></AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
-                        <span className="text-sm font-semibold truncate max-w-[120px]">Guest User</span>
-                        <span className="text-[10px] font-medium text-sidebar-foreground/60 uppercase tracking-wider">Local Workspace</span>
+                        <span className="text-sm font-black truncate max-w-[120px]">Guest User</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Local Workspace</span>
                       </div>
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 mb-2">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuContent align="end" className="w-64 mb-4 p-2 rounded-2xl shadow-2xl border-none">
+                    <DropdownMenuLabel className="px-4 py-3 text-xs font-black uppercase tracking-widest text-muted-foreground">Account Options</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 cursor-pointer">
-                      <UserCircle className="h-4 w-4" /> Profile
+                    <DropdownMenuItem className="gap-4 px-4 py-3 cursor-pointer rounded-xl font-bold">
+                      <UserCircle className="h-5 w-5 text-primary" /> Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2 cursor-pointer">
-                      <Settings className="h-4 w-4" /> Settings
+                    <DropdownMenuItem className="gap-4 px-4 py-3 cursor-pointer rounded-xl font-bold">
+                      <Settings className="h-5 w-5 text-primary" /> Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                      <LogOut className="h-4 w-4" /> Sign Out
+                    <DropdownMenuItem className="gap-4 px-4 py-3 cursor-pointer rounded-xl text-destructive font-bold focus:bg-destructive/10">
+                      <LogOut className="h-5 w-5" /> Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -147,22 +152,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex-1 flex flex-col min-w-0 bg-background overflow-auto">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <SidebarTrigger className="hover:bg-muted" />
-            <div className="flex-1">
-              <span className="text-xs font-medium text-muted-foreground hidden md:inline-block">
-                {currentDate}
+        <SidebarInset className="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+          <header className="sticky top-0 z-40 flex h-20 items-center justify-between px-10 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+            <div className="flex items-center gap-6">
+              <SidebarTrigger className="hover:bg-slate-100 rounded-xl" />
+              <div className="h-6 w-px bg-slate-200 hidden md:block" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 hidden md:block">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted">
+            
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl">
                 <Settings className="h-5 w-5" />
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-            {children}
+          
+          <main className="flex-1 p-10">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {children}
+            </div>
           </main>
         </SidebarInset>
       </div>

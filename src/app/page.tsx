@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,23 +12,24 @@ import {
   Clock,
   Activity,
   ArrowRight,
-  Cpu,
-  CalendarPlus,
-  AlertTriangle,
-  Loader2,
   Sparkles,
   CheckSquare,
   Plus,
   MoreVertical,
-  CalendarDays
+  CalendarDays,
+  Target,
+  Circle,
+  PlayCircle,
+  Loader2,
+  CalendarPlus,
+  UserCheck,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, updateDoc, doc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { ScheduleAnalysisWidget } from "@/components/schedule-analysis-widget";
-import { CalendarSyncButton } from "@/components/CalendarSyncButton";
 import { AIAppointmentCreator } from "@/components/ai-appointment-creator";
 import {
   DropdownMenu,
@@ -67,200 +69,190 @@ export default function Dashboard() {
     return () => { unsubApps(); unsubTasks(); };
   }, [user, authLoading]);
 
+  const updateTaskStatus = async (taskId: string, status: string) => {
+    try {
+      await updateDoc(doc(db, "tasks", taskId), { 
+        status: status,
+        isCompleted: status === 'Done' 
+      });
+    } catch (e) {
+      console.error("Error updating task:", e);
+    }
+  };
+
+  const updateAppStatus = async (appId: string, status: string) => {
+    try {
+      await updateDoc(doc(db, "appointments", appId), { attendanceStatus: status });
+    } catch (e) {
+      console.error("Error updating appointment:", e);
+    }
+  };
+
   if (!mounted || authLoading || loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Workspace...</p>
+      <p className="text-muted-foreground animate-pulse font-medium">Loading Executive Workspace...</p>
     </div>
   );
 
-  const personalItems = [...appointments, ...tasks].filter(item => item.source === 'manual' || !item.source);
-  const pendingTasks = (tasks || []).filter(t => !t.isCompleted);
-  const completionRate = tasks.length > 0 ? Math.round(((tasks.length - pendingTasks.length) / tasks.length) * 100) : 0;
+  // Stats Calculations
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.status === 'Done' || t.isCompleted).length;
+  const taskCompletionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+  const totalApps = appointments.length;
+  const attendedApps = appointments.filter(a => a.attendanceStatus === 'Attended').length;
+  const attendanceRate = totalApps > 0 ? Math.round((attendedApps / totalApps) * 100) : 0;
+
+  const productivityScore = Math.round((taskCompletionRate + attendanceRate) / 2);
+  const totalItemsCount = totalTasks + totalApps;
+  const personalItemsCount = [...appointments, ...tasks].filter(item => item.source === 'manual' || !item.source).length;
+
+  // Schedule Filtering
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayActivities = [
+    ...appointments.filter(a => a.date === todayStr).map(a => ({ ...a, type: 'appointment' })),
+    ...tasks.filter(t => t.date === todayStr).map(t => ({ ...t, type: 'task' }))
+  ].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+
+  const upcomingActivities = [
+    ...appointments.filter(a => a.date > todayStr).map(a => ({ ...a, type: 'appointment' })),
+    ...tasks.filter(t => t.date > todayStr).map(t => ({ ...t, type: 'task' }))
+  ].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00'));
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-10" dir="ltr">
-        {/* Refined Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b pb-8">
+      <div className="flex flex-col gap-12 max-w-7xl mx-auto" dir="ltr">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">Munazzim Dashboard</h1>
+            <h1 className="text-4xl font-black tracking-tight text-foreground">Overview</h1>
             <p className="text-sm text-muted-foreground font-medium">
-              Organize your tasks, appointments, and daily priorities in one place.
+              Manage your daily performance and upcoming mission milestones.
             </p>
-            <div className="flex items-center gap-3 pt-3">
-              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100/50 py-1 px-3">
-                <Cpu className="h-3.5 w-3.5 mr-1.5" /> {isFirebaseConfigured ? "Cloud Active" : "Local Mode"}
-              </Badge>
-              <CalendarSyncButton />
-            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button className="h-11 px-6 shadow-lg shadow-primary/20 font-bold gap-2 active:scale-[0.98] transition-transform" asChild>
-               <Link href="/ai-assistant">
-                 <Sparkles className="h-4 w-4" /> Smart Assistant
-               </Link>
-            </Button>
+          <div className="text-right hidden md:block">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Current Date</p>
+            <p className="text-lg font-bold text-primary">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
 
-        {/* Quick Actions Integrated Section */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Quick Creation</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ActionCard 
-              icon={CalendarPlus} 
-              title="Add Appointment" 
-              description="Schedule a meeting or event manually." 
-              href="/appointments?add=true"
-              colorClass="bg-blue-500 shadow-blue-100"
-            />
-            <ActionCard 
-              icon={CheckSquare} 
-              title="Add Task" 
-              description="Create a new personal task manually." 
-              href="/tasks?add=true"
-              colorClass="bg-emerald-500 shadow-emerald-100"
-            />
-            <ActionCard 
-              icon={Sparkles} 
-              title="Use AI Assistant" 
-              description="Describe your request in natural language." 
-              onClick={() => setShowAIDialog(true)}
-              colorClass="bg-purple-500 shadow-purple-100"
-            />
-          </div>
-        </div>
-
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Executive Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard 
-            title="Personal Add-ons" 
-            value={personalItems.length} 
-            icon={<Activity />} 
-            subtitle="Manually created items"
-            color="blue" 
+            title="Total Items" 
+            value={totalItemsCount} 
+            subtitle="Tasks + Appointments"
+            description={`${personalItemsCount} manually created`}
+            icon={<Activity className="h-5 w-5" />} 
+            color="blue"
           />
           <StatCard 
-            title="Pending Tasks" 
-            value={pendingTasks.length} 
-            icon={<AlertTriangle />} 
-            subtitle={`${pendingTasks.length} require attention`}
-            color="orange" 
-            href="/tasks" 
+            title="Tasks" 
+            value={totalTasks} 
+            subtitle={`Completed ${taskCompletionRate}%`}
+            description={`${doneTasks} finished items`}
+            icon={<CheckSquare className="h-5 w-5" />} 
+            color="emerald"
+            href="/tasks"
           />
-          <StatCard 
+          <CircularStatCard 
             title="Task Completion" 
-            value={`${completionRate}%`} 
-            icon={<CheckCircle2 />} 
-            subtitle={`${tasks.length - pendingTasks.length} of ${tasks.length} completed`}
-            color="emerald" 
-            href="/stats" 
+            percentage={taskCompletionRate} 
+            subtitle={`${doneTasks} of ${totalTasks} Done`}
+            color="emerald"
           />
           <StatCard 
             title="Appointments" 
-            value={appointments?.length || 0} 
-            icon={<CalendarIcon />} 
-            subtitle="Upcoming events today"
-            color="purple" 
-            href="/appointments" 
+            value={totalApps} 
+            subtitle={`Attendance ${attendanceRate}%`}
+            description={`${attendedApps} confirmed events`}
+            icon={<CalendarIcon className="h-5 w-5" />} 
+            color="purple"
+            href="/appointments"
+          />
+          <CircularStatCard 
+            title="Overall Performance" 
+            percentage={productivityScore} 
+            subtitle={productivityScore > 80 ? "Excellent Productivity" : "Steady Progress"}
+            color="primary"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
-          {/* Schedule Section */}
-          <Card className="lg:col-span-2 shadow-sm border-border/60 overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between border-b px-6 py-5">
-              <div className="space-y-1">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-primary" /> Today's Schedule
-                </CardTitle>
-              </div>
-              <Button variant="outline" size="sm" asChild className="font-semibold text-xs border-primary/20 text-primary hover:bg-primary/5">
-                <Link href="/calendar" className="gap-2">View Full Calendar <ArrowRight className="h-3 w-3" /></Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4 p-6">
-              {(appointments || []).slice(0, 4).map((app, idx) => (
-                <div key={app.id} className={cn(
-                  "flex items-center justify-between p-4 rounded-xl border-l-4 border-l-transparent bg-white border shadow-sm transition-all hover:border-primary/20 group relative",
-                  idx === 0 && "border-l-primary bg-primary/[0.02]"
-                )}>
-                  <div className="flex items-center gap-4">
-                    <div className={cn("p-2.5 rounded-xl", idx === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                      <Clock className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-foreground text-base">{app.title}</h4>
-                        {idx === 0 && <Badge className="text-[9px] uppercase font-black px-1.5 h-4 bg-primary text-white">Next</Badge>}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{app.time || 'All Day'}</p>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{app.source || 'manual'}</p>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{app.type || 'Meeting'}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Item</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-              {(!appointments || appointments.length === 0) && (
-                <div className="text-center py-20 flex flex-col items-center gap-4 text-muted-foreground bg-muted/20 rounded-2xl border border-dashed">
-                  <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center">
-                    <CalendarIcon className="h-8 w-8 opacity-20" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-bold">No appointments scheduled.</p>
-                    <p className="text-xs">Your agenda is clear for today.</p>
-                  </div>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {/* Today's Schedule */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-black flex items-center gap-3">
+                <Clock className="h-6 w-6 text-primary" /> Today's Schedule
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {todayActivities.length > 0 ? (
+                todayActivities.map((item) => (
+                  <ActivityRow 
+                    key={item.id} 
+                    item={item} 
+                    onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                  />
+                ))
+              ) : (
+                <EmptyState message="No activities scheduled for today." />
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          {/* AI Insights Panel */}
-          <div className="flex flex-col gap-8">
-            <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
-            
-            <Card className="border-border/50 bg-secondary/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" /> Workspace Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-[11px] space-y-3 pt-2">
-                <div className="flex justify-between items-center py-2 border-b border-border/50">
-                  <span className="text-muted-foreground font-medium">Cloud Integrations</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3" /> Connected
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border/50">
-                  <span className="text-muted-foreground font-medium">Sync Health</span>
-                  <span className="text-primary font-bold">Optimal</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-muted-foreground font-medium">Current Engine</span>
-                  <span className="text-foreground font-bold px-2 py-0.5 bg-muted rounded">MythoMax-L2</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Upcoming Activities */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-black flex items-center gap-3">
+                <CalendarDays className="h-6 w-6 text-primary" /> Upcoming Activities
+              </h2>
+              <Button variant="ghost" size="sm" asChild className="text-xs font-bold text-primary">
+                <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {upcomingActivities.slice(0, 6).map((item) => (
+                <ActivityRow 
+                  key={item.id} 
+                  item={item} 
+                  showDate 
+                  onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                />
+              ))}
+              {upcomingActivities.length === 0 && (
+                <EmptyState message="No upcoming activities found." />
+              )}
+            </div>
+          </section>
         </div>
+
+        {/* Quick Creation - Now at bottom */}
+        <section className="space-y-6 pt-10 border-t">
+          <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Quick Creation</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <QuickActionCard 
+              icon={CalendarPlus} 
+              title="Add Appointment" 
+              onClick={() => window.location.href = '/appointments?add=true'}
+              color="blue"
+            />
+            <QuickActionCard 
+              icon={CheckSquare} 
+              title="Add Task" 
+              onClick={() => window.location.href = '/tasks?add=true'}
+              color="emerald"
+            />
+            <QuickActionCard 
+              icon={Sparkles} 
+              title="AI Assistant" 
+              onClick={() => setShowAIDialog(true)}
+              color="purple"
+            />
+          </div>
+        </section>
       </div>
 
       <AIAppointmentCreator 
@@ -271,57 +263,167 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon, color, href, subtitle }: any) {
+function StatCard({ title, value, subtitle, description, icon, color, href }: any) {
   const isClickable = !!href;
-  
   const colors: any = {
-    blue: "text-blue-600 border-blue-100 bg-blue-50/30",
-    emerald: "text-emerald-600 border-emerald-100 bg-emerald-50/30",
-    purple: "text-purple-600 border-purple-100 bg-purple-50/30",
-    orange: "text-orange-600 border-orange-100 bg-orange-50/30"
+    blue: "text-blue-600 bg-blue-50/50 border-blue-100",
+    emerald: "text-emerald-600 bg-emerald-50/50 border-emerald-100",
+    purple: "text-purple-600 bg-purple-50/50 border-purple-100",
   };
 
   const content = (
     <Card className={cn(
-      "p-6 border transition-all duration-300 relative overflow-hidden group",
-      colors[color],
-      isClickable ? "hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 cursor-pointer" : "cursor-default"
+      "p-6 border-2 transition-all duration-300 group",
+      colors[color] || "bg-card",
+      isClickable ? "hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl cursor-pointer" : "cursor-default"
     )}>
       <div className="flex justify-between items-start mb-4">
-        <div className={cn("p-2.5 rounded-xl border bg-white shadow-sm transition-transform group-hover:scale-110", colors[color])}>
+        <div className="p-2 rounded-lg bg-white shadow-sm border">
           {icon}
         </div>
-        {isClickable && <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-40 transition-opacity" />}
       </div>
       <div className="space-y-1">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">{title}</p>
-        <h3 className="text-3xl font-black tracking-tight text-foreground">{value}</h3>
-        {subtitle && <p className="text-[10px] font-medium text-muted-foreground pt-1">{subtitle}</p>}
+        <h3 className="text-3xl font-black text-foreground transition-all group-hover:scale-110 origin-left inline-block animate-in fade-in zoom-in duration-500">
+          {value}
+        </h3>
+        <p className="text-sm font-bold text-foreground/80">{title}</p>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{subtitle}</p>
+        {description && <p className="text-[10px] italic text-muted-foreground mt-2">{description}</p>}
       </div>
     </Card>
   );
 
-  return isClickable ? <Link href={href} className="focus:outline-none focus:ring-2 focus:ring-primary rounded-lg">{content}</Link> : content;
+  return isClickable ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
-function ActionCard({ icon: Icon, title, description, href, onClick, colorClass }: any) {
-  const content = (
-    <div className="flex flex-col gap-4 p-5 rounded-2xl bg-white border border-border shadow-sm hover:border-primary/30 hover:shadow-lg transition-all group cursor-pointer w-full text-left h-full active:scale-[0.98]">
-      <div className={cn("p-3 rounded-xl text-white w-fit shadow-md transition-transform group-hover:scale-110", colorClass)}>
-        <Icon className="h-5 w-5" />
+function CircularStatCard({ title, percentage, subtitle, color }: any) {
+  const colors: any = {
+    emerald: "text-emerald-600 stroke-emerald-500",
+    primary: "text-primary stroke-primary",
+  };
+
+  return (
+    <Card className="p-6 border-2 flex flex-col items-center justify-center text-center gap-3">
+      <div className="relative h-20 w-20">
+        <svg className="h-full w-full" viewBox="0 0 36 36">
+          <path
+            className="stroke-muted fill-none"
+            strokeWidth="3"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+          <path
+            className={cn("fill-none transition-all duration-1000 ease-out", colors[color])}
+            strokeWidth="3"
+            strokeDasharray={`${percentage}, 100`}
+            strokeLinecap="round"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-lg font-black">{percentage}%</span>
+        </div>
       </div>
-      <div>
-        <h4 className="font-bold text-base mb-1 text-foreground flex items-center gap-2">
-          {title} <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-        </h4>
-        <p className="text-xs text-muted-foreground leading-snug font-medium">{description}</p>
+      <div className="space-y-1">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</p>
+        <p className="text-[10px] font-bold text-foreground/60">{subtitle}</p>
+      </div>
+    </Card>
+  );
+}
+
+function ActivityRow({ item, showDate, onStatusUpdate }: any) {
+  const isTask = item.type === 'task';
+  const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
+
+  const statusColors: any = {
+    'Pending': 'bg-orange-100 text-orange-700 border-orange-200',
+    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Done': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Upcoming': 'bg-purple-100 text-purple-700 border-purple-200',
+    'Attended': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Missed': 'bg-red-100 text-red-700 border-red-200',
+  };
+
+  return (
+    <div className="group flex items-center justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "p-2 rounded-lg",
+          isTask ? "bg-emerald-50 text-emerald-600" : "bg-primary/5 text-primary"
+        )}>
+          {isTask ? <CheckSquare className="h-5 w-5" /> : <CalendarIcon className="h-5 w-5" />}
+        </div>
+        <div>
+          <h4 className={cn("font-bold text-base", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
+          <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            {showDate && <span>{item.date}</span>}
+            {showDate && <span>•</span>}
+            <span>{item.time || 'No Time'}</span>
+            <span>•</span>
+            <span className="text-primary">{item.source || 'Manual'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-7 text-[9px] font-black uppercase px-2", statusColors[status])}>
+              {status}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isTask ? (
+              <>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
+}
 
-  if (href) {
-    return <Link href={href} className="block">{content}</Link>;
-  }
+function QuickActionCard({ icon: Icon, title, onClick, color }: any) {
+  const colors: any = {
+    blue: "text-blue-600 border-blue-100 hover:bg-blue-50",
+    emerald: "text-emerald-600 border-emerald-100 hover:bg-emerald-50",
+    purple: "text-purple-600 border-purple-100 hover:bg-purple-50",
+  };
 
-  return <button onClick={onClick} className="block w-full">{content}</button>;
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all active:scale-95 text-center gap-3 bg-white",
+        colors[color]
+      )}
+    >
+      <div className="p-3 rounded-full bg-white shadow-sm border">
+        <Icon className="h-5 w-5" />
+      </div>
+      <span className="text-sm font-black uppercase tracking-widest">{title}</span>
+    </button>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-3 bg-muted/10 opacity-60">
+      <AlertCircle className="h-8 w-8 text-muted-foreground" />
+      <p className="text-sm font-medium text-muted-foreground">{message}</p>
+    </div>
+  );
 }
