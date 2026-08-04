@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { collection, addDoc, query, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/auth-context";
 import { useSearchParams } from "next/navigation";
 
@@ -43,19 +43,30 @@ function TasksContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     if (isFirebaseConfigured) {
-      const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
+      const userId = user.uid || user.id;
+      const q = query(collection(db, "tasks"), where("userId", "==", userId));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const tsks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setTasks(tsks);
         setLoading(false);
       }, (err) => {
-        console.error(err);
+        console.error("Error fetching tasks:", err);
+        toast({
+          variant: "destructive",
+          title: "Failed to load tasks",
+          description: "There was an error fetching your tasks from the database.",
+        });
         setLoading(false);
       });
       return () => unsubscribe();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -174,7 +185,6 @@ function TasksContent() {
           </Dialog>
         </div>
 
-        {/* Edit Task Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogContent dir="ltr">
               <DialogHeader className="text-left">
