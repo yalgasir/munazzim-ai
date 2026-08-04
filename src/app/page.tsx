@@ -142,32 +142,7 @@ export default function Dashboard() {
 
         {/* Row 1: Unified Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard 
-            title="Total Items" 
-            value={totalItemsCount} 
-            subtitle="Tasks + Appointments"
-            icon={<Activity className="h-4 w-4" />} 
-            color="blue"
-            href="/stats"
-          />
-          <StatCard 
-            title="Tasks" 
-            value={totalTasks} 
-            subtitle={`${taskCompletionRate}% Completed`}
-            details={`${doneTasks} Done • ${pendingTasks} Pending`}
-            icon={<CheckSquare className="h-4 w-4" />} 
-            color="emerald"
-            href="/tasks"
-          />
-          <StatCard 
-            title="Appointments" 
-            value={totalApps} 
-            subtitle={`${attendanceRate}% Attended`}
-            details={`${attendedApps} Attended • ${upcomingApps} Upcoming`}
-            icon={<CalendarIcon className="h-4 w-4" />} 
-            color="purple"
-            href="/appointments"
-          />
+          
         </div>
 
         {/* Quick Creation Row */}
