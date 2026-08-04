@@ -46,7 +46,7 @@ function TasksContent() {
     if (!user) return;
 
     if (isFirebaseConfigured) {
-      const q = collection(db, "tasks");
+      const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const tsks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setTasks(tsks);
@@ -119,7 +119,8 @@ function TasksContent() {
     }
   };
 
-  const openEdit = (task: any) => {
+  const openEdit = (e: React.MouseEvent, task: any) => {
+    e.stopPropagation();
     setEditingTask(task);
     setIsEditOpen(true);
   };
@@ -173,6 +174,53 @@ function TasksContent() {
           </Dialog>
         </div>
 
+        {/* Edit Task Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent dir="ltr">
+              <DialogHeader className="text-left">
+                <DialogTitle className="text-2xl font-black text-primary">Edit Task</DialogTitle>
+              </DialogHeader>
+              {editingTask && <div className="grid gap-6 py-4">
+                <div className="space-y-2 text-left">
+                  <Label className="font-bold">Description</Label>
+                  <Input placeholder="What needs to be done?" value={editingTask.description} onChange={(e) => setEditingTask({...editingTask, description: e.target.value})} className="h-12 rounded-xl" />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2 text-left">
+                    <Label className="font-bold">Date</Label>
+                    <Input type="date" value={editingTask.date} onChange={(e) => setEditingTask({...editingTask, date: e.target.value})} className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label className="font-bold">Priority</Label>
+                    <Select value={editingTask.priority} onValueChange={(v) => setEditingTask({...editingTask, priority: v})}>
+                      <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                   <div className="space-y-2 text-left">
+                    <Label className="font-bold">Status</Label>
+                    <Select value={editingTask.status} onValueChange={(v) => setEditingTask({...editingTask, status: v})}>
+                      <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                <Button onClick={handleEditTask} className="h-12 text-lg font-black rounded-2xl">Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
         <div className="grid gap-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -184,10 +232,9 @@ function TasksContent() {
               <Card 
                 key={task.id} 
                 className={cn(
-                  "group transition-all hover:shadow-xl border-none shadow-sm rounded-2xl overflow-hidden cursor-pointer",
+                  "group transition-all hover:shadow-xl border-none shadow-sm rounded-2xl overflow-hidden",
                   task.status === 'Done' && "opacity-60 grayscale-[0.5]"
                 )}
-                onClick={() => openEdit(task)}
               >
                 <CardContent className="p-0 flex items-center gap-0 flex-row">
                   <div className={cn(
@@ -226,7 +273,7 @@ function TasksContent() {
                     <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); updateStatus(task.id, 'In Progress'); }} className="text-slate-400 hover:text-blue-600 hover:bg-transparent">
                       <PlayCircle className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary hover:bg-transparent">
+                    <Button variant="ghost" size="icon" onClick={(e) => openEdit(e, task)} className="text-slate-400 hover:text-primary hover:bg-transparent">
                       <Pencil className="h-5 w-5" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={(e) => deleteTask(e, task.id)} className="text-slate-400 hover:text-rose-600 hover:bg-transparent">
