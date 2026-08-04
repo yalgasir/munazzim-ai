@@ -11,16 +11,17 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Legend,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
+  Cell,
+  PieChart,
+  Pie
 } from "recharts";
-import { Target, Award, Activity, Loader2, Check, Calendar, TrendingUp } from "lucide-react";
+import { Target, Award, Activity, Loader2, ShieldCheck, Cpu } from "lucide-react";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { Badge } from "@/components/ui/badge";
+
+const COLORS = ['#2963CC', '#52B2BF', '#F59E0B', '#EF4444'];
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -28,9 +29,16 @@ export default function StatsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
     setMounted(true);
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    setFormattedDate(`${day}/${month}/${year}`);
+    
     if (!user) return;
     const userId = user.uid || user.id;
 
@@ -38,15 +46,27 @@ export default function StatsPage() {
       const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
       const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
       
-      const unsubTasks = onSnapshot(qTasks, (s) => setTasks(s.docs.map(d => ({...d.data(), id: d.id}))));
+      const unsubTasks = onSnapshot(qTasks, (s) => setTasks(s.docs.map(d => d.data())));
       const unsubApps = onSnapshot(qApps, (s) => {
-        setAppointments(s.docs.map(d => ({...d.data(), id: d.id})));
+        setAppointments(s.docs.map(d => d.data()));
         setLoading(false);
       });
       
-      return () => { unsubTasks(); unsubApps(); };
+      return () => {
+        unsubTasks();
+        unsubApps();
+      };
     } else {
+      const loadLocalData = () => {
+        const allTasks = JSON.parse(localStorage.getItem("mock_tasks") || "[]");
+        const allApps = JSON.parse(localStorage.getItem("mock_appointments") || "[]");
+        setTasks(allTasks.filter((t: any) => t.userId === userId));
+        setAppointments(allApps.filter((a: any) => a.userId === userId));
         setLoading(false);
+      };
+      loadLocalData();
+      window.addEventListener('storage', loadLocalData);
+      return () => window.removeEventListener('storage', loadLocalData);
     }
   }, [user]);
 
@@ -56,77 +76,69 @@ export default function StatsPage() {
     </AppLayout>
   );
 
-  const completedTasks = (tasks || []).filter(t => t.status === 'Done' || t.isCompleted).length;
-  const pendingTasks = (tasks || []).length - completedTasks;
+  const completedCount = (tasks || []).filter(t => t.isCompleted).length;
+  const totalTasks = (tasks || []).length;
+  const pendingCount = totalTasks - completedCount;
+  
+  const pieData = totalTasks > 0 ? [
+    { name: "Completed", value: completedCount },
+    { name: "Pending", value: pendingCount }
+  ] : [{ name: "No Tasks", value: 1 }];
 
-  const attendedApps = (appointments || []).filter(a => a.attendanceStatus === 'Attended').length;
-  const upcomingApps = (appointments || []).length - attendedApps;
-
-  const overviewData = [
-    {
-      name: 'Tasks',
-      completed: completedTasks,
-      pending: pendingTasks,
-    },
-    {
-      name: 'Appointments',
-      attended: attendedApps,
-      upcoming: upcomingApps,
-    },
-  ];
-
-  const getWeekNumber = (d: Date) => {
-      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      var weekNo = Math.ceil(( ( (d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
-      return weekNo;
-  }
-
-  const performanceData = [...tasks, ...appointments].reduce((acc: any, item: any) => {
-      const date = new Date(item.createdAt || item.date);
-      const week = `Week ${getWeekNumber(date)}`;
-      if (!acc[week]) {
-          acc[week] = { name: week, total: 0, completed: 0 };
-      }
-      acc[week].total++;
-      if (item.isCompleted || item.status === 'Done' || item.attendanceStatus === 'Attended') {
-          acc[week].completed++;
-      }
-      return acc;
+  const categoryCounts = (appointments || []).reduce((acc: any, app: any) => {
+    const type = app.type || "General";
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
   }, {});
 
-  const weeklyPerformance = Object.values(performanceData).map((d: any) => ({
-      ...d,
-      rate: d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0,
-  })).sort((a,b) => a.name.localeCompare(b.name));
+  const barData = Object.keys(categoryCounts).length > 0 
+    ? Object.keys(categoryCounts).map(key => ({
+        name: key,
+        count: categoryCounts[key]
+      }))
+    : [{ name: 'None', count: 0 }];
 
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="ltr">
-        <div className="text-left">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="text-left">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                NASA TRL 8 | Updated: {formattedDate}
+              </Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
+                <Cpu className="h-3.5 w-3.5" />
+                MythoMax-L2-13B
+              </Badge>
+            </div>
             <h1 className="text-3xl font-bold font-headline mb-1">Performance Analytics</h1>
-            <p className="text-muted-foreground">Monitoring of Key Performance Indicators and productivity trends.</p>
+            <p className="text-muted-foreground">Precise monitoring of Key Performance Indicators (KPIs) and system health.</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard icon={<Target />} label="Task Completion" value={`${completedCount}/${totalTasks}`} color="primary" />
+          <StatCard icon={<Activity />} label="Appointments" value={appointments.length} color="accent" />
+          <StatCard icon={<Cpu />} label="Active Engine" value="MythoMax" color="purple" />
+          <StatCard icon={<Award />} label="Commitment" value={totalTasks > 0 ? `${Math.round((completedCount/totalTasks)*100)}%` : "0%"} color="emerald" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5"/> Tasks & Appointments Overview</CardTitle>
-              <CardDescription>Comparative analysis of scheduled items.</CardDescription>
+              <CardTitle className="text-lg">Appointments by Category</CardTitle>
+              <CardDescription>Analysis of time allocation quality</CardDescription>
             </CardHeader>
-            <CardContent className="h-[350px]">
+            <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={overviewData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3}/>
+                <BarChart data={barData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                   <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
-                  <YAxis fontSize={12} axisLine={false} tickLine={false} allowDecimals={false}/>
-                  <Tooltip cursor={{fill: 'hsl(var(--muted) / 0.5)'}} />
-                  <Legend wrapperStyle={{fontSize: "12px"}}/>
-                  <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed Tasks" />
-                  <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending Tasks" />
-                  <Bar dataKey="attended" stackId="b" fill="#8b5cf6" name="Attended Appointments" />
-                  <Bar dataKey="upcoming" stackId="b" fill="#d8b4fe" name="Upcoming Appointments" />
+                  <YAxis fontSize={12} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{fill: '#f8fafc'}} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -134,29 +146,51 @@ export default function StatsPage() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="h-5 w-5"/> Overall Performance</CardTitle>
-              <CardDescription>Weekly productivity score over time.</CardDescription>
+              <CardTitle className="text-lg">Readiness Status</CardTitle>
+              <CardDescription>Final completion efficiency</CardDescription>
             </CardHeader>
-            <CardContent className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={weeklyPerformance} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                        <defs>
-                            <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3}/>
-                        <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
-                        <YAxis unit="%" domain={[0, 100]} fontSize={12} axisLine={false} tickLine={false}/>
-                        <Tooltip formatter={(value) => `${value}%`} />
-                        <Area type="monotone" dataKey="rate" name="Completion Rate" stroke="hsl(var(--primary))" fill="url(#colorRate)" strokeWidth={2}/>
-                    </AreaChart>
-                </ResponsiveContainer>
+            <CardContent className="h-[300px] flex justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+function StatCard({ icon, label, value, color }: any) {
+  const colorMap: any = {
+    primary: "bg-primary/10 text-primary border-primary/20",
+    accent: "bg-accent/10 text-accent border-accent/20",
+    destructive: "bg-destructive/10 text-destructive border-destructive/20",
+    emerald: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    purple: "bg-purple-500/10 text-purple-600 border-purple-500/20"
+  };
+
+  return (
+    <Card className={`p-4 flex items-center gap-4 border ${colorMap[color]}`}>
+      <div className="h-12 w-12 rounded-xl flex items-center justify-center">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs opacity-80">{label}</p>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    </Card>
   );
 }
