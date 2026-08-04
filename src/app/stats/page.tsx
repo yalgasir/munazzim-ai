@@ -79,15 +79,18 @@ export default function StatsPage() {
   const completedCount = (tasks || []).filter(t => t.isCompleted).length;
   const totalTasks = (tasks || []).length;
   const pendingCount = totalTasks - completedCount;
+
+  const attendedCount = (appointments || []).filter(t => t.attendanceStatus === 'Attended').length;
+  const totalAppointments = (appointments || []).length;
   
   const pieData = totalTasks > 0 ? [
     { name: "Completed", value: completedCount },
     { name: "Pending", value: pendingCount }
   ] : [{ name: "No Tasks", value: 1 }];
 
-  const categoryCounts = (appointments || []).reduce((acc: any, app: any) => {
-    const type = app.type || "General";
-    acc[type] = (acc[type] || 0) + 1;
+  const categoryCounts = (tasks || []).reduce((acc: any, task: any) => {
+    const category = task.priority || "General";
+    acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
 
@@ -103,33 +106,22 @@ export default function StatsPage() {
       <div className="max-w-6xl mx-auto flex flex-col gap-8" dir="ltr">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="text-left">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1.5 py-1 px-3">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                NASA TRL 8 | Updated: {formattedDate}
-              </Badge>
-              <Badge variant="outline" className="border-primary/30 text-primary gap-1.5 py-1 px-3">
-                <Cpu className="h-3.5 w-3.5" />
-                MythoMax-L2-13B
-              </Badge>
-            </div>
             <h1 className="text-3xl font-bold font-headline mb-1">Performance Analytics</h1>
             <p className="text-muted-foreground">Precise monitoring of Key Performance Indicators (KPIs) and system health.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard icon={<Target />} label="Task Completion" value={`${completedCount}/${totalTasks}`} color="primary" />
-          <StatCard icon={<Activity />} label="Appointments" value={appointments.length} color="accent" />
-          <StatCard icon={<Cpu />} label="Active Engine" value="MythoMax" color="purple" />
+          <StatCard icon={<Activity />} label="Appointments" value={`${attendedCount}/${totalAppointments}`} color="accent" />
           <StatCard icon={<Award />} label="Commitment" value={totalTasks > 0 ? `${Math.round((completedCount/totalTasks)*100)}%` : "0%"} color="emerald" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">Appointments by Category</CardTitle>
-              <CardDescription>Analysis of time allocation quality</CardDescription>
+              <CardTitle className="text-lg">Tasks by Category</CardTitle>
+              <CardDescription>Analysis of task distribution</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
