@@ -127,7 +127,6 @@ export default function Dashboard() {
     <AppLayout>
       <div className="flex flex-col gap-8 max-w-full mx-auto" dir="ltr">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl font-black tracking-tight text-foreground">Dashboard</h1>
@@ -140,7 +139,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Row 1: Unified Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard 
             title="Total Items" 
@@ -170,7 +168,6 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Quick Creation Row */}
         <section className="space-y-4">
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Quick Creation</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -195,10 +192,8 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 items-start">
           
-          {/* Left Column */}
           <div className="space-y-10">
             <section className="space-y-6">
               <div className="flex items-center justify-between">
@@ -208,15 +203,17 @@ export default function Dashboard() {
               </div>
               <div className="space-y-0">
                 {todayActivities.length > 0 ? (
-                  <div className="relative">
-                    {todayActivities.map((item, index) => (
-                      <TimelineActivityRow 
-                        key={item.id} 
-                        item={item} 
-                        onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                        isLast={index === todayActivities.length - 1}
-                      />
-                    ))}
+                  <div className="flow-root">
+                    <ul className="-mb-8">
+                      {todayActivities.map((item, index) => (
+                        <TimelineItem 
+                          key={item.id} 
+                          item={item} 
+                          onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                          isLast={index === todayActivities.length - 1}
+                        />
+                      ))}
+                    </ul>
                   </div>
                 ) : (
                   <EmptyState message="No activities scheduled for today." />
@@ -234,22 +231,27 @@ export default function Dashboard() {
                 </Button>
               </div>
               <div className="space-y-3">
-                {upcomingActivities.slice(0, 8).map((item) => (
-                  <ActivityRow 
-                    key={item.id} 
-                    item={item} 
-                    showDate 
-                    onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                  />
-                ))}
-                {upcomingActivities.length === 0 && (
+                 {upcomingActivities.length > 0 ? (
+                  <div className="flow-root">
+                    <ul className="-mb-8">
+                      {upcomingActivities.slice(0, 5).map((item, index) => (
+                        <TimelineItem 
+                          key={item.id} 
+                          item={item} 
+                          onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                          isLast={index === upcomingActivities.slice(0, 5).length - 1}
+                          showDate
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
                   <EmptyState message="No upcoming activities found." />
                 )}
               </div>
             </section>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-8 sticky top-24">
             <ScheduleAnalysisWidget appointments={appointments} tasks={tasks} />
             <div className="space-y-4">
@@ -349,7 +351,7 @@ function CircularStatCard({ title, percentage, subtitle, color, size = "md", hre
   return href ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
-function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
+function TimelineItem({ item, onStatusUpdate, isLast, showDate = false }: any) {
   const isTask = item.type === 'task';
   const isAI = item.source === 'ai_generated';
   const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
@@ -359,151 +361,57 @@ function TimelineActivityRow({ item, onStatusUpdate, isLast }: any) {
   const typeLabelColor = isAI ? 'text-purple-500' : (isTask ? 'text-emerald-500' : 'text-blue-500');
 
   const statusColors: any = {
-    'Pending': 'bg-orange-100 text-orange-700 border-orange-200',
-    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Done': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Upcoming': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Attended': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Missed': 'bg-red-100 text-red-700 border-red-200',
-  };
-  
-  const getDuration = () => {
-    if (!item.startTime || !item.endTime) return null;
-    try {
-      const start = new Date(`1970-01-01T${item.startTime}Z`);
-      const end = new Date(`1970-01-01T${item.endTime}Z`);
-      const diff = (end.getTime() - start.getTime()) / (1000 * 60); // in minutes
-      if (diff >= 60) {
-        const hours = Math.floor(diff / 60);
-        const minutes = diff % 60;
-        return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
-      }
-      return `${diff}m`;
-    } catch(e) {
-      return null;
-    }
-  };
-  const duration = getDuration();
-
-  return (
-    <div className="flex items-start gap-4 group">
-      <div className="w-20 text-right font-bold text-xs text-muted-foreground pt-1.5">
-        {item.time || 'No Time'}
-      </div>
-      <div className="relative flex flex-col items-center">
-        <div className={cn("w-3 h-3 rounded-full mt-1.5 z-10 border-2 border-white", dotColor)}></div>
-        {!isLast && <div className="absolute top-5 -bottom-2 w-0.5 bg-muted/50"></div>}
-      </div>
-      <div className="flex-1 pb-6">
-        <div className="flex items-start justify-between">
-          <div className={cn("space-y-1 group-hover:bg-muted/30 p-3 rounded-lg transition-colors w-full", status === 'Done' && "opacity-60")}>
-            <p className={cn("text-[9px] font-bold uppercase tracking-wider", typeLabelColor)}>{typeLabel}</p>
-            <h4 className={cn("font-bold text-sm text-foreground", status === 'Done' && "line-through")}>
-              {item.title || item.description}
-            </h4>
-            {(duration || item.location) && (
-              <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground">
-                {duration && <span>{duration}</span>}
-                {item.location && <span>{item.location}</span>}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 pt-3 pr-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-5 text-[7px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
-                  {status}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                 {isTask ? (
-                  <>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-              <MoreVertical className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActivityRow({ item, showDate, onStatusUpdate }: any) {
-  const isTask = item.type === 'task';
-  const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
-
-  const statusColors: any = {
-    'Pending': 'bg-orange-100 text-orange-700 border-orange-200',
-    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Done': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Upcoming': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Attended': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'Missed': 'bg-red-100 text-red-700 border-red-200',
+    'Pending': 'bg-orange-100 text-orange-700',
+    'In Progress': 'bg-blue-100 text-blue-700',
+    'Done': 'bg-emerald-100 text-emerald-700',
+    'Upcoming': 'bg-purple-100 text-purple-700',
+    'Attended': 'bg-emerald-100 text-emerald-700',
+    'Missed': 'bg-red-100 text-red-700',
   };
 
   return (
-    <div className="group flex items-center justify-between p-3 rounded-xl border bg-card hover:shadow-md transition-all">
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          "p-2 rounded-lg",
-          isTask ? "bg-emerald-50 text-emerald-600" : "bg-primary/5 text-primary"
-        )}>
-          {isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
-        </div>
-        <div>
-          <h4 className={cn("font-bold text-xs", status === 'Done' && "line-through opacity-50")}>{item.title || item.description}</h4>
-          <div className="flex items-center gap-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-            {showDate && <span>{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-            {showDate && <span>•</span>}
-            <span>{item.time || 'No Time'}</span>
-            <span>•</span>
-            <span className="text-primary/70">{item.source || 'Manual'}</span>
+    <li>
+      <div className="relative pb-8">
+        {!isLast && <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />}
+        <div className="relative flex space-x-3">
+          <div>
+            <span className={cn("h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white", dotColor)}>
+              {isTask ? <CheckSquare className="h-4 w-4 text-white" /> : <CalendarIcon className="h-4 w-4 text-white" />}
+            </span>
+          </div>
+          <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {showDate ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : item.time || 'No time'}
+              </p>
+              <p className={cn("font-semibold text-slate-800", status === 'Done' && 'line-through')}>{item.title || item.description}</p>
+            </div>
+            <div className="text-right text-xs whitespace-nowrap text-muted-foreground">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Badge variant="secondary" className={cn("cursor-pointer font-semibold", statusColors[status])}>{status}</Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {isTask ? (
+                      <>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="flex items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-5 text-[7px] font-black uppercase px-2 rounded-lg", statusColors[status] || "bg-muted text-muted-foreground")}>
-              {status}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isTask ? (
-              <>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="h-3 w-3" />
-        </Button>
-      </div>
-    </div>
+    </li>
   );
 }
 

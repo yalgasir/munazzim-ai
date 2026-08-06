@@ -73,7 +73,7 @@ export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appo
           {!analysis && !loading ? (
              <div className="py-4 flex flex-col items-center gap-3 border-2 border-dashed border-primary/10 rounded-xl bg-white/50">
                <Button onClick={runAnalysis} variant="secondary" size="sm" className="h-8 font-black text-[10px] gap-2">
-                 <Sparkles className="h-3 w-3" /> Analyze Mission
+                 <Sparkles className="h-3 w-3" /> Analyze My Schedule
                </Button>
              </div>
           ) : loading ? (
