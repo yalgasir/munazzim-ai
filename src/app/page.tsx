@@ -148,7 +148,7 @@ export default function Dashboard() {
             title="Total Items" 
             value={totalItemsCount} 
             subtitle="Tasks + Appointments"
-            icon={<Activity className="h-4 w-4" />} 
+            icon={Activity}
             color="blue"
             href="/stats"
           />
@@ -157,7 +157,7 @@ export default function Dashboard() {
             value={totalTasks} 
             subtitle={`${taskCompletionRate}% Completed`}
             details={`${doneTasks} Done • ${pendingTasks} Pending`}
-            icon={<CheckSquare className="h-4 w-4" />} 
+            icon={CheckSquare}
             color="emerald"
             href="/tasks"
           />
@@ -166,7 +166,7 @@ export default function Dashboard() {
             value={totalApps} 
             subtitle={`${attendanceRate}% Attended`}
             details={`${attendedApps} Attended • ${upcomingApps} Upcoming`}
-            icon={<CalendarIcon className="h-4 w-4" />} 
+            icon={CalendarIcon}
             color="purple"
             href="/appointments"
           />
@@ -270,7 +270,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, subtitle, details, icon, color, href }: any) {
+function StatCard({ title, value, subtitle, details, icon: Icon, color, href }: any) {
   const isClickable = !!href;
   const colors: any = {
     blue: "text-blue-600 border-blue-100 hover:bg-blue-50/50",
@@ -286,7 +286,7 @@ function StatCard({ title, value, subtitle, details, icon, color, href }: any) {
     )}>
       <div className="flex justify-between items-start">
         <div className="p-1.5 rounded-lg bg-white shadow-sm border border-inherit">
-          {icon}
+          <Icon className="h-4 w-4" />
         </div>
       </div>
       <div className="space-y-0.5">
@@ -350,7 +350,6 @@ function TimelineRow({ item, onStatusUpdate, showDate = false }: any) {
   const isDone = isTask ? item.status === 'Done' : item.attendanceStatus === 'Attended';
 
   const icon = isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />;
-  const color = isTask ? "bg-emerald-500" : "bg-blue-500";
   const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
 
   const statusColors: { [key: string]: string } = {
@@ -362,13 +361,15 @@ function TimelineRow({ item, onStatusUpdate, showDate = false }: any) {
     'Missed': 'text-red-500',
   };
   
+  const timeToDisplay = item.time || (isTask ? 'All Day' : 'No Time');
+
   return (
     <div className="flex items-start gap-4 group">
       <div className="w-24 text-right pr-4">
         <p className="text-sm font-semibold text-foreground">
-          {showDate ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : item.time || 'All Day'}
+          {showDate ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : timeToDisplay}
         </p>
-        {showDate && <p className="text-xs text-muted-foreground">{item.time}</p>}
+        {showDate && <p className="text-xs text-muted-foreground">{timeToDisplay}</p>}
       </div>
       <div className="relative flex-1">
         <div className="absolute -left-2 top-1 h-full w-0.5 bg-border -z-10" />

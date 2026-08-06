@@ -25,13 +25,23 @@ import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc
 import { useAuth } from "@/components/auth/auth-context";
 import { useSearchParams } from "next/navigation";
 
+const getFormattedDate = (dateString: string | undefined) => {
+  if (!dateString) return 'No Date';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch (e) {
+    return 'Invalid Date';
+  }
+}
+
 function TasksContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ description: "", priority: "Medium", status: "Pending", date: new Date().toISOString().split('T')[0] });
+  const [newTask, setNewTask] = useState({ description: "", priority: "Medium", status: "Pending", date: new Date().toISOString().split('T')[0], time: "" });
   const [editingTask, setEditingTask] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -82,7 +92,7 @@ function TasksContent() {
           createdAt: new Date().toISOString() 
         });
       }
-      setNewTask({ description: "", priority: "Medium", status: "Pending", date: new Date().toISOString().split('T')[0] });
+      setNewTask({ description: "", priority: "Medium", status: "Pending", date: new Date().toISOString().split('T')[0], time: "" });
       setIsAddOpen(false);
       toast({ title: "Success", description: "Task added to your list." });
     } catch (e) {
@@ -132,7 +142,7 @@ function TasksContent() {
 
   const openEdit = (e: React.MouseEvent, task: any) => {
     e.stopPropagation();
-    setEditingTask(task);
+    setEditingTask({ ...task, time: task.time || "" });
     setIsEditOpen(true);
   };
 
@@ -160,10 +170,14 @@ function TasksContent() {
                   <Label className="font-bold">Description</Label>
                   <Input placeholder="What needs to be done?" value={newTask.description} onChange={(e) => setNewTask({...newTask, description: e.target.value})} className="h-12 rounded-xl" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2 text-left">
                     <Label className="font-bold">Date</Label>
                     <Input type="date" value={newTask.date} onChange={(e) => setNewTask({...newTask, date: e.target.value})} className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label className="font-bold">Task Time</Label>
+                    <Input type="time" value={newTask.time} onChange={(e) => setNewTask({...newTask, time: e.target.value})} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2 text-left">
                     <Label className="font-bold">Priority</Label>
@@ -186,7 +200,7 @@ function TasksContent() {
         </div>
 
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent dir="ltr">
+            <DialogContent dir="ltr" className="max-w-2xl">
               <DialogHeader className="text-left">
                 <DialogTitle className="text-2xl font-black text-primary">Edit Task</DialogTitle>
               </DialogHeader>
@@ -195,10 +209,14 @@ function TasksContent() {
                   <Label className="font-bold">Description</Label>
                   <Input placeholder="What needs to be done?" value={editingTask.description} onChange={(e) => setEditingTask({...editingTask, description: e.target.value})} className="h-12 rounded-xl" />
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-2 text-left">
                     <Label className="font-bold">Date</Label>
-                    <Input type="date" value={editingTask.date} onChange={(e) => setEditingTask({...editingTask, date: e.target.value})} className="h-12 rounded-xl" />
+                    <Input type="date" value={editingTask.date || ''} onChange={(e) => setEditingTask({...editingTask, date: e.target.value})} className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label className="font-bold">Task Time</Label>
+                    <Input type="time" value={editingTask.time || ''} onChange={(e) => setEditingTask({...editingTask, time: e.target.value})} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2 text-left">
                     <Label className="font-bold">Priority</Label>
@@ -269,7 +287,10 @@ function TasksContent() {
                           "text-[9px] py-0 px-2 uppercase font-black tracking-widest border-2",
                           task.priority === "High" ? "border-rose-200 text-rose-600 bg-rose-50" : task.priority === "Medium" ? "border-amber-200 text-amber-600 bg-amber-50" : "border-emerald-200 text-emerald-600 bg-emerald-50"
                         )}>{task.priority} Priority</Badge>
-                        <span className="text-[10px] font-black text-slate-400 flex items-center gap-1 uppercase tracking-widest"><Clock className="h-3 w-3" /> {task.date || 'No Date'}</span>
+                        <span className="text-[10px] font-black text-slate-400 flex items-center gap-1 uppercase tracking-widest">
+                          <Clock className="h-3 w-3" /> 
+                          {getFormattedDate(task.date)} {task.time ? ` at ${task.time}` : ''}
+                        </span>
                         <Badge className={cn(
                           "text-[9px] uppercase font-black tracking-widest h-5",
                           task.status === 'In Progress' ? "bg-blue-500" : task.status === 'Done' ? "bg-emerald-500" : "bg-slate-400"
