@@ -21,7 +21,9 @@ import {
   Loader2,
   CalendarPlus,
   Zap,
-  TrendingUp
+  TrendingUp,
+  Circle,
+  CheckCircle
 } from "lucide-react";
 import Link from "next/link";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
@@ -53,8 +55,10 @@ export default function Dashboard() {
     setTodayStr(now.toISOString().split('T')[0]);
     setHeaderDate(now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
 
+    if (authLoading) return;
+
     if (!user || !db || !isFirebaseConfigured) {
-      if (!authLoading) setLoading(false);
+      setLoading(false);
       return;
     }
 
@@ -201,20 +205,15 @@ export default function Dashboard() {
                   <Clock className="h-5 w-5 text-primary" /> Today's Schedule
                 </h2>
               </div>
-              <div className="space-y-0">
+              <div className="space-y-4">
                 {todayActivities.length > 0 ? (
-                  <div className="flow-root">
-                    <ul className="-mb-8">
-                      {todayActivities.map((item, index) => (
-                        <TimelineItem 
-                          key={item.id} 
-                          item={item} 
-                          onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                          isLast={index === todayActivities.length - 1}
-                        />
-                      ))}
-                    </ul>
-                  </div>
+                  todayActivities.map((item, index) => (
+                    <TimelineRow 
+                      key={item.id} 
+                      item={item} 
+                      onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                    />
+                  ))
                 ) : (
                   <EmptyState message="No activities scheduled for today." />
                 )}
@@ -230,21 +229,16 @@ export default function Dashboard() {
                   <Link href="/calendar">View Full Calendar <ArrowRight className="h-3 w-3 ml-1" /></Link>
                 </Button>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                  {upcomingActivities.length > 0 ? (
-                  <div className="flow-root">
-                    <ul className="-mb-8">
-                      {upcomingActivities.slice(0, 5).map((item, index) => (
-                        <TimelineItem 
-                          key={item.id} 
-                          item={item} 
-                          onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
-                          isLast={index === upcomingActivities.slice(0, 5).length - 1}
-                          showDate
-                        />
-                      ))}
-                    </ul>
-                  </div>
+                  upcomingActivities.slice(0, 5).map((item, index) => (
+                    <TimelineRow 
+                      key={item.id} 
+                      item={item} 
+                      onStatusUpdate={item.type === 'task' ? updateTaskStatus : updateAppStatus}
+                      showDate
+                    />
+                  ))
                 ) : (
                   <EmptyState message="No upcoming activities found." />
                 )}
@@ -351,67 +345,73 @@ function CircularStatCard({ title, percentage, subtitle, color, size = "md", hre
   return href ? <Link href={href} className="focus:outline-none">{content}</Link> : content;
 }
 
-function TimelineItem({ item, onStatusUpdate, isLast, showDate = false }: any) {
+function TimelineRow({ item, onStatusUpdate, showDate = false }: any) {
   const isTask = item.type === 'task';
-  const isAI = item.source === 'ai_generated';
+  const isDone = isTask ? item.status === 'Done' : item.attendanceStatus === 'Attended';
+
+  const icon = isTask ? <CheckSquare className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />;
+  const color = isTask ? "bg-emerald-500" : "bg-blue-500";
   const status = isTask ? item.status || (item.isCompleted ? 'Done' : 'Pending') : item.attendanceStatus || 'Upcoming';
 
-  const dotColor = isAI ? 'bg-purple-500' : (isTask ? 'bg-emerald-500' : 'bg-blue-500');
-  const typeLabel = isTask ? 'TASK' : 'APPOINTMENT';
-  const typeLabelColor = isAI ? 'text-purple-500' : (isTask ? 'text-emerald-500' : 'text-blue-500');
-
-  const statusColors: any = {
-    'Pending': 'bg-orange-100 text-orange-700',
-    'In Progress': 'bg-blue-100 text-blue-700',
-    'Done': 'bg-emerald-100 text-emerald-700',
-    'Upcoming': 'bg-purple-100 text-purple-700',
-    'Attended': 'bg-emerald-100 text-emerald-700',
-    'Missed': 'bg-red-100 text-red-700',
+  const statusColors: { [key: string]: string } = {
+    'Pending': 'text-orange-500',
+    'In Progress': 'text-blue-500',
+    'Done': 'text-emerald-500',
+    'Upcoming': 'text-purple-500',
+    'Attended': 'text-emerald-500',
+    'Missed': 'text-red-500',
   };
-
+  
   return (
-    <li>
-      <div className="relative pb-8">
-        {!isLast && <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />}
-        <div className="relative flex space-x-3">
-          <div>
-            <span className={cn("h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white", dotColor)}>
-              {isTask ? <CheckSquare className="h-4 w-4 text-white" /> : <CalendarIcon className="h-4 w-4 text-white" />}
-            </span>
-          </div>
-          <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {showDate ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : item.time || 'No time'}
-              </p>
-              <p className={cn("font-semibold text-slate-800", status === 'Done' && 'line-through')}>{item.title || item.description}</p>
+    <div className="flex items-start gap-4 group">
+      <div className="w-24 text-right pr-4">
+        <p className="text-sm font-semibold text-foreground">
+          {showDate ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : item.time || 'All Day'}
+        </p>
+        {showDate && <p className="text-xs text-muted-foreground">{item.time}</p>}
+      </div>
+      <div className="relative flex-1">
+        <div className="absolute -left-2 top-1 h-full w-0.5 bg-border -z-10" />
+        <div className={cn(
+          "absolute -left-4 top-1 h-4 w-4 rounded-full border-4 border-background",
+          isDone ? (isTask ? 'bg-emerald-500' : 'bg-blue-500') : (isTask ? 'bg-emerald-200' : 'bg-blue-200')
+        )} />
+        
+        <div className={cn("p-4 rounded-xl border transition-all", isDone && "bg-muted/50")}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn("p-1.5 rounded-md", isTask ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600')}>{icon}</div>
+              <h4 className={cn("font-semibold text-sm", isDone && "line-through text-muted-foreground")}>
+                {item.title || item.description}
+              </h4>
             </div>
-            <div className="text-right text-xs whitespace-nowrap text-muted-foreground">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Badge variant="secondary" className={cn("cursor-pointer font-semibold", statusColors[status])}>{status}</Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {isTask ? (
-                      <>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className={cn("text-xs font-semibold h-7 px-2", statusColors[status])}>
+                  {status}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isTask ? (
+                  <>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Pending')}>Pending</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'In Progress')}>In Progress</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Done')}>Done</DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Upcoming')}>Upcoming</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Attended')}>Attended</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onStatusUpdate(item.id, 'Missed')}>Missed</DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
-    </li>
+    </div>
   );
 }
 

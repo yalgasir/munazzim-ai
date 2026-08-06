@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export default function StatsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,12 @@ export default function StatsPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (!user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const userId = user.uid || user.id;
 
     if (isFirebaseConfigured) {
@@ -60,9 +65,9 @@ export default function StatsPage() {
     } else {
         setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
-  if (loading || !mounted) return (
+  if (loading || !mounted || authLoading) return (
     <AppLayout>
       <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
     </AppLayout>
@@ -79,7 +84,7 @@ export default function StatsPage() {
   const attendanceRate = totalApps > 0 ? (attendedApps / totalApps) * 100 : 0;
 
   const overdueTasks = tasks.filter(t => !t.isCompleted && t.date && new Date(t.date) < today).length;
-  const productivityScore = Math.round((taskCompletionRate + attendanceRate - (overdueTasks * 5)) / 2);
+  const productivityScore = Math.max(0, Math.round((taskCompletionRate + attendanceRate - (overdueTasks * 10)) / 2));
 
   // Chart Data
   const priorityDistribution = tasks.reduce((acc, task) => {
