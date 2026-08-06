@@ -43,31 +43,52 @@ export default function StatsPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (authLoading) return;
+    if (authLoading) return; // Wait for auth to resolve
 
     if (!user) {
+      setLoading(false); // Not logged in
+      return;
+    }
+    
+    const userId = user.uid || user.id;
+    if (!userId || !isFirebaseConfigured) { // Guard against invalid user or config
       setLoading(false);
       return;
     }
-    const userId = user.uid || user.id;
 
-    if (isFirebaseConfigured) {
-      const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
-      const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-      
-      const unsubTasks = onSnapshot(qTasks, (s) => setTasks(s.docs.map(d => ({...d.data(), id: d.id}))));
-      const unsubApps = onSnapshot(qApps, (s) => {
-        setAppointments(s.docs.map(d => ({...d.data(), id: d.id})));
+    setLoading(true);
+
+    const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
+    const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
+
+    let tasksLoaded = false;
+    let appsLoaded = false;
+
+    const checkLoadingComplete = () => {
+      if (tasksLoaded && appsLoaded) {
         setLoading(false);
-      });
-      
-      return () => { unsubTasks(); unsubApps(); };
-    } else {
-        setLoading(false);
-    }
+      }
+    };
+
+    const unsubTasks = onSnapshot(qTasks, (snapshot) => {
+      setTasks(snapshot.docs.map(d => ({ ...d.data(), id: d.id })));
+      tasksLoaded = true;
+      checkLoadingComplete();
+    }, () => { tasksLoaded = true; checkLoadingComplete(); });
+
+    const unsubApps = onSnapshot(qApps, (snapshot) => {
+      setAppointments(snapshot.docs.map(d => ({ ...d.data(), id: d.id })));
+      appsLoaded = true;
+      checkLoadingComplete();
+    }, () => { appsLoaded = true; checkLoadingComplete(); });
+
+    return () => {
+      unsubTasks();
+      unsubApps();
+    };
   }, [user, authLoading]);
 
-  if (loading || !mounted || authLoading) return (
+  if (loading || authLoading || !mounted) return (
     <AppLayout>
       <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
     </AppLayout>
