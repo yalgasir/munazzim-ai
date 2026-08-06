@@ -150,28 +150,28 @@ export default function StatsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard 
-            icon={<ListChecks />} 
+            icon={ListChecks} 
             label="Task Completion" 
             value={`${completedTasks} / ${totalTasks}`}
             footer={`${taskCompletionRate.toFixed(0)}%`}
             color={taskCompletionRate > 80 ? 'green' : 'blue'}
           />
           <StatCard 
-            icon={<CalendarCheck2 />} 
+            icon={CalendarCheck2} 
             label="Appointments" 
             value={`${attendedApps} / ${totalApps}`}
             footer={`${attendanceRate.toFixed(0)}%`}
             color={attendanceRate > 80 ? 'green' : 'blue'}
           />
           <StatCard 
-            icon={<AlertTriangle />} 
+            icon={AlertTriangle} 
             label="Overdue Tasks" 
             value={overdueTasks}
             footer="Action Required"
             color={overdueTasks > 0 ? 'red' : 'green'}
           />
           <StatCard 
-            icon={<Zap />} 
+            icon={Zap} 
             label="Productivity Score" 
             value={`${productivityScore}%`}
             footer={productivityScore > 80 ? 'Excellent' : 'Good'}
