@@ -1,14 +1,8 @@
-
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   images: {
     remotePatterns: [
       {
@@ -31,39 +25,42 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    serverExternalPackages: [
-      'genkit',
-      'genkitx-openai',
-      '@genkit-ai/core',
-      '@genkit-ai/ai',
-      '@genkit-ai/flow',
-      '@genkit-ai/dotprompt',
-      '@genkit-ai/google-genai',
-      'openai',
-      'zod',
-      '@opentelemetry/sdk-node',
-      '@opentelemetry/api',
-      '@opentelemetry/instrumentation',
-      '@opentelemetry/exporter-jaeger',
-      '@opentelemetry/exporter-zipkin',
-      'google-auth-library'
-    ],
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev',
-      '*.firebase.google.com',
-      'localhost:3000',
-      '127.0.0.1:3000',
-      '*.huggingface.co',
-      '*.hf.space'
-    ],
-  },
+
+  // Stable top-level Next.js options in Next 15.
+  serverExternalPackages: [
+    'genkit',
+    'genkitx-openai',
+    '@genkit-ai/core',
+    '@genkit-ai/ai',
+    '@genkit-ai/flow',
+    '@genkit-ai/dotprompt',
+    '@genkit-ai/google-genai',
+    'openai',
+    'zod',
+    '@opentelemetry/sdk-node',
+    '@opentelemetry/api',
+    '@opentelemetry/instrumentation',
+    '@opentelemetry/exporter-jaeger',
+    '@opentelemetry/exporter-zipkin',
+    'google-auth-library',
+  ],
+
+  allowedDevOrigins: [
+    '*.cloudworkstations.dev',
+    '*.firebase.google.com',
+    'localhost:3000',
+    '127.0.0.1:3000',
+    '*.huggingface.co',
+    '*.hf.space',
+  ],
+
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals || []), 
+      config.externals = [
+        ...(config.externals || []),
         '@opentelemetry/exporter-jaeger',
         '@opentelemetry/exporter-zipkin',
-        '@opentelemetry/sdk-node'
+        '@opentelemetry/sdk-node',
       ];
     }
     return config;
@@ -71,5 +68,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
- 

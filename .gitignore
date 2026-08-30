@@ -13,6 +13,22 @@
 # testing
 /coverage
 
+# local data, backups, and runtime output
+/backups/
+/emulator-data/
+/logs/
+/.firebase/
+*.pid
+/dist/
+/tmp/
+/temp/
+/.agents/
+/.claude/
+/agent/
+/.vscode/
+/skills-lock.json
+/tp.yml
+
 # next.js
 /.next/
 /out/

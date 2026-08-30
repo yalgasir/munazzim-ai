@@ -1,59 +1,52 @@
-import { db } from "./firebase";
-import { collection, query, where, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
-
 /**
- * @fileOverview Service for handling external calendar synchronization logic.
+ * Calendar synchronization service.
+ *
+ * Browser
+ *   ↓
+ * Next.js API
+ *   ↓
+ * Firebase Emulator
  */
 
-export async function syncGoogleCalendar(userId: string) {
-  if (!db) {
-    throw new Error("Database not initialized");
-  }
-
+export async function syncGoogleCalendar(
+  userId: string
+) {
   try {
-    const mockExternalEvents = [
+    const response = await fetch(
+      "/api/calendar-sync",
       {
-        externalId: "gcal_123",
-        title: "Product Sync (Imported)",
-        date: new Date().toISOString().split('T')[0],
-        startTime: "10:00",
-        endTime: "11:00",
-        location: "Google Meet",
-        description: "Weekly product alignment",
-        source: "calendar_import"
-      }
-    ];
-
-    let newCount = 0;
-    const appointmentsRef = collection(db, "appointments");
-
-    for (const event of mockExternalEvents) {
-      const q = query(appointmentsRef, 
-        where("userId", "==", userId), 
-        where("externalId", "==", event.externalId)
-      );
-      
-      const existing = await getDocs(q);
-      
-      if (existing.empty) {
-        await addDoc(appointmentsRef, {
-          ...event,
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
           userId,
-          createdAt: new Date().toISOString()
-        });
-        newCount++;
-      } else {
-        const docId = existing.docs[0].id;
-        await updateDoc(doc(db, "appointments", docId), {
-          ...event,
-          updatedAt: new Date().toISOString()
-        });
+        }),
       }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Calendar sync failed"
+      );
     }
 
-    return { success: true, count: newCount };
+    const data = await response.json();
+
+    return {
+      success: Boolean(data.success),
+      count: Number(data.count || 0),
+    };
   } catch (error) {
-    console.error("Calendar Sync Error:", error);
-    return { success: false, count: 0 };
+    console.error(
+      "Calendar Sync Error:",
+      error
+    );
+
+    return {
+      success: false,
+      count: 0,
+    };
   }
 }

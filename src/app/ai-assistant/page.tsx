@@ -1,125 +1,162 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, BrainCircuit, Loader2, Check, Cpu, History, AlertTriangle, Calendar, Clock, LayoutList } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { useAuth } from "@/components/auth/auth-context";
-import { collection, query, where, getDocs, addDoc, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { analyzeFullSchedule, AnalysisOutput } from "@/ai/flows/ai-schedule-optimizer-flow";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import {
+  BrainCircuit,
+  Sparkles,
+  Loader2,
+  Cpu,
+  CalendarPlus,
+  CheckSquare,
+  Save,
+  Lightbulb,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth/auth-context";
+import type { AnalysisOutput } from "@/ai/flows/ai-schedule-optimizer-flow";
 
 export default function AIAssistantPage() {
   const { user } = useAuth();
-  const [context, setContext] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [suggestion, setSuggestion] = useState<AnalysisOutput | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
-  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setMounted(true);
-    if (!user || !db || !isFirebaseConfigured) return;
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<AnalysisOutput | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-    const q = query(
-      collection(db, "ai_logs"),
-      where("userId", "==", user.uid || user.id),
-      orderBy("createdAt", "desc"),
-      limit(5)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-    return () => unsub();
-  }, [user]);
+  useEffect(() => setMounted(true), []);
 
-  const handleOptimize = async () => {
-    if (!user) return;
-    if (!context.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Input Required",
-        description: "Please describe your schedule or goals for the AI to analyze.",
-      });
-      return;
-    }
+  const actionCount = useMemo(() => {
+    if (!result) return 0;
+    return result.tasks.length + result.appointments.length;
+  }, [result]);
+
+  const askAI = async () => {
+    if (!user || !prompt.trim()) return;
 
     setLoading(true);
-
     try {
       const userId = user.uid || user.id;
-      let currentAppointments: any[] = [];
-      let currentTasks: any[] = [];
+      const response = await fetch("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, prompt }),
+      });
 
-      if (isFirebaseConfigured && db) {
-        const qApps = query(collection(db, "appointments"), where("userId", "==", userId));
-        const qTasks = query(collection(db, "tasks"), where("userId", "==", userId));
-        const [appSnap, taskSnap] = await Promise.all([getDocs(qApps), getDocs(qTasks)]);
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "AI request failed.");
+      const aiResult = body as AnalysisOutput;
 
-        currentAppointments = appSnap.docs.map(doc => {
-          const data = doc.data();
-          return {
-            title: String(data.title || "Untitled"),
-            date: String(data.date || ""),
-            time: String(data.time || ""),
-          };
-        });
+      setResult(aiResult);
 
-        currentTasks = taskSnap.docs.map(doc => {
-          const data = doc.data();
-          return {
-            description: String(data.description || "Untitled"),
-            priority: String(data.priority || "Medium"),
-            isCompleted: Boolean(data.isCompleted),
-          };
-        });
-      }
-
-      const result = await analyzeFullSchedule(currentAppointments, currentTasks, context);
-
-      if (result) {
-        setSuggestion(result);
-        
-        if (isFirebaseConfigured && db) {
-          await addDoc(collection(db, "ai_logs"), {
+      try {
+        await fetch("/api/ai-logs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             userId,
-            prompt: context,
-            analysis: result.todayOverview,
-            recommendation: result.generalRecommendation,
-            createdAt: new Date().toISOString(),
-            model: "MythoMax-L2"
-          });
-        }
-
-        toast({
-          title: "Analysis Complete",
-          description: "Your schedule has been analyzed by MythoMax-L2.",
+            prompt,
+            analysis: aiResult.analysis?.summary || aiResult.reply,
+            recommendation: aiResult.analysis?.suggestions.join(" ") || "",
+            model: `${aiResult.provider} | ${aiResult.model}`,
+          }),
         });
+      } catch {
+        // Logging must never block the assistant.
       }
     } catch (error: any) {
-      console.error("AI Assistant Error:", error);
+      console.error("AI Assistant error:", error);
       toast({
         variant: "destructive",
-        title: "Connection Error",
-        description: "Could not connect to the AI engine. Please check your OpenRouter API key.",
+        title: "AI Error",
+        description: error?.message || "Could not reach Qwen or the local Llama fallback.",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!mounted) return "";
+  const saveActions = async () => {
+    if (!user || !result || actionCount === 0) return;
+
+    setSaving(true);
     try {
-      return new Date(dateStr).toLocaleString();
-    } catch (e) {
-      return dateStr;
+      const userId = user.uid || user.id;
+
+      for (const task of result.tasks) {
+        const response = await fetch("/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            title: task.title,
+            description: task.description,
+            priority: task.priority,
+            status: "Pending",
+            date: task.date || "",
+            time: task.time || "",
+            source: "ai_generated",
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Could not save task: ${task.title}`);
+        }
+      }
+
+      for (const appointment of result.appointments) {
+        const time = appointment.startTime && appointment.endTime
+          ? `${appointment.startTime} - ${appointment.endTime}`
+          : appointment.startTime || "";
+
+        const response = await fetch("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            title: appointment.title,
+            date: appointment.date || "",
+            startTime: appointment.startTime,
+            endTime: appointment.endTime,
+            time,
+            attendanceStatus: "Upcoming",
+            notes: appointment.description,
+            location: appointment.location || "",
+            description: appointment.description,
+            source: "ai_generated",
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Could not save appointment: ${appointment.title}`);
+        }
+      }
+
+      toast({
+        title: "Saved",
+        description: `${actionCount} AI item${actionCount === 1 ? "" : "s"} saved successfully.`,
+      });
+
+      setResult({
+        ...result,
+        tasks: [],
+        appointments: [],
+      });
+    } catch (error: any) {
+      console.error("AI action save error:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: error?.message || "Could not save the AI result.",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -127,136 +164,165 @@ export default function AIAssistantPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto flex flex-col gap-8" dir="ltr">
-        <div className="flex flex-col items-center text-center gap-2">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm border border-primary/20">
+      <div className="max-w-4xl mx-auto space-y-6" dir="ltr">
+        <div className="text-center space-y-3">
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
             <BrainCircuit className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold font-headline text-primary">AI Productivity Assistant</h1>
-          <p className="text-muted-foreground max-w-xl">
-            Powered by MythoMax-L2. Get deep insights into your workload and schedule.
+          <h1 className="text-3xl font-black">AI Assistant</h1>
+          <p className="text-muted-foreground">
+            Ask naturally: create a task, add an appointment, analyze your schedule, or give you ideas.
           </p>
-          <Badge variant="outline" className="mt-2 gap-1.5 py-1 px-3 border-primary/30 text-primary">
-            <Cpu className="h-3.5 w-3.5" /> Engine: MythoMax-L2 (Cloud)
+          <Badge variant="outline" className="gap-2">
+            <Cpu className="h-3.5 w-3.5" />
+            {result
+              ? `${result.provider} · ${result.model}`
+              : "Qwen primary → Llama/Ollama fallback"}
           </Badge>
         </div>
 
-        <Card className="border-primary/10 shadow-lg bg-card overflow-hidden">
+        <Card className="shadow-lg border-primary/20">
           <CardContent className="p-6 space-y-4">
             <Textarea
-              placeholder="I'm running late for my next meeting, how should I adjust my day? / Help me prioritize my tasks for this week..."
-              className="min-h-[120px] text-lg p-4 text-left border-primary/20 focus:ring-primary/30 transition-all"
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Example: add a task tomorrow at 9, or analyze my schedule."
+              className="min-h-[120px] text-lg"
+              dir="auto"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !loading) {
+                  e.preventDefault();
+                  askAI();
+                }
+              }}
             />
             <Button
-              className="w-full h-14 text-xl font-bold gap-3 shadow-md transition-all active:scale-[0.98]"
-              onClick={handleOptimize}
-              disabled={loading}
+              className="w-full h-12 text-lg font-bold gap-2"
+              onClick={askAI}
+              disabled={loading || !prompt.trim()}
             >
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
-              {loading ? "Analyzing..." : "Analyze Workspace Data"}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+              {loading ? "Thinking..." : "Ask Munazzim"}
             </Button>
           </CardContent>
         </Card>
 
-        {suggestion && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-primary/20 shadow-xl overflow-hidden">
-               <div className="bg-primary p-4 text-white">
-                  <h3 className="font-bold flex items-center gap-2 text-lg">
-                    <Sparkles className="h-5 w-5" /> AI Intelligence Report
-                  </h3>
-               </div>
-              <CardContent className="p-6 space-y-8">
-                <section>
-                  <h4 className="font-bold text-primary flex items-center gap-2 mb-3 uppercase text-xs tracking-widest">
-                    Today's Overview
-                  </h4>
-                  <p className="text-base leading-relaxed text-foreground/90">{suggestion.todayOverview}</p>
-                </section>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <h4 className="font-bold text-emerald-600 flex items-center gap-2 uppercase text-xs tracking-widest">
-                      <Check className="h-4 w-4" /> Recommended Priorities
-                    </h4>
-                    <ul className="space-y-2">
-                      {(suggestion.priorityRecommendations || []).map((item, i) => (
-                        <li key={i} className="text-sm bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex gap-2">
-                          <span className="font-bold text-emerald-600">{i+1}.</span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-bold text-red-600 flex items-center gap-2 uppercase text-xs tracking-widest">
-                      <AlertTriangle className="h-4 w-4" /> Potential Conflicts
-                    </h4>
-                    <ul className="space-y-2">
-                      {(suggestion.conflictAlerts || []).map((item, i) => (
-                        <li key={i} className="text-sm bg-red-50 p-2 rounded-lg border border-red-100">
-                          {item}
-                        </li>
-                      ))}
-                      {(!suggestion.conflictAlerts || suggestion.conflictAlerts.length === 0) && <li className="text-sm text-muted-foreground italic">No conflicts detected.</li>}
-                    </ul>
-                  </div>
-                </div>
-
-                <section>
-                  <h4 className="font-bold text-primary flex items-center gap-2 mb-4 uppercase text-xs tracking-widest">
-                    <LayoutList className="h-4 w-4" /> Suggested Daily Plan
-                  </h4>
-                  <div className="space-y-3 relative before:absolute before:inset-0 before:left-2.5 before:border-l-2 before:border-muted before:h-full">
-                    {(suggestion.dailyPlan || []).map((item, i) => (
-                      <div key={i} className="relative pl-8 flex items-center gap-4">
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-background border-2 border-primary flex items-center justify-center z-10">
-                          <div className="h-2 w-2 rounded-full bg-primary" />
-                        </div>
-                        <div className="flex-1 bg-muted/30 p-3 rounded-xl flex items-center justify-between">
-                          <span className="text-xs font-bold w-16 text-primary">{item.time}</span>
-                          <span className="text-sm flex-1">{item.activity}</span>
-                          <Badge variant="outline" className="text-[10px] ml-2">
-                            {item.isTask ? "Task" : "Event"}
-                          </Badge>
-                        </div>
-                      </div>
+        {result && (
+          <div className="space-y-5">
+            {result.warnings && result.warnings.length > 0 && (
+              <Card className="border-amber-500/40 bg-amber-500/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Lightbulb className="h-4 w-4" /> AI Validation Warning
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Some information returned by the local model was invalid:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    {result.warnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
                     ))}
-                  </div>
-                </section>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
-                <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                   <h4 className="font-bold text-primary text-sm mb-1 flex items-center gap-2">
-                     <BrainCircuit className="h-4 w-4" /> Final Recommendation
-                   </h4>
-                   <p className="text-sm italic text-foreground/80">{suggestion.generalRecommendation}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            {result.reply && (
+              <Card className="border-primary/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-primary" /> Result
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p dir="auto" className="text-base leading-relaxed whitespace-pre-wrap">
+                    {result.reply}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-        {history.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold flex items-center gap-2 text-muted-foreground">
-              <History className="h-5 w-5" /> Recent Insights
-            </h3>
-            <div className="grid gap-4">
-              {history.map((log) => (
-                <Card key={log.id} className="bg-muted/20 border-dashed hover:bg-muted/30 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-primary text-sm">Query: {log.prompt}</span>
-                      <span className="text-[10px] opacity-60">{formatDate(log.createdAt)}</span>
+            {actionCount > 0 && (
+              <Card className="border-emerald-500/30 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between gap-3">
+                    <span>AI Actions</span>
+                    <Badge>{actionCount} item{actionCount === 1 ? "" : "s"}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {result.tasks.map((task, index) => (
+                    <div key={`task-${index}`} className="rounded-xl border p-4" dir="auto">
+                      <div className="font-bold flex items-center gap-2">
+                        <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        {task.title}
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-3">
+                        <span>Task</span>
+                        {task.priority && <span>{task.priority}</span>}
+                        {task.date && <span>{task.date}</span>}
+                        {task.time && <span>{task.time}</span>}
+                      </div>
                     </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">{log.analysis}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  ))}
+
+                  {result.appointments.map((appointment, index) => (
+                    <div key={`appointment-${index}`} className="rounded-xl border p-4" dir="auto">
+                      <div className="font-bold flex items-center gap-2">
+                        <CalendarPlus className="h-4 w-4 text-blue-600" />
+                        {appointment.title}
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-3">
+                        <span>Appointment</span>
+                        {appointment.date && <span>{appointment.date}</span>}
+                        {appointment.startTime && <span>{appointment.startTime}</span>}
+                        {appointment.endTime && <span>→ {appointment.endTime}</span>}
+                        {appointment.location && <span>{appointment.location}</span>}
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    className="w-full gap-2"
+                    onClick={saveActions}
+                    disabled={saving}
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {saving ? "Saving..." : "Save AI Actions"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {result.analysis && (
+              <Card className="border-purple-500/20">
+                <CardHeader>
+                  <CardTitle>AI Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {result.analysis.summary && (
+                    <section>
+                      <h3 className="font-bold mb-1">Overview</h3>
+                      <p dir="auto" className="text-muted-foreground">{result.analysis.summary}</p>
+                    </section>
+                  )}
+
+                  {result.analysis.suggestions.length > 0 && (
+                    <section>
+                      <h3 className="font-bold mb-2">Priorities & Ideas</h3>
+                      <ul className="space-y-2">
+                        {result.analysis.suggestions.map((item, index) => (
+                          <li key={index} dir="auto" className="rounded-lg border p-3">{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>
