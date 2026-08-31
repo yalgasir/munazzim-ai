@@ -36,6 +36,45 @@ const ModelResponseSchema = z.object({
   analysis: AnalysisSchema.nullable(),
 }).strict();
 
+const RequestIntentSchema = z.object({
+  createTasks: z.boolean(),
+  createAppointments: z.boolean(),
+  analyzeSchedule: z.boolean(),
+  taskDateProvided: z.boolean(),
+  taskTimeProvided: z.boolean(),
+  taskPriorityProvided: z.boolean(),
+  taskDescriptionProvided: z.boolean(),
+  appointmentLocationProvided: z.boolean(),
+  appointmentDescriptionProvided: z.boolean(),
+}).strict();
+
+const REQUEST_INTENT_JSON_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'createTasks',
+    'createAppointments',
+    'analyzeSchedule',
+    'taskDateProvided',
+    'taskTimeProvided',
+    'taskPriorityProvided',
+    'taskDescriptionProvided',
+    'appointmentLocationProvided',
+    'appointmentDescriptionProvided',
+  ],
+  properties: {
+    createTasks: { type: 'boolean' },
+    createAppointments: { type: 'boolean' },
+    analyzeSchedule: { type: 'boolean' },
+    taskDateProvided: { type: 'boolean' },
+    taskTimeProvided: { type: 'boolean' },
+    taskPriorityProvided: { type: 'boolean' },
+    taskDescriptionProvided: { type: 'boolean' },
+    appointmentLocationProvided: { type: 'boolean' },
+    appointmentDescriptionProvided: { type: 'boolean' },
+  },
+};
+
 const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
   type: 'object',
   additionalProperties: false,
@@ -44,6 +83,7 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
     reply: { type: 'string' },
     tasks: {
       type: 'array',
+      maxItems: 5,
       items: {
         type: 'object',
         additionalProperties: false,
@@ -59,6 +99,7 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
     },
     appointments: {
       type: 'array',
+      maxItems: 5,
       items: {
         type: 'object',
         additionalProperties: false,
@@ -82,7 +123,7 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
           required: ['summary', 'suggestions'],
           properties: {
             summary: { type: 'string' },
-            suggestions: { type: 'array', items: { type: 'string' } },
+            suggestions: { type: 'array', maxItems: 6, items: { type: 'string' } },
           },
         },
       ],
@@ -93,6 +134,13 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
 export type AnalysisOutput = z.infer<typeof ModelResponseSchema> & {
   provider: string;
   model: string;
+  providerMetadata: {
+    finishReason: string | null;
+    promptTokens: number | null;
+    completionTokens: number | null;
+    totalTokens: number | null;
+    responseTimeMs: number;
+  };
   warnings: string[];
 };
 
@@ -127,8 +175,11 @@ ABSOLUTE RULES:
 2. If priority is not mentioned, priority = null (NOT Medium, NOT High, NOT Low).
 3. If time is not mentioned, time = null (NOT inferred, NOT guessed).
 4. If date is not mentioned, date = null.
-5. Do NOT copy optional values from the existing schedule into new tasks.
-6. Only add dates/times if the user explicitly mentioned them.
+5. Existing schedule data is read-only context, not a source of new actions.
+6. Never copy an existing task or appointment into the output tasks/appointments arrays.
+7. Only put an item in tasks/appointments when the user's current request explicitly asks to create that new item.
+8. Do NOT copy optional values from the existing schedule into new tasks.
+9. Only add dates/times if the user explicitly mentioned them.
 
 RELATIVE DATE RULES:
 - Use ONLY the supplied current Riyadh date/time (provided at the start of your prompt).
@@ -140,6 +191,7 @@ RELATIVE DATE RULES:
 APPOINTMENT RULES:
 - Only create if date, startTime, endTime are all present.
 - If any are missing, return empty appointments array and explain in reply.
+- If the user asks for a new calendar item with both a start time and an end time, put it in appointments, not tasks.
 
 ANALYSIS RULES:
 - Populate "analysis" whenever the user asks to review, organize, prioritize, plan, or get suggestions/recommendations about their schedule.
@@ -149,6 +201,20 @@ ANALYSIS RULES:
 - If the user only asks a question with no schedule change and no analysis request, set tasks=[], appointments=[], analysis=null, and answer in "reply".
 
 Return JSON only. Do not use Markdown outside the JSON object.
+`.trim();
+
+const INTENT_SYSTEM_PROMPT = `
+Classify only the user's current request. Return exactly one JSON object.
+
+Understand the user's meaning in any language.
+Set createTasks=true only if the user explicitly asks for a new task, todo, reminder, or work item.
+Set createAppointments=true only if the user explicitly asks for a new calendar item such as an appointment, meeting, event, or visit. A new item with both a start time and end time is a calendar appointment, not a task.
+Set analyzeSchedule=true only if the user explicitly asks to analyze, review, organize, prioritize, plan, or suggest improvements for their schedule.
+If the user asks for more than one thing, set every matching boolean to true.
+Set each optional field boolean to true only when the user explicitly supplied that value in the current request. Do not count values from existing schedule data.
+
+Do not infer actions from greetings, schedule context, existing data, or helpfulness.
+Return JSON only.
 `.trim();
 
 function getRiyadhLocalDateTime(): string {
@@ -168,10 +234,6 @@ function getRiyadhLocalDateTime(): string {
   return `${value('year')}-${value('month')}-${value('day')} ${value('hour')}:${value('minute')}`;
 }
 
-function scheduleContext(appointments: unknown[], tasks: unknown[]): string {
-  return JSON.stringify({ appointments, tasks });
-}
-
 // Model-first single request/response. If the first reply is not JSON at all,
 // allow exactly one retry asking for JSON only - never more, and never an
 // attempt to sanitize prose into JSON ourselves.
@@ -180,7 +242,7 @@ async function requestCanonicalResponse(prompt: string): Promise<MunazzimAIRespo
     system: SYSTEM_PROMPT,
     prompt,
     temperature: 0,
-    maxTokens: 500,
+    maxTokens: 800,
     json: true,
     jsonSchema: CANONICAL_JSON_SCHEMA,
   });
@@ -191,13 +253,44 @@ async function requestCanonicalResponse(prompt: string): Promise<MunazzimAIRespo
   } catch {
     return askMunazzimAI({
       system: SYSTEM_PROMPT,
-      prompt: `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the canonical JSON object - no prose, no markdown, no explanation.`,
+      prompt: `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the canonical JSON object - no prose, no markdown, no explanation. Do not copy read-only schedule context into tasks or appointments.`,
       temperature: 0,
-      maxTokens: 500,
+      maxTokens: 800,
       json: true,
       jsonSchema: CANONICAL_JSON_SCHEMA,
     });
   }
+}
+
+async function requestIntent(userRequest: string): Promise<z.infer<typeof RequestIntentSchema>> {
+  const first = await askMunazzimAI({
+    system: INTENT_SYSTEM_PROMPT,
+    prompt: `USER REQUEST:\n${userRequest}`,
+    temperature: 0,
+    maxTokens: 180,
+    json: true,
+    jsonSchema: REQUEST_INTENT_JSON_SCHEMA,
+  });
+
+  try {
+    return RequestIntentSchema.parse(parseAIJson(first.text));
+  } catch (error) {
+    console.warn('AI Assistant intent response invalid; retrying once:', {
+      rawResponse: first.text,
+      error,
+    });
+  }
+
+  const retry = await askMunazzimAI({
+    system: INTENT_SYSTEM_PROMPT,
+    prompt: `USER REQUEST:\n${userRequest}\n\nYour previous response was not valid JSON. Return ONLY the exact intent JSON object with boolean values.`,
+    temperature: 0,
+    maxTokens: 180,
+    json: true,
+    jsonSchema: REQUEST_INTENT_JSON_SCHEMA,
+  });
+
+  return RequestIntentSchema.parse(parseAIJson(retry.text));
 }
 
 // True absence only: real nulls/undefined or the literal strings the local model
@@ -263,9 +356,10 @@ function sanitizeTasks(raw: unknown): { tasks: SanitizedTask[]; warnings: string
       }
     }
 
-    const description = isMissingLiteral(row.description) || typeof row.description !== 'string'
+    const rawDescription = isMissingLiteral(row.description) || typeof row.description !== 'string'
       ? null
-      : row.description;
+      : row.description.trim();
+    const description = rawDescription && rawDescription !== title ? rawDescription : null;
 
     tasks.push({ title, date, time, priority, description });
   }
@@ -405,6 +499,42 @@ function removeExactDuplicates(
   };
 }
 
+function applyIntentGate(
+  response: z.infer<typeof ModelResponseSchema>,
+  intent: z.infer<typeof RequestIntentSchema>
+): { data: z.infer<typeof ModelResponseSchema>; warnings: string[] } {
+  const warnings: string[] = [];
+  const tasks = intent.createTasks
+    ? response.tasks.map((task) => ({
+        ...task,
+        date: intent.taskDateProvided ? task.date : null,
+        time: intent.taskTimeProvided ? task.time : null,
+        priority: intent.taskPriorityProvided ? task.priority : null,
+        description: intent.taskDescriptionProvided ? task.description : null,
+      }))
+    : [];
+  const appointments = intent.createAppointments
+    ? response.appointments.map((appointment) => ({
+        ...appointment,
+        location: intent.appointmentLocationProvided ? appointment.location : null,
+        description: intent.appointmentDescriptionProvided ? appointment.description : null,
+      }))
+    : [];
+  const analysis = intent.analyzeSchedule ? response.analysis : null;
+
+  if (!intent.createTasks && response.tasks.length > 0) {
+    warnings.push('AI returned task actions that were not requested; they were omitted.');
+  }
+  if (!intent.createAppointments && response.appointments.length > 0) {
+    warnings.push('AI returned appointment actions that were not requested; they were omitted.');
+  }
+  if (!intent.analyzeSchedule && response.analysis) {
+    warnings.push('AI returned schedule analysis that was not requested; it was omitted.');
+  }
+
+  return { data: { ...response, tasks, appointments, analysis }, warnings };
+}
+
 export async function analyzeFullSchedule(
   appointments: unknown[],
   tasks: unknown[],
@@ -412,25 +542,38 @@ export async function analyzeFullSchedule(
 ): Promise<AnalysisOutput> {
   const request = userContext?.trim() || 'Analyze my schedule and performance and give useful productivity recommendations.';
 
+  const intent = await requestIntent(request);
   const facts = workspaceFacts(appointments, tasks);
+  const scheduleFactsSection = intent.analyzeSchedule
+    ? `READ-ONLY AGGREGATE SCHEDULE FACTS (use only for analysis; never invent numbers not present here):\n${JSON.stringify(facts)}`
+    : 'READ-ONLY AGGREGATE SCHEDULE FACTS: Not supplied because schedule analysis was not requested.';
 
   const prompt = `
 CURRENT RIYADH LOCAL DATE/TIME: ${getRiyadhLocalDateTime()}
 TIMEZONE: Asia/Riyadh
 
+MODEL-DERIVED REQUEST GATE:
+${JSON.stringify(intent)}
+
+Only fill output arrays/analysis where the matching gate value is true. If createTasks=false, tasks must be []. If createAppointments=false, appointments must be []. If analyzeSchedule=false, analysis must be null.
+For optional fields, if the matching gate field ends with Provided=false, return null for that optional field.
+If analyzeSchedule=false, do not mention schedule facts in the reply.
+
 USER REQUEST:
 ${request}
 
-SCHEDULE FACTS (use only for analysis; never invent numbers not present here):
-${JSON.stringify(facts)}
-
-EXISTING SCHEDULE ITEMS (READ ONLY; NEVER COPY INTO NEW ACTIONS):
-${scheduleContext(appointments, tasks)}
+${scheduleFactsSection}
 
 Return only the canonical JSON object from the system instructions.
 `.trim();
 
   const response = await requestCanonicalResponse(prompt);
+  console.log('AI Assistant provider metadata:', {
+    finishReason: response.finishReason,
+    promptTokens: response.usage.promptTokens,
+    completionTokens: response.usage.completionTokens,
+    responseTimeMs: response.responseTimeMs,
+  });
   console.log('AI Assistant action raw model response:', response.text);
 
   let parsed: z.infer<typeof ModelResponseSchema>;
@@ -442,8 +585,9 @@ Return only the canonical JSON object from the system instructions.
     // Beyond this point the JSON is well-formed; sanitize repairs structure
     // only (drop/omit bad fields) and reports every repair as a warning.
     const sanitized = sanitizeModelResponse(rawParsed);
-    parsed = ModelResponseSchema.parse(sanitized.data);
-    warnings = sanitized.warnings;
+    const gated = applyIntentGate(ModelResponseSchema.parse(sanitized.data), intent);
+    parsed = gated.data;
+    warnings = [...sanitized.warnings, ...gated.warnings];
   } catch (error) {
     console.error('AI canonical response validation failed:', {
       rawResponse: response.text,
@@ -453,5 +597,17 @@ Return only the canonical JSON object from the system instructions.
   }
 
   const result = removeExactDuplicates(parsed, appointments, tasks);
-  return { ...result, provider: response.providerLabel, model: response.model, warnings };
+  return {
+    ...result,
+    provider: response.providerLabel,
+    model: response.model,
+    providerMetadata: {
+      finishReason: response.finishReason,
+      promptTokens: response.usage.promptTokens,
+      completionTokens: response.usage.completionTokens,
+      totalTokens: response.usage.totalTokens,
+      responseTimeMs: response.responseTimeMs,
+    },
+    warnings,
+  };
 }

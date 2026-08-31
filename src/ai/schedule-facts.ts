@@ -16,6 +16,7 @@ export function workspaceFacts(appointments: unknown[], tasks: unknown[]): Recor
   const overdueTasks = taskRows.filter((task) =>
     !isCompleted(task) && typeof task.date === 'string' && task.date < today
   ).length;
+  const todayTasks = taskRows.filter((task) => task.date === today).length;
   const attendedAppointments = appointmentRows.filter(
     (appointment) => appointment.attendanceStatus === 'Attended'
   ).length;
@@ -24,6 +25,9 @@ export function workspaceFacts(appointments: unknown[], tasks: unknown[]): Recor
   ).length;
   const upcomingAppointments = appointmentRows.filter(
     (appointment) => appointment.attendanceStatus !== 'Attended' && appointment.attendanceStatus !== 'Missed'
+  ).length;
+  const todayAppointments = appointmentRows.filter(
+    (appointment) => appointment.date === today
   ).length;
 
   return {
@@ -34,24 +38,12 @@ export function workspaceFacts(appointments: unknown[], tasks: unknown[]): Recor
       pendingTasks,
       taskCompletionRate,
       overdueTasks,
+      todayTasks,
       appointments: appointmentRows.length,
       attendedAppointments,
       missedAppointments,
       upcomingAppointments,
+      todayAppointments,
     },
-    tasks: taskRows.map((task) => ({
-      title: String(task.title ?? task.description ?? 'Untitled'),
-      status: String(task.status ?? 'Pending'),
-      date: task.date ?? null,
-      time: task.time ?? null,
-      priority: task.priority ?? null,
-    })),
-    appointments: appointmentRows.map((appointment) => ({
-      title: String(appointment.title ?? 'Untitled'),
-      date: appointment.date ?? null,
-      startTime: appointment.startTime ?? null,
-      endTime: appointment.endTime ?? null,
-      attendanceStatus: appointment.attendanceStatus ?? 'Upcoming',
-    })),
   };
 }

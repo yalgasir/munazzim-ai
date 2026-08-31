@@ -8,6 +8,7 @@ fi
 
 PROJECT_DIR="$HOME/Desktop/munazzim-ai"
 LOG_DIR="$PROJECT_DIR/logs"
+NEXT_PORT=3001
 
 mkdir -p "$LOG_DIR"
 cd "$PROJECT_DIR"
@@ -50,7 +51,7 @@ else
 fi
 
 echo "[4/5] Checking Next.js..."
-if curl -s -I http://127.0.0.1:3000 >/dev/null 2>&1; then
+if curl -s -I "http://127.0.0.1:$NEXT_PORT" >/dev/null 2>&1; then
   echo "Next.js already running."
 else
   echo "Starting Next.js..."
@@ -65,7 +66,15 @@ fi
 
 echo "[5/5] Checking Ngrok..."
 if curl -s http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-  echo "Ngrok already running."
+  NGROK_TARGET=$(curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'http://localhost:[0-9]*\|http://127.0.0.1:[0-9]*' | head -1 || true)
+
+  if echo "$NGROK_TARGET" | grep -q ":$NEXT_PORT$"; then
+    echo "Ngrok already running for localhost:$NEXT_PORT."
+  else
+    echo "WARNING: Ngrok is running but is not targeting localhost:$NEXT_PORT."
+    echo "Existing Ngrok target: ${NGROK_TARGET:-unknown}"
+    echo "Not modifying another running Ngrok tunnel."
+  fi
 else
   if [ -z "${NGROK_BASIC_AUTH:-}" ]; then
     echo ""
@@ -77,7 +86,7 @@ else
   else
     echo "Starting Ngrok..."
 
-    nohup ngrok http 3000 \
+    nohup ngrok http "$NEXT_PORT" \
       --basic-auth="$NGROK_BASIC_AUTH" \
       > "$LOG_DIR/ngrok.log" 2>&1 &
 
@@ -98,7 +107,7 @@ else
   echo "Qwen:      NOT REACHABLE"
 fi
 
-if curl -s -I http://127.0.0.1:3000 >/dev/null 2>&1; then
+if curl -s -I "http://127.0.0.1:$NEXT_PORT" >/dev/null 2>&1; then
   echo "Next.js:   RUNNING"
 else
   echo "Next.js:   NOT RUNNING"
@@ -140,7 +149,7 @@ fi
 
 echo ""
 echo "Local:"
-echo "http://localhost:3000"
+echo "http://localhost:$NEXT_PORT"
 
 echo ""
 echo "Logs:"

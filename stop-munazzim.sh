@@ -2,6 +2,7 @@
 
 PROJECT_DIR="$HOME/Desktop/munazzim-ai"
 LOG_DIR="$PROJECT_DIR/logs"
+NEXT_PORT=3001
 
 cd "$PROJECT_DIR"
 
@@ -11,7 +12,7 @@ echo "======================================"
 
 echo "[1/5] Stopping Ngrok..."
 
-NGROK_PIDS=$(pgrep -f "ngrok http 3000" || true)
+NGROK_PIDS=$(pgrep -f "ngrok http $NEXT_PORT" || true)
 
 if [ -n "$NGROK_PIDS" ]; then
   kill $NGROK_PIDS 2>/dev/null || true
@@ -26,22 +27,22 @@ rm -f "$PROJECT_DIR/.ngrok.pid"
 
 echo "[2/5] Stopping Next.js..."
 
-NEXT_PIDS=$(pgrep -f "$PROJECT_DIR/node_modules/.bin/next dev -p 3000" || true)
+NEXT_PIDS=$(pgrep -f "$PROJECT_DIR/node_modules/.bin/next dev -p $NEXT_PORT" || true)
 
 if [ -n "$NEXT_PIDS" ]; then
   kill $NEXT_PIDS 2>/dev/null || true
   sleep 2
 fi
 
-NEXT_SERVER_PIDS=$(pgrep -f "next-server" || true)
+NEXT_SERVER_PIDS=$(ss -ltnp 2>/dev/null | awk -v port=":$NEXT_PORT" '$4 ~ port {print $NF}' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u || true)
 
 if [ -n "$NEXT_SERVER_PIDS" ]; then
   kill $NEXT_SERVER_PIDS 2>/dev/null || true
   sleep 1
 fi
 
-if ss -ltn 2>/dev/null | grep -q ':3000 '; then
-  echo "WARNING: Port 3000 is still in use."
+if ss -ltn 2>/dev/null | grep -q ":$NEXT_PORT "; then
+  echo "WARNING: Port $NEXT_PORT is still in use."
 else
   echo "Next.js stopped."
 fi
@@ -127,13 +128,13 @@ fi
 
 echo "[5/5] Checking final status..."
 
-if ss -ltn 2>/dev/null | grep -q ':3000 '; then
+if ss -ltn 2>/dev/null | grep -q ":$NEXT_PORT "; then
   echo "Next.js:   STILL RUNNING"
 else
   echo "Next.js:   STOPPED"
 fi
 
-if ss -ltn 2>/dev/null | grep -q ':8080 '; then
+if ss -ltn 2>/dev/null | grep -q ':8081 '; then
   echo "Firestore: STILL RUNNING"
 else
   echo "Firestore: STOPPED"

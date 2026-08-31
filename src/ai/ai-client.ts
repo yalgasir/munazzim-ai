@@ -13,6 +13,13 @@ export type MunazzimAIResponse = {
   provider: MunazzimAIProvider;
   providerLabel: string;
   model: string;
+  finishReason: string | null;
+  usage: {
+    promptTokens: number | null;
+    completionTokens: number | null;
+    totalTokens: number | null;
+  };
+  responseTimeMs: number;
 };
 
 export type AskMunazzimAIOptions = {
@@ -41,7 +48,7 @@ const OLLAMA_MODEL =
   'llama3.2:3b';
 
 const LAB_TIMEOUT_MS = Number(
-  process.env.MUNAZZIM_LAB_TIMEOUT_MS || 60000
+  process.env.MUNAZZIM_LAB_TIMEOUT_MS || 120000
 );
 
 const OLLAMA_TIMEOUT_MS = Number(
@@ -77,6 +84,7 @@ async function fetchWithTimeout(
 async function askQwen(
   options: AskMunazzimAIOptions
 ): Promise<MunazzimAIResponse> {
+  const startedAt = Date.now();
   const response = await fetchWithTimeout(
     LAB_AI_URL,
     {
@@ -99,7 +107,18 @@ async function askQwen(
         temperature: options.temperature ?? 0.2,
         max_tokens: options.maxTokens ?? 700,
         ...(options.json
-          ? { response_format: { type: 'json_object' } }
+          ? {
+              response_format: options.jsonSchema
+                ? {
+                    type: 'json_schema',
+                    json_schema: {
+                      name: 'munazzim_canonical_response',
+                      strict: true,
+                      schema: options.jsonSchema,
+                    },
+                  }
+                : { type: 'json_object' },
+            }
           : {}),
         chat_template_kwargs: {
           enable_thinking: false,
@@ -115,6 +134,7 @@ async function askQwen(
   }
 
   const data = await response.json();
+  const responseTimeMs = Date.now() - startedAt;
   const text = cleanModelText(
     data?.choices?.[0]?.message?.content ??
       data?.choices?.[0]?.text
@@ -129,12 +149,22 @@ async function askQwen(
     provider: 'qwen',
     providerLabel: 'SCI Lab Qwen',
     model: LAB_MODEL,
+    finishReason: typeof data?.choices?.[0]?.finish_reason === 'string'
+      ? data.choices[0].finish_reason
+      : null,
+    usage: {
+      promptTokens: typeof data?.usage?.prompt_tokens === 'number' ? data.usage.prompt_tokens : null,
+      completionTokens: typeof data?.usage?.completion_tokens === 'number' ? data.usage.completion_tokens : null,
+      totalTokens: typeof data?.usage?.total_tokens === 'number' ? data.usage.total_tokens : null,
+    },
+    responseTimeMs,
   };
 }
 
 async function askOllama(
   options: AskMunazzimAIOptions
 ): Promise<MunazzimAIResponse> {
+  const startedAt = Date.now();
   const body: Record<string, unknown> = {
     model: OLLAMA_MODEL,
     messages: [
@@ -181,6 +211,7 @@ async function askOllama(
   }
 
   const data = await response.json();
+  const responseTimeMs = Date.now() - startedAt;
   const text = cleanModelText(data?.message?.content);
 
   if (!text) {
@@ -192,6 +223,15 @@ async function askOllama(
     provider: 'ollama',
     providerLabel: 'Local Ollama Fallback',
     model: OLLAMA_MODEL,
+    finishReason: typeof data?.done_reason === 'string' ? data.done_reason : null,
+    usage: {
+      promptTokens: typeof data?.prompt_eval_count === 'number' ? data.prompt_eval_count : null,
+      completionTokens: typeof data?.eval_count === 'number' ? data.eval_count : null,
+      totalTokens: typeof data?.prompt_eval_count === 'number' && typeof data?.eval_count === 'number'
+        ? data.prompt_eval_count + data.eval_count
+        : null,
+    },
+    responseTimeMs,
   };
 }
 
@@ -226,44 +266,11 @@ export async function askMunazzimAI(
 }
 
 export function parseAIJson(text: string): unknown {
-  let cleaned = cleanModelText(text)
+  const cleaned = cleanModelText(text)
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
 
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    // Ollama may double-escape Unicode: \\\\uXXXX instead of \\uXXXX or literal characters.
-    // Fix this by replacing double backslashes before Unicode sequences with single backslashes.
-    const unescaped = cleaned.replace(/\\\\u([0-9a-fA-F]{4})/g, '\\u$1');
-    
-    // Log if we actually made changes (for debugging)
-    if (unescaped !== cleaned) {
-      console.log('DEBUG: Fixed double-escaped Unicode in AI response');
-    }
-    
-    try {
-      const parsed = JSON.parse(unescaped);
-      
-      // Verify the parse succeeded and contains expected structure
-      if (typeof parsed === 'object' && parsed !== null && 'reply' in parsed) {
-        console.log('DEBUG: Successfully parsed AI JSON after Unicode fix');
-      }
-      
-      return parsed;
-    } catch {
-      // Last resort: try to extract JSON block from surrounding text
-      const start = unescaped.indexOf('{');
-      const end = unescaped.lastIndexOf('}');
-
-      if (start >= 0 && end > start) {
-        const extracted = unescaped.slice(start, end + 1);
-        return JSON.parse(extracted);
-      }
-
-      throw new Error('AI did not return valid JSON.');
-    }
-  }
+  return JSON.parse(cleaned);
 }
