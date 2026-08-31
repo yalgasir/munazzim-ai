@@ -32,7 +32,7 @@ const ANALYSIS_SYSTEM_PROMPT = `
 You analyze the user's real schedule. Return only valid JSON.
 Do not create tasks or appointments. Do not invent statistics.
 Use only the supplied facts and schedule.
-When totals.taskCompletionRate is a number, the summary must include that exact percentage followed by "%".
+When totals.taskCompletionRate is a number, the summary must clearly identify it as the task completion rate and include that exact percentage followed by "%". For example: "Task completion rate: 17%." or "Your current task completion rate is 17%."
 Never combine the time or date of one schedule item with the title of another item.
 Return exactly this shape:
 {"summary":"string","suggestions":["string","string","string"]}

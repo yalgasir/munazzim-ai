@@ -9,6 +9,12 @@ import { BrainCircuit, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/auth-context";
 
+function displaySummary(summary: string): string {
+  return /^\s*\d+(?:\.\d+)?%\s*$/.test(summary)
+    ? `Task completion rate: ${summary.trim()}`
+    : summary;
+}
+
 export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appointments: any[]; tasks: any[] }) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<PerformanceAnalysisOutput | null>(null);
@@ -54,7 +60,7 @@ export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appo
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">AI Analysis</p>
-                <p className="mt-1 text-sm font-medium leading-relaxed">{analysis.summary}</p>
+                <p className="mt-1 text-sm font-medium leading-relaxed">{displaySummary(analysis.summary)}</p>
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Recommendations</p>
@@ -70,8 +76,8 @@ export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appo
               </div>
             </div>
           ) : (
-            <Button onClick={runAnalysis} variant="secondary" size="sm" className="w-full gap-2">
-              <Sparkles className="h-3 w-3" /> Analyze My Schedule
+            <Button onClick={runAnalysis} size="sm" className="w-full gap-2 bg-blue-600 text-white hover:bg-blue-700">
+              <Sparkles className="h-3 w-3 text-white" /> Analyze My Schedule
             </Button>
           )}
         </CardContent>
@@ -84,7 +90,7 @@ export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appo
             <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-bold">AI Analysis</h3>
-                <p className="mt-2 text-sm leading-relaxed">{analysis.summary}</p>
+                <p className="mt-2 text-sm leading-relaxed">{displaySummary(analysis.summary)}</p>
               </div>
               <div>
                 <h3 className="text-sm font-bold">Recommendations</h3>
