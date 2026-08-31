@@ -109,19 +109,21 @@ echo "[4/5] Creating automatic backup..."
 
 if [ "$EXPORT_OK" = true ]; then
 
-  if [ -x "$PROJECT_DIR/backup-munazzim.sh" ]; then
+  SHUTDOWN_BACKUP_DIR="$PROJECT_DIR/backups/data/shutdown-$(date +"%Y-%m-%d_%H-%M-%S")"
 
-    "$PROJECT_DIR/backup-munazzim.sh"
+  mkdir -p "$SHUTDOWN_BACKUP_DIR"
+  cp -a "$PROJECT_DIR/emulator-data/." "$SHUTDOWN_BACKUP_DIR/"
 
+  if [ -d "$SHUTDOWN_BACKUP_DIR" ] && [ -n "$(find "$SHUTDOWN_BACKUP_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+    echo "Shutdown backup completed successfully."
+    echo "Location: $SHUTDOWN_BACKUP_DIR"
   else
-
-    echo "WARNING: backup-munazzim.sh is missing or not executable."
-
+    echo "WARNING: Shutdown backup was not created or is empty."
   fi
 
 else
 
-  echo "Backup skipped because a new Firebase export was not confirmed."
+  echo "WARNING: Shutdown backup skipped because Firebase export was not confirmed."
 
 fi
 
