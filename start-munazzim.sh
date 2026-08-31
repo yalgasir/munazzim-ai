@@ -35,9 +35,20 @@ else
 fi
 
 echo "[3/5] Checking Firebase Emulator..."
-if ss -ltn 2>/dev/null | grep -q ':8081 ' || ss -ltn 2>/dev/null | grep -q ':9099 '; then
+FIRESTORE_RUNNING=false
+AUTH_RUNNING=false
+
+if ss -ltn 2>/dev/null | grep -q ':8081 '; then
+  FIRESTORE_RUNNING=true
+fi
+
+if ss -ltn 2>/dev/null | grep -q ':9099 '; then
+  AUTH_RUNNING=true
+fi
+
+if [ "$FIRESTORE_RUNNING" = true ] && [ "$AUTH_RUNNING" = true ]; then
   echo "Firebase Emulator already running."
-else
+elif [ "$FIRESTORE_RUNNING" = false ] && [ "$AUTH_RUNNING" = false ]; then
   echo "Starting Firebase Emulator..."
 
   nohup firebase emulators:start \
@@ -48,6 +59,11 @@ else
   echo $! > "$PROJECT_DIR/.firebase.pid"
 
   sleep 5
+else
+  echo "WARNING: Firebase Emulator is partially running."
+  echo "Firestore: $([ "$FIRESTORE_RUNNING" = true ] && echo RUNNING || echo NOT RUNNING)"
+  echo "Auth:      $([ "$AUTH_RUNNING" = true ] && echo RUNNING || echo NOT RUNNING)"
+  echo "Manual restart recommended."
 fi
 
 echo "[4/5] Checking Next.js..."
