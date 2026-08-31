@@ -1,6 +1,27 @@
 import { NextResponse } from 'next/server';
 import { analyzeFullSchedule } from '@/ai/flows/ai-schedule-optimizer-flow';
+import { db } from '@/lib/firebase';
 import { getCurrentUserId } from '@/lib/request-user';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
+
+async function loadUserCollection(collectionName: 'appointments' | 'tasks', userId: string) {
+  const userQuery = query(
+    collection(db, collectionName),
+    where('userId', '==', userId)
+  );
+
+  const snapshot = await getDocs(userQuery);
+
+  return snapshot.docs.map((item) => ({
+    id: item.id,
+    ...item.data(),
+  }));
+}
 
 export async function POST(req: Request) {
   try {
@@ -15,27 +36,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const [appointmentsResponse, tasksResponse] = await Promise.all([
-      fetch(`${new URL('/api/appointments', req.url)}?userId=${encodeURIComponent(userId)}`, {
-        cache: 'no-store',
-      }),
-      fetch(`${new URL('/api/tasks', req.url)}?userId=${encodeURIComponent(userId)}`, {
-        cache: 'no-store',
-      }),
+    const [appointments, tasks] = await Promise.all([
+      loadUserCollection('appointments', userId),
+      loadUserCollection('tasks', userId),
     ]);
 
-    if (!appointmentsResponse.ok || !tasksResponse.ok) {
-      return NextResponse.json(
-        { error: 'Could not load the current schedule.' },
-        { status: 502 }
-      );
-    }
-
-    const appointments = await appointmentsResponse.json();
-    const tasks = await tasksResponse.json();
     const result = await analyzeFullSchedule(
-      Array.isArray(appointments) ? appointments : [],
-      Array.isArray(tasks) ? tasks : [],
+      appointments,
+      tasks,
       prompt
     );
 
