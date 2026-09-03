@@ -1,109 +1,34 @@
 # Munazzim AI Time Manager: TRL 6 Assessment
 
-**Assessment date:** 2026-08-31  
-**Final assessment:** **NOT ACHIEVED**
+**Assessment date:** 2026-09-03
+**Final assessment:** **NOT ACHIEVED / IN PROGRESS**
 
-## TRL Level and Definition
+## TRL Level and Scope
 
-TRL 6 requires a representative system or subsystem prototype demonstrated in a relevant environment. The prototype must do more than run in a laboratory: critical functions must meet defined criteria under conditions representative of intended operation.
+TRL 6 requires a representative system prototype to be demonstrated in a sufficiently representative relevant environment. Munazzim has met the prototype-level relevant-environment threshold for TRL 5, but the evidence is not yet sufficient to establish a controlled, representative system demonstration at TRL 6. This is not a production-certification checklist.
 
-## Purpose of This TRL Level
+## Existing Foundation
 
-The purpose is to reduce system-level readiness risk by demonstrating the representative prototype, including its external dependencies, security boundary, degraded modes, and operational recovery.
+The integrated Ubuntu laboratory stack, Windows local operation, emulator-backed task and appointment workflows, AI Assistant, AI Performance, deterministic output controls, and Qwen/Ollama provider architecture provide a credible foundation for TRL 6 work. The documented result remains limited by unverified system-boundary evidence.
 
-## Expected Evidence
+## Remaining TRL 6 Evidence
 
-- Completed TRL 5 relevant-environment validation.
-- A frozen representative prototype configuration.
-- Approved demonstration plan and acceptance criteria.
-- End-to-end normal, degraded, and recovery demonstrations.
-- Measured correctness, latency, reliability, data-integrity, and security results.
-- Traceable artifacts and independent technical review.
+1. **Primary Qwen application verification:** Record an end-to-end application request that successfully uses the configured Qwen primary integration, including the relevant configuration and result artifact. Direct endpoint inference alone is insufficient for this item.
+2. **Representative-environment validation:** Define the prototype's intended representative environment, its users/data, network topology, and included external boundaries; then validate the primary task, appointment, AI Assistant, and AI Performance workflows there.
+3. **Nginx/reverse-proxy validation where relevant:** If the representative topology includes Nginx or another reverse proxy, document and exercise the routing, TLS/access controls as applicable, and failure behavior. If it is not in scope, formally record that boundary rather than claim it was validated.
+4. **Authentication and security validation:** Demonstrate an appropriate prototype identity and access-control boundary, validate authorization and data-access behavior, and perform security verification aligned with applicable **ISO/IEC 27001 information-security principles**. This is not a claim of ISO/IEC 27001 certification or formal compliance.
+5. **Backup-restore verification:** Demonstrate restoration from a created backup and record the recovered data and procedure outcome. Production disaster-recovery qualification is outside this specific prototype criterion.
+6. **Reasonable reliability/endurance evidence:** Run and document a bounded, representative-duration exercise covering normal operation and selected provider/network failure or fallback conditions. Define simple acceptance observations such as successful workflow completion, observable failures, and recovery behavior; large-scale load certification is not required.
+7. **Documented end-to-end demonstration:** Produce a dated demonstration plan and results package with acceptance criteria, environment/configuration record, observed outcomes, limitations, and retained artifacts for normal and degraded workflows.
 
-## Munazzim Evidence Currently Available
+## Evidence Boundaries
 
-Munazzim has a substantial integrated prototype and credible Windows and Ubuntu demonstrations. The Ubuntu laboratory stack supported local and ngrok remote access, application AI workflows, emulator persistence, and tested defensive behavior. This is stronger than source-only evidence, but the system is not yet representative in identity, persistence, calendar integration, recovery, or operational qualification.
+Real production Firebase deployment, enterprise-scale load testing, formal security certification, full disaster-recovery qualification, and production operations monitoring may be future production-readiness activities. They are not automatically required to demonstrate TRL 6 prototype maturity, unless they are part of the declared representative environment.
 
-## Source-Code Evidence
+## ISO Standard Clarification
 
-The repository contains the major prototype modules and deployment-related assets. It also directly shows that request identity is hardcoded, server persistence is emulator-bound, calendar synchronization is mocked, health is static, and duplicate checks are not transactional. These are system-representativeness gaps, not merely missing documentation.
-
-## Functional Test Evidence
-
-AI Assistant, repeated AI Performance, task and appointment persistence, validation/sanitization, duplicate behavior, and backup creation have functional evidence. There is no complete prototype acceptance campaign, sustained-use result, concurrent-user test, production dependency test, or restore demonstration.
-
-## Windows Demonstration Evidence
-
-Windows local operation was demonstrated, including fallback behavior when Qwen was unreachable. This contributes environment and degradation evidence but does not establish representative production operation.
-
-## Ubuntu Laboratory Demonstration Evidence
-
-Next.js, both Firebase emulators, Ollama, and ngrok ran together, and the application was used locally and remotely. This is a valid laboratory prototype demonstration. It is not by itself a qualifying TRL 6 relevant-environment demonstration.
-
-## AI Model Evidence
-
-Ollama has application-level evidence, including multiple valid AI Performance outputs with three recommendations. Qwen has successful direct inference evidence with thinking disabled, but no explicit final application-level Qwen success. Broad semantic acceptance, multilingual regression, failure rates, and model-change controls remain **NOT VERIFIED**.
-
-## Deployment/Environment Evidence
-
-The project has demonstrated local multi-service operation and remote tunneling. It has not demonstrated a representative authenticated deployment, production persistence, real calendar integration, Nginx, sustained monitoring, scale, or recovery from a restored backup.
-
-## Security Evidence
-
-Ownership comparisons and input/output controls are implemented, but the prototype lacks real authentication and tenant isolation. Security testing, threat modeling, rate limiting, secure production data rules, and external exposure validation are absent.
-
-## Evidence Matrix
-
-| Requirement | Evidence | Evidence class | Status | Notes |
-|---|---|---|---|---|
-| Integrated prototype | Windows and Ubuntu application runs | Demonstration | PASS | Prototype operates locally/in lab |
-| Relevant-environment validation | TRL 5 assessment | Assessment | PARTIAL | Prerequisite incomplete |
-| Representative identity/security | Shared guest only | Source/security | NOT ACHIEVED | Blocks representative claim |
-| Representative persistence | Emulator only | Functional/environment | NOT VERIFIED | Production behavior absent |
-| Representative interfaces | Mock calendar; Qwen direct only | Source/model | PARTIAL | Critical integrations incomplete |
-| End-to-end acceptance campaign | No controlled evidence package | Demonstration | NOT VERIFIED | No entry/exit criteria |
-| Degraded/recovery modes | Ollama fallback; backup creation | Functional test | PARTIAL | Restore and broader failures absent |
-| Scale/endurance/security results | No measurements | Relevant environment | NOT VERIFIED | System evidence missing |
-
-## What Has Been Demonstrated
-
-- A meaningful integrated laboratory prototype.
-- Local operation on Windows and Ubuntu.
-- Remote application access through ngrok.
-- Application-level AI and persistence workflows.
-- Selected validation, duplicate, fallback, and backup-creation behaviors.
-
-## What Is Only Implemented in Code
-
-- Docker/App Hosting packaging and several operational automation paths.
-- Static health reporting.
-- Mock external-calendar import.
-- Ownership logic operating only against the shared guest identity.
-
-## What Is NOT VERIFIED
-
-- A complete prototype demonstration in a formally defined relevant environment.
-- Full application-level Qwen integration.
-- Real authentication and real calendar synchronization are **NOT IMPLEMENTED / NOT VERIFIED**; production Firestore is **NOT VERIFIED**.
-- Nginx, backup restore, scale, endurance, security, and disaster-recovery qualification.
-- Independent review or witnessed TRL 6 demonstration evidence.
-
-## Known Gaps
-
-TRL 5 is incomplete. The current prototype uses laboratory substitutes at critical system boundaries and lacks quantitative acceptance evidence.
-
-## Known Risks
-
-Calling the laboratory demonstration TRL 6 would hide identity, persistence, external-service, recovery, and security risks. Valid model structure also does not ensure semantic correctness.
-
-## Required Work to Satisfy This TRL
-
-Complete TRL 5, freeze a representative prototype, implement or explicitly scope all critical external boundaries, and execute an approved end-to-end demonstration with measured criteria for correctness, performance, resilience, data integrity, security, and recovery.
-
-## Required Evidence to Move to the Next TRL
-
-After TRL 6 is achieved, higher-level work would require an operational prototype, controlled user trials, sustained reliability evidence, formal release controls, and broader qualification in the intended operational environment.
+The relevant standard is **ISO/IEC 27001:2022, Information security, cybersecurity and privacy protection — Information security management systems — Requirements**. The cited term “ISO 7001” is a discrepancy: ISO 7001 concerns registered public-information graphical symbols, not information-security management systems. Munazzim is not claimed to be ISO/IEC 27001 certified or compliant.
 
 ## Final Assessment
 
-**NOT ACHIEVED.** The integrated laboratory demonstrations are substantial, but relevant-environment validation is incomplete and the demonstrated prototype is not yet representative at several critical system boundaries.
+**NOT ACHIEVED / IN PROGRESS.** TRL 5 prototype evidence is sufficient, while the representative end-to-end, security, recovery, primary-provider, reliability, and documented-demonstration evidence above remains to be completed for TRL 6.
