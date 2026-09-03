@@ -21,7 +21,7 @@ import {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const q = query(
       collection(db, "appointments"),
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const {
       userId: _ignoredUserId,
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const { id, ...updates } = body;
 
@@ -242,7 +242,7 @@ export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     if (!id) {
       return NextResponse.json(

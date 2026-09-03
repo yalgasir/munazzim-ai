@@ -73,7 +73,7 @@ export default function StatsPage() {
       return;
     }
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     if (!userId) {
       setTasks([]);

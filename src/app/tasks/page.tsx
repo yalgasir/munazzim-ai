@@ -81,7 +81,7 @@ function TasksContent() {
       return;
     }
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     try {
       setLoading(true);
@@ -127,7 +127,7 @@ function TasksContent() {
   const handleAddTask = async () => {
     if (!newTask.description.trim() || !user) return;
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     try {
       const response = await fetch("/api/tasks", {

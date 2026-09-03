@@ -13,7 +13,7 @@ import {
 
 export async function POST(req: Request) {
   try {
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const mockExternalEvents = [
       {

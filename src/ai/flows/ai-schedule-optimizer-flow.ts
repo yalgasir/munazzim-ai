@@ -275,10 +275,7 @@ async function requestIntent(userRequest: string): Promise<z.infer<typeof Reques
   try {
     return RequestIntentSchema.parse(parseAIJson(first.text));
   } catch (error) {
-    console.warn('AI Assistant intent response invalid; retrying once:', {
-      rawResponse: first.text,
-      error,
-    });
+    console.warn('AI Assistant intent response invalid; retrying once:', error);
   }
 
   const retry = await askMunazzimAI({
@@ -574,7 +571,7 @@ Return only the canonical JSON object from the system instructions.
     completionTokens: response.usage.completionTokens,
     responseTimeMs: response.responseTimeMs,
   });
-  console.log('AI Assistant action raw model response:', response.text);
+  console.log('AI Assistant action response received:', { provider: response.providerLabel });
 
   let parsed: z.infer<typeof ModelResponseSchema>;
   let warnings: string[];
@@ -589,10 +586,7 @@ Return only the canonical JSON object from the system instructions.
     parsed = gated.data;
     warnings = [...sanitized.warnings, ...gated.warnings];
   } catch (error) {
-    console.error('AI canonical response validation failed:', {
-      rawResponse: response.text,
-      issues: error instanceof z.ZodError ? error.issues : error,
-    });
+    console.error('AI canonical response validation failed:', error instanceof z.ZodError ? error.issues : error);
     throw new Error('AI returned malformed or invalid schedule JSON. No actions were created.');
   }
 

@@ -70,15 +70,17 @@ const db = getFirestore(app);
  * Always connect the server to the local Firebase Emulator.
  */
 if (typeof window === "undefined") {
+  const firestoreHost = process.env.MUNAZZIM_FIRESTORE_EMULATOR_HOST || "127.0.0.1";
+  const firestorePort = Number(process.env.MUNAZZIM_FIRESTORE_EMULATOR_PORT || 8081);
   try {
     connectFirestoreEmulator(
       db,
-      "127.0.0.1",
-      8081
+      firestoreHost,
+      firestorePort
     );
 
     console.log(
-      "🔥 SERVER connected to Firestore Emulator: 127.0.0.1:8081"
+      `SERVER connected to Firestore Emulator: ${firestoreHost}:${firestorePort}`
     );
   } catch (error) {
     console.log(

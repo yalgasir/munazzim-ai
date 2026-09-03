@@ -21,7 +21,7 @@ export function CalendarSyncButton() {
     setStatus("idle");
     
     try {
-      const result = await syncGoogleCalendar(user.uid || user.id);
+      const result = await syncGoogleCalendar(user.uid);
       if (result.success) {
         setStatus("success");
         toast({

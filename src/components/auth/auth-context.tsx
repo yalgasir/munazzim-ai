@@ -2,7 +2,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { isFirebaseConfigured } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 /**
  * @fileOverview Authentication context for managing global user state.
@@ -10,67 +11,59 @@ import { isFirebaseConfigured } from "@/lib/firebase";
  */
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   loading: boolean;
   isDemo: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   loading: true, 
-  isDemo: true 
+  isDemo: false,
+  signIn: async () => {},
+  register: async () => {},
+  signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const syncUser = async () => {
-      // Identity data for the user session
-      const userData = { 
-        uid: "public-guest", 
-        email: "guest@munazzim.app",
-        displayName: "Guest User",
-      };
-
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
       try {
-        if (isFirebaseConfigured) {
-          // Call the server-side sync API to capture IP and update Firestore
-          // We wrap this in a promise with a timeout to prevent hanging the whole app
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
+        if (currentUser) {
+          const token = await currentUser.getIdToken();
           const response = await fetch('/api/user/sync', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-            signal: controller.signal,
+            headers: { Authorization: `Bearer ${token}` },
           });
-
-          clearTimeout(timeoutId);
-
           if (!response.ok) {
             console.error("Failed to sync user data with server.");
-          } else {
-            const result = await response.json();
-            console.log("User session synchronized. Client IP:", result.ip);
           }
         }
       } catch (error) {
         console.error("Error syncing user session:", error);
       } finally {
-        // Always set the user and stop loading, even if sync fails
-        setUser({ ...userData, status: "Active" });
         setLoading(false);
       }
-    };
-
-    syncUser();
+    });
+    return unsubscribe;
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDemo: true }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isDemo: false,
+      signIn: async (email, password) => { await signInWithEmailAndPassword(auth, email, password); },
+      register: async (email, password) => { await createUserWithEmailAndPassword(auth, email, password); },
+      signOut: async () => { await signOut(auth); },
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -26,7 +26,7 @@ async function loadUserCollection(collectionName: 'appointments' | 'tasks', user
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
 
     if (!prompt) {

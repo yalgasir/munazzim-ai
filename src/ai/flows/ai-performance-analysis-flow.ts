@@ -59,7 +59,6 @@ export type PerformanceAnalysisOutput = z.infer<typeof CompleteAnalysisSchema> &
   provider: string;
   model: string;
   responseTimeMs: number;
-  rawResponse: string;
   attempts: number;
 };
 
@@ -91,13 +90,12 @@ export async function analyzeWorkspacePerformance(
 
   if (firstAnalysis.suggestions.length === 3) {
     const analysis = CompleteAnalysisSchema.parse(firstAnalysis);
-    console.log('AI Performance raw model response:', firstResponse.text);
+    console.log('AI Performance response accepted:', { provider: firstResponse.providerLabel, attempts: 1 });
     return {
       ...analysis,
       provider: firstResponse.providerLabel,
       model: firstResponse.model,
       responseTimeMs: Date.now() - startedAt,
-      rawResponse: firstResponse.text,
       attempts: 1,
     };
   }
@@ -111,14 +109,13 @@ export async function analyzeWorkspacePerformance(
     jsonSchema: ANALYSIS_JSON_SCHEMA,
   });
   const analysis = CompleteAnalysisSchema.parse(parseAnalysis(retryResponse.text));
-  console.log('AI Performance raw model response:', retryResponse.text);
+  console.log('AI Performance response accepted:', { provider: retryResponse.providerLabel, attempts: 2 });
 
   return {
     ...analysis,
     provider: retryResponse.providerLabel,
     model: retryResponse.model,
     responseTimeMs: Date.now() - startedAt,
-    rawResponse: retryResponse.text,
     attempts: 2,
   };
 }
@@ -127,7 +124,7 @@ export async function answerScheduleQuestion(
   appointments: unknown[],
   tasks: unknown[],
   userRequest: string
-): Promise<{ reply: string; provider: string; model: string; rawResponse: string }> {
+): Promise<{ reply: string; provider: string; model: string }> {
   const facts = workspaceFacts(appointments, tasks);
   const response = await askMunazzimAI({
     system: ANSWER_SYSTEM_PROMPT,
@@ -138,12 +135,11 @@ export async function answerScheduleQuestion(
     jsonSchema: ANSWER_JSON_SCHEMA,
   });
   const parsed = z.object({ reply: z.string().min(1) }).strict().parse(parseAIJson(response.text));
-  console.log('AI Assistant answer raw model response:', response.text);
+  console.log('AI Assistant answer response accepted:', { provider: response.providerLabel });
 
   return {
     ...parsed,
     provider: response.providerLabel,
     model: response.model,
-    rawResponse: response.text,
   };
 }

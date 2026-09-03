@@ -73,7 +73,7 @@ function AppointmentsContent() {
       return;
     }
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     try {
       setLoading(true);
@@ -128,7 +128,7 @@ function AppointmentsContent() {
       return;
     }
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     try {
       setSaving(true);

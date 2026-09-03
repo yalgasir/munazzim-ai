@@ -42,7 +42,7 @@ export default function AIAssistantPage() {
 
     setLoading(true);
     try {
-      const userId = user.uid || user.id;
+      const userId = user.uid;
       const response = await fetch("/api/ai/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +87,7 @@ export default function AIAssistantPage() {
 
     setSaving(true);
     try {
-      const userId = user.uid || user.id;
+      const userId = user.uid;
 
       for (const task of result.tasks) {
         const response = await fetch("/api/tasks", {

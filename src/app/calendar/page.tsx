@@ -31,7 +31,7 @@ export default function CalendarPage() {
       return;
     }
 
-    const userId = user.uid || user.id;
+    const userId = user.uid;
 
     try {
       setLoading(true);

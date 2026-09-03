@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { getCurrentUserId } from "@/lib/request-user";
 import { isClockTime, isISODate, optionalString } from "@/lib/validation";
+import { withTimeout } from "@/lib/with-timeout";
 import {
   collection,
   addDoc,
@@ -21,7 +22,7 @@ import {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const q = query(
       collection(db, "tasks"),
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const {
       userId: _ignoredUserId,
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
       where("date", "==", normalizedDate),
       where("time", "==", normalizedTime)
     );
-    const duplicateSnapshot = await getDocs(duplicateQuery);
+    const duplicateSnapshot = await withTimeout(getDocs(duplicateQuery));
 
     if (!duplicateSnapshot.empty) {
       const existing = duplicateSnapshot.docs[0];
@@ -113,10 +114,10 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const docRef = await addDoc(
+    const docRef = await withTimeout(addDoc(
       collection(db, "tasks"),
       newTask
-    );
+    ));
 
     return NextResponse.json({
       success: true,
@@ -142,7 +143,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     const { id, ...updates } = body;
 
@@ -200,7 +201,7 @@ export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
 
     if (!id) {
       return NextResponse.json(

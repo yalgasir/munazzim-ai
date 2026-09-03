@@ -36,7 +36,7 @@ export function ScheduleAnalysisDialog({ appointments, tasks }: { appointments: 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.uid || user.id,
+          userId: user.uid,
           prompt: "Analyze my schedule and performance and give useful productivity recommendations.",
           appointments: safeApps,
           tasks: safeTasks,

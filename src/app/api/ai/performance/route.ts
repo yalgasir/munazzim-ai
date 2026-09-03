@@ -25,7 +25,7 @@ async function loadUserCollection(collectionName: 'appointments' | 'tasks', user
 
 export async function POST(req: Request) {
   try {
-    const userId = getCurrentUserId(req);
+    const userId = await getCurrentUserId(req);
     const [appointments, tasks] = await Promise.all([
       loadUserCollection('appointments', userId),
       loadUserCollection('tasks', userId),

@@ -29,7 +29,7 @@ export function ScheduleAnalysisWidget({ appointments = [], tasks = [] }: { appo
       const response = await fetch("/api/ai/performance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid || user.id }),
+        body: JSON.stringify({ userId: user.uid }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Could not reach AI engine.");
