@@ -2,8 +2,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 /**
  * @fileOverview Authentication context for managing global user state.
@@ -11,7 +9,7 @@ import { auth } from "@/lib/firebase";
  */
 
 interface AuthContextType {
-  user: User | null;
+  user: { uid: string; email: string | null; displayName: string | null } | null;
   loading: boolean;
   isDemo: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -29,40 +27,38 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthContextType['user']>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      try {
-        if (currentUser) {
-          const token = await currentUser.getIdToken();
-          const response = await fetch('/api/user/sync', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!response.ok) {
-            console.error("Failed to sync user data with server.");
-          }
-        }
-      } catch (error) {
-        console.error("Error syncing user session:", error);
-      } finally {
-        setLoading(false);
-      }
-    });
-    return unsubscribe;
+    fetch('/api/auth')
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((result) => setUser(result?.user || null))
+      .finally(() => setLoading(false));
   }, []);
+
+  const authenticate = async (email: string, password: string, register = false) => {
+    const response = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, register }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw Object.assign(new Error(result.error || 'Sign-in failed'), { code: result.error || 'auth/sign-in-failed' });
+    setUser(result.user);
+  };
 
   return (
     <AuthContext.Provider value={{
       user,
       loading,
       isDemo: false,
-      signIn: async (email, password) => { await signInWithEmailAndPassword(auth, email, password); },
-      register: async (email, password) => { await createUserWithEmailAndPassword(auth, email, password); },
-      signOut: async () => { await signOut(auth); },
+      signIn: (email, password) => authenticate(email, password),
+      register: (email, password) => authenticate(email, password, true),
+      signOut: async () => {
+        await fetch('/api/auth', { method: 'DELETE' });
+        setUser(null);
+      },
     }}>
       {children}
     </AuthContext.Provider>

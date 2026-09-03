@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-const publicApiPaths = new Set(['/api/health', '/api/user/sync']);
+const publicApiPaths = new Set(['/api/health', '/api/user/sync', '/api/auth']);
 
 export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')

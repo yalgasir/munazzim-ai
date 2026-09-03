@@ -20,7 +20,7 @@ export default function LoginPage() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     try { setError(''); await signIn(email, password); router.replace('/'); }
-    catch { setError('Sign-in failed.'); }
+    catch (error: any) { setError(error?.code || error?.message || 'Sign-in failed.'); }
   };
 
   return (
