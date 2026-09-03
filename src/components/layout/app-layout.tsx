@@ -75,7 +75,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const userAvatar = (PlaceHolderImages || []).find(img => img.id === 'user-avatar')?.imageUrl;
-  const userName = user?.displayName || user?.email || 'Laboratory User';
+  // No default/lab identity: AppLayout only renders for a verified session.
+  const userName = user?.displayName || user?.email || 'Account';
 
   const handleSignOut = async () => {
     await signOut();

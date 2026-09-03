@@ -56,6 +56,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signIn: (email, password) => authenticate(email, password),
       register: (email, password) => authenticate(email, password, true),
       signOut: async () => {
+        // Clear any cached Firebase client authentication state first
+        // (removes stale prototype identities persisted in browser storage).
+        try {
+          const [{ signOut: signOutClient }, { auth }] = await Promise.all([
+            import('firebase/auth'),
+            import('@/lib/firebase'),
+          ]);
+          await signOutClient(auth);
+        } catch {
+          // Client sign-out is best-effort; the server session is authoritative.
+        }
+        // Clear the server-side munazzim_session HttpOnly cookie.
         await fetch('/api/auth', { method: 'DELETE' });
         setUser(null);
       },
