@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -17,6 +17,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/auth-context";
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +53,8 @@ const menuItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const [mounted, setMounted] = React.useState(false);
   const [headerDate, setHeaderDate] = React.useState("");
 
@@ -72,6 +75,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const userAvatar = (PlaceHolderImages || []).find(img => img.id === 'user-avatar')?.imageUrl;
+  const userName = user?.displayName || user?.email || 'Laboratory User';
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/login');
+  };
 
   return (
     <SidebarProvider>
@@ -128,7 +137,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         <AvatarFallback className="bg-primary text-white"><UserIcon className="h-5 w-5" /></AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
-                        <span className="text-sm font-black truncate max-w-[120px]">Guest User</span>
+                        <span className="text-sm font-black truncate max-w-[120px]">{userName}</span>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Local Workspace</span>
                       </div>
                     </SidebarMenuButton>
@@ -143,7 +152,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <Settings className="h-5 w-5 text-primary" /> Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-4 px-4 py-3 cursor-pointer rounded-xl text-destructive font-bold focus:bg-destructive/10">
+                    <DropdownMenuItem onSelect={handleSignOut} className="gap-4 px-4 py-3 cursor-pointer rounded-xl text-destructive font-bold focus:bg-destructive/10">
                       <LogOut className="h-5 w-5" /> Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>

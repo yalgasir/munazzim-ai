@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 import { getCurrentUserId } from "@/lib/request-user";
 import { isClockTime, isISODate, isLegacyTime, minutesSinceMidnight, optionalString } from "@/lib/validation";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
 
 /**
  * GET
@@ -23,12 +12,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = await getCurrentUserId(req);
 
-    const q = query(
-      collection(db, "appointments"),
-      where("userId", "==", userId)
-    );
-
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection("appointments").where("userId", "==", userId).get();
 
     const appointments = snapshot.docs.map((item) => ({
       id: item.id,
@@ -108,14 +92,12 @@ export async function POST(req: Request) {
     const storedTime = normalizedTime || (normalizedStartTime && normalizedEndTime
       ? `${normalizedStartTime} - ${normalizedEndTime}`
       : normalizedStartTime);
-    const duplicateQuery = query(
-      collection(db, "appointments"),
-      where("userId", "==", userId),
-      where("title", "==", normalizedTitle),
-      where("date", "==", normalizedDate),
-      where("time", "==", storedTime)
-    );
-    const duplicateSnapshot = await getDocs(duplicateQuery);
+    const duplicateSnapshot = await adminDb.collection("appointments")
+      .where("userId", "==", userId)
+      .where("title", "==", normalizedTitle)
+      .where("date", "==", normalizedDate)
+      .where("time", "==", storedTime)
+      .get();
 
     if (!duplicateSnapshot.empty) {
       const existing = duplicateSnapshot.docs[0];
@@ -140,10 +122,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const docRef = await addDoc(
-      collection(db, "appointments"),
-      newAppointment
-    );
+    const docRef = await adminDb.collection("appointments").add(newAppointment);
 
     return NextResponse.json({
       success: true,
@@ -205,20 +184,14 @@ export async function PATCH(req: Request) {
       }
     }
 
-    const appointmentRef = doc(
-      db,
-      "appointments",
-      id
-    );
-    const existing = await getDoc(appointmentRef);
-    if (!existing.exists() || existing.data().userId !== userId) {
+    const appointmentRef = adminDb.collection("appointments").doc(id);
+    const existing = await appointmentRef.get();
+    const existingAppointment = existing.data();
+    if (!existing.exists || existingAppointment?.userId !== userId) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
 
-    await updateDoc(
-      appointmentRef,
-      updates
-    );
+    await appointmentRef.update(updates);
 
     return NextResponse.json({
       success: true,
@@ -251,12 +224,13 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const appointmentRef = doc(db, "appointments", id);
-    const existing = await getDoc(appointmentRef);
-    if (!existing.exists() || existing.data().userId !== userId) {
+    const appointmentRef = adminDb.collection("appointments").doc(id);
+    const existing = await appointmentRef.get();
+    const existingAppointment = existing.data();
+    if (!existing.exists || existingAppointment?.userId !== userId) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
-    await deleteDoc(appointmentRef);
+    await appointmentRef.delete();
 
     return NextResponse.json({
       success: true,

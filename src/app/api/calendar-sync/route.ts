@@ -1,15 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 import { getCurrentUserId } from "@/lib/request-user";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
 
 export async function POST(req: Request) {
   try {
@@ -32,52 +23,30 @@ export async function POST(req: Request) {
 
     let newCount = 0;
 
-    const appointmentsRef = collection(
-      db,
-      "appointments"
-    );
+    const appointmentsRef = adminDb.collection("appointments");
 
     for (const event of mockExternalEvents) {
-      const q = query(
-        appointmentsRef,
-        where("userId", "==", userId),
-        where(
-          "externalId",
-          "==",
-          event.externalId
-        )
-      );
-
-      const existing = await getDocs(q);
+      const existing = await appointmentsRef
+        .where("userId", "==", userId)
+        .where("externalId", "==", event.externalId)
+        .get();
 
       if (existing.empty) {
-        await addDoc(
-          appointmentsRef,
-          {
-            ...event,
-            userId,
-            createdAt:
-              new Date().toISOString(),
-          }
-        );
+        await appointmentsRef.add({
+          ...event,
+          userId,
+          createdAt: new Date().toISOString(),
+        });
 
         newCount++;
       } else {
         const docId =
           existing.docs[0].id;
 
-        await updateDoc(
-          doc(
-            db,
-            "appointments",
-            docId
-          ),
-          {
-            ...event,
-            updatedAt:
-              new Date().toISOString(),
-          }
-        );
+        await appointmentsRef.doc(docId).update({
+          ...event,
+          updatedAt: new Date().toISOString(),
+        });
       }
     }
 

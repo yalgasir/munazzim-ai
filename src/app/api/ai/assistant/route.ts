@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server';
 import { analyzeFullSchedule } from '@/ai/flows/ai-schedule-optimizer-flow';
-import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { getCurrentUserId } from '@/lib/request-user';
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from 'firebase/firestore';
 
 async function loadUserCollection(collectionName: 'appointments' | 'tasks', userId: string) {
-  const userQuery = query(
-    collection(db, collectionName),
-    where('userId', '==', userId)
-  );
-
-  const snapshot = await getDocs(userQuery);
+  const snapshot = await adminDb
+    .collection(collectionName)
+    .where('userId', '==', userId)
+    .get();
 
   return snapshot.docs.map((item) => ({
     id: item.id,

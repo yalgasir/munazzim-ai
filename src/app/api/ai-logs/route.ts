@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 import { getCurrentUserId } from "@/lib/request-user";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
 
 /**
  * GET
@@ -18,12 +11,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = await getCurrentUserId(req);
 
-    const q = query(
-      collection(db, "ai_logs"),
-      where("userId", "==", userId)
-    );
-
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection("ai_logs").where("userId", "==", userId).get();
 
     const logs = snapshot.docs
       .map((item) => ({
@@ -81,10 +69,7 @@ export async function POST(req: Request) {
       model,
     };
 
-    const docRef = await addDoc(
-      collection(db, "ai_logs"),
-      newLog
-    );
+    const docRef = await adminDb.collection("ai_logs").add(newLog);
 
     return NextResponse.json({
       success: true,

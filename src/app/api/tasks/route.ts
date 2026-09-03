@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 import { getCurrentUserId } from "@/lib/request-user";
 import { isClockTime, isISODate, optionalString } from "@/lib/validation";
 import { withTimeout } from "@/lib/with-timeout";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
 
 /**
  * GET
@@ -24,12 +13,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = await getCurrentUserId(req);
 
-    const q = query(
-      collection(db, "tasks"),
-      where("userId", "==", userId)
-    );
-
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection("tasks").where("userId", "==", userId).get();
 
     const tasks = snapshot.docs.map((item) => ({
       id: item.id,
@@ -84,14 +68,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "time must use HH:mm" }, { status: 400 });
     }
 
-    const duplicateQuery = query(
-      collection(db, "tasks"),
-      where("userId", "==", userId),
-      where("title", "==", canonicalTitle),
-      where("date", "==", normalizedDate),
-      where("time", "==", normalizedTime)
-    );
-    const duplicateSnapshot = await withTimeout(getDocs(duplicateQuery));
+    const duplicateSnapshot = await withTimeout(adminDb.collection("tasks")
+      .where("userId", "==", userId)
+      .where("title", "==", canonicalTitle)
+      .where("date", "==", normalizedDate)
+      .where("time", "==", normalizedTime)
+      .get());
 
     if (!duplicateSnapshot.empty) {
       const existing = duplicateSnapshot.docs[0];
@@ -114,10 +96,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const docRef = await withTimeout(addDoc(
-      collection(db, "tasks"),
-      newTask
-    ));
+    const docRef = await withTimeout(adminDb.collection("tasks").add(newTask));
 
     return NextResponse.json({
       success: true,
@@ -171,13 +150,14 @@ export async function PATCH(req: Request) {
       updates.isCompleted = updates.status === "Done";
     }
 
-    const taskRef = doc(db, "tasks", id);
-    const existing = await getDoc(taskRef);
-    if (!existing.exists() || existing.data().userId !== userId) {
+    const taskRef = adminDb.collection("tasks").doc(id);
+    const existing = await taskRef.get();
+    const existingTask = existing.data();
+    if (!existing.exists || existingTask?.userId !== userId) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    await updateDoc(taskRef, updates);
+    await taskRef.update(updates);
 
     return NextResponse.json({
       success: true,
@@ -210,12 +190,13 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const taskRef = doc(db, "tasks", id);
-    const existing = await getDoc(taskRef);
-    if (!existing.exists() || existing.data().userId !== userId) {
+    const taskRef = adminDb.collection("tasks").doc(id);
+    const existing = await taskRef.get();
+    const existingTask = existing.data();
+    if (!existing.exists || existingTask?.userId !== userId) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-    await deleteDoc(taskRef);
+    await taskRef.delete();
 
     return NextResponse.json({
       success: true,
