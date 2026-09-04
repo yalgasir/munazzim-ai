@@ -89,7 +89,7 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
         additionalProperties: false,
         required: ['title', 'date', 'time', 'priority', 'description'],
         properties: {
-          title: { type: 'string' },
+          title: { type: 'string', minLength: 1 },
           date: { type: ['string', 'null'] },
           time: { type: ['string', 'null'] },
           priority: { type: ['string', 'null'], enum: ['High', 'Medium', 'Low', null] },
@@ -105,7 +105,7 @@ const CANONICAL_JSON_SCHEMA: Record<string, unknown> = {
         additionalProperties: false,
         required: ['title', 'date', 'startTime', 'endTime', 'location', 'description'],
         properties: {
-          title: { type: 'string' },
+          title: { type: 'string', minLength: 1 },
           date: { type: 'string' },
           startTime: { type: 'string' },
           endTime: { type: 'string' },
@@ -182,11 +182,14 @@ ABSOLUTE RULES:
 9. Only add dates/times if the user explicitly mentioned them.
 
 RELATIVE DATE RULES:
-- Use ONLY the supplied current Riyadh date/time (provided at the start of your prompt).
-- "tomorrow" = current date + 1 day
-- "day after tomorrow" = current date + 2 days
-- Day names = next occurrence from today
-- Always output as YYYY-MM-DD
+- Use the supplied CURRENT RIYADH LOCAL DATE/TIME, CURRENT WEEKDAY, and factual CALENDAR REFERENCE to determine dates.
+- CALENDAR REFERENCE starts with today at the top and lists each day chronologically forward.
+- "today" = current date.
+- "tomorrow" = current date + 1 day.
+- "day after tomorrow" = current date + 2 days.
+- Unless the user explicitly says "next <weekday>", any mention of a weekday or "this <weekday>" MUST be matched to the FIRST occurrence of that weekday in the CALENDAR REFERENCE.
+- When the user explicitly says "next <weekday>", match to the SECOND occurrence of that weekday in the CALENDAR REFERENCE.
+- Always output dates in YYYY-MM-DD format.
 
 APPOINTMENT RULES:
 - date and startTime are REQUIRED. If either is missing, return empty appointments array and explain in reply.
@@ -219,21 +222,47 @@ Do not infer actions from greetings, schedule context, existing data, or helpful
 Return JSON only.
 `.trim();
 
-function getRiyadhLocalDateTime(): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+function getRiyadhDateContext(): {
+  dateTime: string;
+  weekday: string;
+  calendarReference: string;
+} {
+  const now = new Date();
+  const dtf = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Riyadh',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    weekday: 'long',
     hour12: false,
-  }).formatToParts(new Date());
+  });
 
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value || '';
+  const getParts = (d: Date) => {
+    const parts = dtf.formatToParts(d);
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((part) => part.type === type)?.value || '';
+    return {
+      date: `${get('year')}-${get('month')}-${get('day')}`,
+      time: `${get('hour')}:${get('minute')}`,
+      weekday: get('weekday'),
+    };
+  };
 
-  return `${value('year')}-${value('month')}-${value('day')} ${value('hour')}:${value('minute')}`;
+  const current = getParts(now);
+  const calendar: string[] = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+    const info = getParts(d);
+    calendar.push(`- ${info.date}: ${info.weekday}`);
+  }
+
+  return {
+    dateTime: `${current.date} ${current.time}`,
+    weekday: current.weekday,
+    calendarReference: calendar.join('\n'),
+  };
 }
 
 // Model-first single request/response. If the first reply is not JSON at all,
@@ -550,10 +579,8 @@ export async function analyzeFullSchedule(
     ? `READ-ONLY AGGREGATE SCHEDULE FACTS (use only for analysis; never invent numbers not present here):\n${JSON.stringify(facts)}`
     : 'READ-ONLY AGGREGATE SCHEDULE FACTS: Not supplied because schedule analysis was not requested.';
 
+  const dateCtx = getRiyadhDateContext();
   const prompt = `
-CURRENT RIYADH LOCAL DATE/TIME: ${getRiyadhLocalDateTime()}
-TIMEZONE: Asia/Riyadh
-
 MODEL-DERIVED REQUEST GATE:
 ${JSON.stringify(intent)}
 
@@ -563,6 +590,18 @@ If analyzeSchedule=false, do not mention schedule facts in the reply.
 
 USER REQUEST:
 ${request}
+
+CURRENT RIYADH LOCAL DATE/TIME: ${dateCtx.dateTime}
+CURRENT WEEKDAY: ${dateCtx.weekday}
+TIMEZONE: Asia/Riyadh
+
+CALENDAR REFERENCE:
+${dateCtx.calendarReference}
+
+DATE RESOLUTION INSTRUCTION:
+- Scan the CALENDAR REFERENCE from top to bottom.
+- For a weekday or "this <weekday>" (without the word "next"), take the FIRST matching line.
+- For "next <weekday>", take the SECOND matching line.
 
 ${scheduleFactsSection}
 
