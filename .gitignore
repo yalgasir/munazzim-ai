@@ -18,6 +18,7 @@
 /emulator-data/
 /logs/
 /.firebase/
+/.munazzim-run/
 *.pid
 /dist/
 /tmp/
