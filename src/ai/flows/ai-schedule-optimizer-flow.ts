@@ -163,7 +163,7 @@ Return exactly this shape - NO OTHER FIELDS:
     "title": "REQUIRED",
     "date": "YYYY-MM-DD (REQUIRED for appointments)",
     "startTime": "HH:mm (REQUIRED)",
-    "endTime": "HH:mm (REQUIRED)",
+    "endTime": "HH:mm (REQUIRED - see DEFAULT DURATION POLICY below if the user did not state one)",
     "location": "string or null (only if mentioned)",
     "description": "string or null (only if mentioned)"
   }],
@@ -189,8 +189,10 @@ RELATIVE DATE RULES:
 - Always output as YYYY-MM-DD
 
 APPOINTMENT RULES:
-- Only create if date, startTime, endTime are all present.
-- If any are missing, return empty appointments array and explain in reply.
+- date and startTime are REQUIRED. If either is missing, return empty appointments array and explain in reply.
+- endTime is REQUIRED in the output shape, but the user is NOT required to state it explicitly.
+- DEFAULT DURATION POLICY (the only permitted default in this contract): if the user gives a startTime for an appointment but does not explicitly state an endTime or a duration, set endTime to exactly 60 minutes after startTime. If the user explicitly states a duration (e.g. "for 30 minutes", "a 2 hour meeting"), use that duration instead. If the user explicitly states an endTime, use it exactly as given.
+- endTime must ALWAYS be strictly later than startTime. Never output endTime equal to or earlier than startTime. If applying the default 60-minute duration would cross midnight (past 23:59), cap endTime at "23:59".
 - If the user asks for a new calendar item with both a start time and an end time, put it in appointments, not tasks.
 
 ANALYSIS RULES:
