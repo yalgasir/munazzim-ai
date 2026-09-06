@@ -30,7 +30,7 @@ if curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
   echo "Ollama already running."
 else
   echo "Starting Ollama..."
-  nohup ollama serve > "$LOG_DIR/ollama.log" 2>&1 &
+  nohup setsid ollama serve > "$LOG_DIR/ollama.log" 2>&1 &
   sleep 2
 fi
 
@@ -51,7 +51,7 @@ if [ "$FIRESTORE_RUNNING" = true ] && [ "$AUTH_RUNNING" = true ]; then
 elif [ "$FIRESTORE_RUNNING" = false ] && [ "$AUTH_RUNNING" = false ]; then
   echo "Starting Firebase Emulator..."
 
-  nohup firebase emulators:start \
+  nohup setsid firebase emulators:start \
     --import=./emulator-data \
     --export-on-exit=./emulator-data \
     > "$LOG_DIR/firebase.log" 2>&1 &
@@ -72,7 +72,7 @@ if curl -s -I "http://127.0.0.1:$NEXT_PORT" >/dev/null 2>&1; then
 else
   echo "Starting Next.js..."
 
-  nohup npm run dev \
+  nohup setsid npm run dev \
     > "$LOG_DIR/next.log" 2>&1 &
 
   echo $! > "$PROJECT_DIR/.next.pid"
@@ -102,7 +102,7 @@ else
   else
     echo "Starting Ngrok..."
 
-    nohup ngrok http "$NEXT_PORT" \
+    nohup setsid ngrok http "$NEXT_PORT" \
       --basic-auth="$NGROK_BASIC_AUTH" \
       > "$LOG_DIR/ngrok.log" 2>&1 &
 

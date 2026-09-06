@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       error
     );
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       {
         success: false,
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
           error?.message ||
           "Calendar sync failed",
       },
-      { status: 500 }
+      { status }
     );
   }
 }

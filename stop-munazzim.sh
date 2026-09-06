@@ -104,6 +104,21 @@ fi
 
 rm -f "$PROJECT_DIR/.firebase.pid"
 
+# Clean up any lingering emulator processes on port 8081 or 9099
+FIRESTORE_ORPHANS=$(ss -ltnp 2>/dev/null | awk '$4 ~ /:8081$/ {print $NF}' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u || true)
+if [ -n "$FIRESTORE_ORPHANS" ]; then
+  echo "Cleaning up lingering Firestore emulator process ($FIRESTORE_ORPHANS)..."
+  kill $FIRESTORE_ORPHANS 2>/dev/null || true
+  sleep 1
+fi
+
+AUTH_ORPHANS=$(ss -ltnp 2>/dev/null | awk '$4 ~ /:9099$/ {print $NF}' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u || true)
+if [ -n "$AUTH_ORPHANS" ]; then
+  echo "Cleaning up lingering Auth emulator process ($AUTH_ORPHANS)..."
+  kill $AUTH_ORPHANS 2>/dev/null || true
+  sleep 1
+fi
+
 
 echo "[4/5] Creating automatic backup..."
 

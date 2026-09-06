@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document records the current Ubuntu laboratory environment used for Munazzim prototype operation. It describes the existing operational configuration and does not establish production readiness, formal security compliance, or ISO certification.
+This document records the current Ubuntu laboratory environment used for Munazzim prototype operation. It describes the operational configuration, hardened management scripts, and verified laboratory state at TRL 6. It does not establish commercial production readiness or ISO certification.
 
 ## Branch Roles
 
@@ -17,11 +17,11 @@ This document records the current Ubuntu laboratory environment used for Munazzi
 | Operating system | Ubuntu laboratory environment |
 | Next.js | `http://127.0.0.1:3001` |
 | Primary AI provider | Qwen at `http://192.168.0.5/v1/chat/completions` |
-| Qwen model | `/models/Qwen3.5-2B-BF16.gguf` |
+| Qwen model | `/models/Qwen3.5-2B-BF16.gguf` (`enable_thinking: false`) |
 | Fallback AI provider | Ollama at `http://127.0.0.1:11434/api/chat` |
 | Ollama model | `llama3.2:3b` |
 
-Qwen remains the configured primary provider. The existing operational flow checks its laboratory endpoint and continues with the Ollama fallback when Qwen is unreachable. These settings are documented as currently configured; this document does not claim a completed application-level Qwen verification.
+Qwen is the primary provider and has been verified end-to-end at the application layer across English, Arabic, and mixed schedule queries. Ollama is configured and verified as a seamless fallback provider.
 
 ## Firebase Emulator Environment
 
@@ -37,16 +37,18 @@ The Firestore and Auth emulators are configured in `firebase.json` to bind to `0
 
 ## Operational Scripts
 
-| Purpose | Script |
-| --- | --- |
-| Startup | `start-munazzim.sh` |
-| Controlled shutdown | `stop-munazzim.sh` |
-| Firebase emulator export backup | `backup-munazzim-data.sh` |
-| Local emulator-data copy backup | `backup-munazzim.sh` |
+| Purpose | Script | Hardening details |
+| --- | --- | --- |
+| Startup | `start-munazzim.sh` | Launches background services with `setsid` so child processes decouple from the launcher shell and survive terminal exit. |
+| Controlled shutdown | `stop-munazzim.sh` | Gracefully shuts down services and explicitly terminates orphan processes bound to ports 8081, 9099, 3001, 4000, and 4040. |
+| Firebase emulator export backup | `backup-munazzim-data.sh` | Exports running emulator data to timestamped archives under `backups/data/` and verifies export metadata. |
+| Automated Backup Unit | `systemd/user/munazzim-backup.service` | Configured as an unprivileged user unit (without invalid `User=%u` directives), triggered daily by `munazzim-backup.timer`. |
 
 `start-munazzim.sh` manages the laboratory services, including Ngrok. Ngrok is part of the laboratory environment and must not be removed. When `NGROK_BASIC_AUTH` is configured, the startup script starts an Ngrok tunnel for the Next.js port; when it is absent, the script leaves Ngrok stopped and reports the missing setting.
 
-`backup-munazzim-data.sh` is designed to export the running Firebase Emulator state into a timestamped backup and verifies the Firestore export metadata. It checks for an Auth export and reports when Auth data was not exported. `stop-munazzim.sh` requests emulator export during controlled shutdown and creates a shutdown copy only after it observes export completion. Backup restore remains a TRL 6 verification activity, not a completed claim.
+## Backup Export and Restore
+
+Backup creation is automated via the user-level systemd timer. Complete round-trip restore has been verified by launching an isolated emulator instance importing from backup archives (`firebase emulators:exec --config firebase.restore-test.json --only firestore,auth --import ...`).
 
 ## Git-Excluded Local Artifacts
 
@@ -54,4 +56,4 @@ Existing `.gitignore` coverage keeps local runtime artifacts out of Git, includi
 
 ## Security and TRL 6
 
-TRL 6 security verification is planned to be aligned with applicable **ISO/IEC 27001:2022 information-security principles**. This is prototype-scoped security-verification guidance only; it does not claim ISO/IEC 27001 certification, formal compliance, conformity, or production readiness.
+TRL 6 security verification is aligned with applicable **ISO/IEC 27001:2022 information-security principles** (least privilege, secure boundary, authenticated endpoints, session isolation). This is prototype-scoped security verification; it does not claim formal ISO/IEC 27001 certification or compliance.

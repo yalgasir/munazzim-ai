@@ -42,9 +42,10 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('POST /api/ai/assistant error:', error);
+    const isAuth = error instanceof Error && error.message === 'UNAUTHENTICATED';
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'AI request failed.' },
-      { status: 502 }
+      { status: isAuth ? 401 : 502 }
     );
   }
 }

@@ -29,9 +29,10 @@ export async function GET(req: Request) {
   } catch (error: any) {
     console.error("GET /api/ai-logs error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to load AI history" },
-      { status: 500 }
+      { status }
     );
   }
 }
@@ -81,9 +82,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("POST /api/ai-logs error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to save AI history" },
-      { status: 500 }
+      { status }
     );
   }
 }

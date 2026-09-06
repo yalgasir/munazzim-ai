@@ -180,6 +180,7 @@ ABSOLUTE RULES:
 7. Only put an item in tasks/appointments when the user's current request explicitly asks to create that new item.
 8. Do NOT copy optional values from the existing schedule into new tasks.
 9. Only add dates/times if the user explicitly mentioned them.
+10. Any item with both a start time and an end time (such as "from X to Y" or "من X إلى Y") is an appointment, NEVER a task.
 
 RELATIVE DATE RULES:
 - Use ONLY the supplied current Riyadh date/time (provided at the start of your prompt).
@@ -191,7 +192,7 @@ RELATIVE DATE RULES:
 APPOINTMENT RULES:
 - Only create if date, startTime, endTime are all present.
 - If any are missing, return empty appointments array and explain in reply.
-- If the user asks for a new calendar item with both a start time and an end time, put it in appointments, not tasks.
+- Any meeting, appointment, event, or item that has both a start time and an end time (such as "from X to Y", "من X إلى Y", "meeting", "اجتماع", "موعد") MUST be placed in "appointments", NEVER in "tasks".
 
 ANALYSIS RULES:
 - Populate "analysis" whenever the user asks to review, organize, prioritize, plan, or get suggestions/recommendations about their schedule.
@@ -206,11 +207,11 @@ Return JSON only. Do not use Markdown outside the JSON object.
 const INTENT_SYSTEM_PROMPT = `
 Classify only the user's current request. Return exactly one JSON object.
 
-Understand the user's meaning in any language.
-Set createTasks=true only if the user explicitly asks for a new task, todo, reminder, or work item.
-Set createAppointments=true only if the user explicitly asks for a new calendar item such as an appointment, meeting, event, or visit. A new item with both a start time and end time is a calendar appointment, not a task.
-Set analyzeSchedule=true only if the user explicitly asks to analyze, review, organize, prioritize, plan, or suggest improvements for their schedule.
-If the user asks for more than one thing, set every matching boolean to true.
+Understand the user's meaning in any language, especially Arabic and English.
+Set createTasks=true only if the user explicitly asks for a new task, todo, reminder, or work item (e.g. "مهمة", "task", "todo", "عمل", "تذكير").
+Set createAppointments=true only if the user explicitly asks for a new calendar item such as an appointment, meeting, event, or visit (e.g. "موعد", "اجتماع", "meeting", "لقاء", "مقابلة", "حدث", "appointment"). Any item with both a start time and end time (or "من ... إلى ...") is a calendar appointment, not a task.
+Set analyzeSchedule=true only if the user explicitly asks to analyze, review, organize, prioritize, plan, or suggest improvements for their schedule (e.g. "حلل", "راجع", "توصيات", "analyze", "review").
+If the user asks for more than one thing (such as a meeting AND a task), set every matching boolean to true.
 Set each optional field boolean to true only when the user explicitly supplied that value in the current request. Do not count values from existing schedule data.
 
 Do not infer actions from greetings, schedule context, existing data, or helpfulness.

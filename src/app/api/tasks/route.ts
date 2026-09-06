@@ -24,9 +24,10 @@ export async function GET(req: Request) {
   } catch (error: any) {
     console.error("GET /api/tasks error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to load tasks" },
-      { status: 500 }
+      { status }
     );
   }
 }
@@ -108,9 +109,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("POST /api/tasks error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to create task" },
-      { status: 500 }
+      { status }
     );
   }
 }
@@ -166,9 +168,10 @@ export async function PATCH(req: Request) {
   } catch (error: any) {
     console.error("PATCH /api/tasks error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to update task" },
-      { status: 500 }
+      { status }
     );
   }
 }
@@ -205,9 +208,10 @@ export async function DELETE(req: Request) {
   } catch (error: any) {
     console.error("DELETE /api/tasks error:", error);
 
+    const status = error?.message === "UNAUTHENTICATED" ? 401 : 500;
     return NextResponse.json(
       { error: error?.message || "Failed to delete task" },
-      { status: 500 }
+      { status }
     );
   }
 }

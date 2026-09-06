@@ -28,9 +28,10 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('POST /api/ai/performance error:', error);
+    const isAuth = error instanceof Error && error.message === 'UNAUTHENTICATED';
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'AI performance analysis failed.' },
-      { status: 502 }
+      { status: isAuth ? 401 : 502 }
     );
   }
 }

@@ -26,12 +26,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <form onSubmit={submit} className="flex w-80 flex-col gap-3">
-        <h1 className="text-xl font-semibold">Laboratory Sign In</h1>
+        <h1 className="text-xl font-semibold">Welcome to Munazzim</h1>
         <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" required />
         <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" required />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit">Sign In</Button>
-        <Button type="button" variant="link" onClick={() => router.push('/register')}>Create laboratory account</Button>
+        <Button type="button" variant="link" onClick={() => router.push('/register')}>Create account</Button>
       </form>
     </div>
   );

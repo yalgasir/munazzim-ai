@@ -10,7 +10,7 @@ export async function GET() {
       database: 'Connected',
       ai_service: 'Active'
     },
-    version: '1.0.0-TRL8'
+    version: '1.0.0-TRL6-prototype'
   };
 
   return NextResponse.json(healthData);
